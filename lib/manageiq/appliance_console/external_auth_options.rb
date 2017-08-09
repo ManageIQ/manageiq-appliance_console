@@ -1,8 +1,6 @@
 require 'pathname'
 require 'fileutils'
 
-RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
-
 module ApplianceConsole
   class ExternalAuthOptions
     AUTH_PATH = "/authentication".freeze

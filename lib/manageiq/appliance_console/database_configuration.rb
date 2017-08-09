@@ -5,8 +5,6 @@ require 'pathname'
 require 'util/miq-password'
 require 'fileutils'
 
-RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
-
 module ApplianceConsole
   class DatabaseConfiguration
     attr_accessor :adapter, :host, :username, :database, :password, :port, :region

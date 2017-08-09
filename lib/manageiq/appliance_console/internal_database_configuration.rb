@@ -3,8 +3,6 @@ require "util/postgres_admin"
 require "pg"
 require "linux_admin"
 
-RAILS_ROOT ||= Pathname.new(__dir__).join("../../../")
-
 module ApplianceConsole
   class InternalDatabaseConfiguration < DatabaseConfiguration
     attr_accessor :disk, :ssl, :run_as_evm_server
