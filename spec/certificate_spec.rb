@@ -1,5 +1,4 @@
 require "fileutils"
-require "appliance_console/certificate"
 
 describe ApplianceConsole::Certificate do
   before { expect(Open3).not_to receive(:capture) }

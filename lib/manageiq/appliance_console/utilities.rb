@@ -2,7 +2,6 @@
 # TODO: Further refactor these unrelated methods.
 require "util/postgres_admin"
 require "awesome_spawn"
-require "appliance_console/logging"
 
 module ApplianceConsole
   module Utilities

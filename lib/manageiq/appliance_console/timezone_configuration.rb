@@ -1,6 +1,4 @@
 require "linux_admin"
-require "appliance_console/logging"
-require 'appliance_console/prompts'
 
 module ApplianceConsole
   class TimezoneConfiguration

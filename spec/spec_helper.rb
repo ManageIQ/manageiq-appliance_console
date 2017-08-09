@@ -10,4 +10,12 @@ RSpec.configure do |config|
   end
 end
 
+# Requires supporting files with custom matchers and macros, etc, in spec/support/ and its subdirectories.
+Dir[File.expand_path(File.join(__dir__, "support/**/*.rb"))].each { |f| require f }
+
 require "manageiq-appliance_console"
+ApplianceConsole::Logging.logger = Logger.new("/dev/null")
+
+# For encryption rspec matchers
+require "manageiq-gems-pending"
+Dir[ManageIQ::Gems::Pending.root.join("spec/support/custom_matchers/*.rb")].each { |f| require f }

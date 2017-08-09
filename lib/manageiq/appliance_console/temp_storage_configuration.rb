@@ -1,5 +1,3 @@
-require "appliance_console/logging"
-
 module ApplianceConsole
   class TempStorageConfiguration
     TEMP_DISK_FILESYSTEM_TYPE = "xfs".freeze

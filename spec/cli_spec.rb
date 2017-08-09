@@ -1,6 +1,3 @@
-require "appliance_console/cli"
-require "appliance_console/timezone_configuration"
-
 describe ApplianceConsole::Cli do
   subject { described_class.new }
 

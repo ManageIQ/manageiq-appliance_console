@@ -2,8 +2,6 @@ require 'linux_admin'
 require 'pathname'
 require 'fileutils'
 require 'util/miq-system.rb'
-require 'appliance_console/logical_volume_management'
-require 'appliance_console/prompts'
 
 module ApplianceConsole
   class LogfileConfiguration

@@ -1,5 +1,3 @@
-require "appliance_console/database_configuration"
-require "appliance_console/logical_volume_management"
 require "pathname"
 require "util/postgres_admin"
 require "pg"

@@ -1,9 +1,3 @@
-require "appliance_console/internal_database_configuration"
-require "appliance_console/external_httpd_authentication"
-require 'appliance_console/principal'
-require 'appliance_console/certificate'
-require "appliance_console/certificate_authority"
-
 describe ApplianceConsole::CertificateAuthority do
   let(:host)  { "client.network.com" }
   let(:realm) { "NETWORK.COM" }

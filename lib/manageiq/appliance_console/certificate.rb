@@ -1,4 +1,3 @@
-require "appliance_console/principal"
 require "awesome_spawn"
 
 module ApplianceConsole

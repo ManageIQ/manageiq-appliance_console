@@ -4,10 +4,6 @@ require 'linux_admin'
 require 'pathname'
 require 'util/miq-password'
 require 'fileutils'
-require 'appliance_console/errors'
-require 'appliance_console/utilities'
-require 'appliance_console/logging'
-require 'appliance_console/key_configuration'
 
 RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
 

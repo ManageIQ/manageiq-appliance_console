@@ -1,7 +1,5 @@
 require 'fileutils'
 require 'tempfile'
-require 'appliance_console/principal'
-require 'appliance_console/certificate'
 require 'util/postgres_admin'
 
 module ApplianceConsole

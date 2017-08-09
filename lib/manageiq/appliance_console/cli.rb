@@ -1,19 +1,5 @@
 require 'trollop'
 require 'pathname'
-require 'appliance_console/utilities'
-require 'appliance_console/logging'
-require 'appliance_console/database_configuration'
-require 'appliance_console/internal_database_configuration'
-require 'appliance_console/external_database_configuration'
-require 'appliance_console/external_httpd_authentication'
-require 'appliance_console/external_auth_options'
-require 'appliance_console/temp_storage_configuration'
-require 'appliance_console/key_configuration'
-require 'appliance_console/principal'
-require 'appliance_console/certificate'
-require 'appliance_console/certificate_authority'
-require 'appliance_console/logfile_configuration'
-require 'appliance_console/database_maintenance_hourly'
 
 # support for appliance_console methods
 unless defined?(say)

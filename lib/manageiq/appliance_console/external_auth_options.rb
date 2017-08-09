@@ -1,8 +1,5 @@
 require 'pathname'
 require 'fileutils'
-require 'appliance_console/errors'
-require 'appliance_console/utilities'
-require 'appliance_console/logging'
 
 RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
 
