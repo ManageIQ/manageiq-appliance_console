@@ -1,4 +1,3 @@
-require 'appliance_console/logical_volume_management'
 require 'pathname'
 require 'tmpdir'
 

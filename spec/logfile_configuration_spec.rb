@@ -1,4 +1,3 @@
-require "appliance_console/logfile_configuration"
 require "tempfile"
 
 describe ManageIQ::ApplianceConsole::LogfileConfiguration do

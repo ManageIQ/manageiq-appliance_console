@@ -1,5 +1,3 @@
-require "appliance_console/database_maintenance_hourly"
-
 describe ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly do
   DIRNAME = File.dirname(__FILE__).freeze
 

@@ -2,9 +2,7 @@
 # description: ManageIQ appliance console
 #
 
-# Simulate rubygems adding the top level appliance_console.rb's directory to the path.
-$LOAD_PATH.push(File.dirname(__FILE__))
-
+require 'manageiq-appliance_console'
 require 'pathname'
 
 RAILS_ROOT ||= Pathname.new("/var/www/miq/vmdb") if File.exist?("/var/www/miq/vmdb")
@@ -44,8 +42,6 @@ def summary_entry(field, value)
   "#{dfield.ljust(24)} #{value}"
 end
 
-require 'appliance_console/errors'
-
 [:INT, :TERM, :ABRT, :TSTP].each { |s| trap(s) { raise MiqSignalError } }
 
 VERSION_FILE  = RAILS_ROOT.join("VERSION")
@@ -60,24 +56,6 @@ require 'util/miq-password'
 MiqPassword.key_root = "#{RAILS_ROOT}/certs"
 
 # Load appliance_console libraries
-require 'appliance_console/utilities'
-require 'appliance_console/logging'
-require 'appliance_console/database_maintenance'
-require 'appliance_console/database_configuration'
-require 'appliance_console/internal_database_configuration'
-require 'appliance_console/external_database_configuration'
-require 'appliance_console/external_httpd_authentication'
-require 'appliance_console/external_auth_options'
-require 'appliance_console/logfile_configuration'
-require 'appliance_console/temp_storage_configuration'
-require 'appliance_console/key_configuration'
-require 'appliance_console/scap'
-require 'appliance_console/certificate_authority'
-require 'appliance_console/timezone_configuration'
-require 'appliance_console/date_time_configuration'
-require 'appliance_console/database_replication_primary'
-require 'appliance_console/database_replication_standby'
-require 'appliance_console/prompts'
 include ManageIQ::ApplianceConsole::Prompts
 
 # Restore database choices

@@ -1,5 +1,3 @@
-require "appliance_console/date_time_configuration"
-
 describe ManageIQ::ApplianceConsole::DateTimeConfiguration do
   subject { described_class.new }
 

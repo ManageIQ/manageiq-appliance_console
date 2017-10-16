@@ -1,7 +1,3 @@
-require 'appliance_console/database_maintenance_hourly'
-require 'appliance_console/database_maintenance_periodic'
-require 'appliance_console/logging'
-require 'appliance_console/prompts'
 require 'fileutils'
 
 module ManageIQ

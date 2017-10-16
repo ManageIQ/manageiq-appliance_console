@@ -1,5 +1,3 @@
-require "appliance_console/database_maintenance"
-
 describe ManageIQ::ApplianceConsole::DatabaseMaintenance do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 

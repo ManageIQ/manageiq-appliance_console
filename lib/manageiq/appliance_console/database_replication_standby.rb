@@ -1,7 +1,3 @@
-require 'appliance_console/logging'
-require 'appliance_console/prompts'
-require 'appliance_console/database_replication'
-require "appliance_console/logical_volume_management"
 require 'util/postgres_admin'
 require 'fileutils'
 require 'linux_admin'

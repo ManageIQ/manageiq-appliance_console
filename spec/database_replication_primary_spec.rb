@@ -1,7 +1,3 @@
-require 'appliance_console/prompts'
-require 'appliance_console/database_configuration'
-require 'appliance_console/database_replication'
-require 'appliance_console/database_replication_primary'
 require 'linux_admin'
 require 'pg'
 

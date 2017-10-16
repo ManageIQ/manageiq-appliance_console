@@ -1,9 +1,4 @@
 module ManageIQ
-require 'appliance_console/logging'
-require 'appliance_console/prompts'
-require 'appliance_console/database_configuration'
-require 'appliance_console/database_replication'
-
 module ApplianceConsole
   class DatabaseReplicationPrimary < DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging

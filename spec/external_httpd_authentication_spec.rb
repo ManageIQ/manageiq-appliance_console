@@ -1,7 +1,4 @@
 require "active_support/all"
-require "appliance_console/external_httpd_authentication"
-require "appliance_console/prompts"
-require "appliance_console/principal"
 require "linux_admin"
 
 describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do

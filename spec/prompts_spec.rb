@@ -1,8 +1,6 @@
 require 'stringio'
 require 'tempfile'
 require 'readline'
-require "appliance_console/errors"
-require "appliance_console/prompts"
 require "active_support/all"
 require 'highline/import'
 require "linux_admin"

@@ -1,6 +1,3 @@
-require "appliance_console/prompts"
-require "appliance_console/database_replication"
-require "appliance_console/database_replication_standby"
 require "linux_admin"
 require "pathname"
 require "tempfile"

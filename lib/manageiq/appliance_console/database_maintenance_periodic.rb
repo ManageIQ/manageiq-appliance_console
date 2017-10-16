@@ -1,7 +1,4 @@
 module ManageIQ
-require 'appliance_console/logging'
-require 'appliance_console/prompts'
-
 module ApplianceConsole
   class DatabaseMaintenancePeriodic
     include ManageIQ::ApplianceConsole::Logging

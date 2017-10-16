@@ -1,6 +1,3 @@
-require "appliance_console/prompts"
-require "appliance_console/key_configuration"
-
 describe ManageIQ::ApplianceConsole::KeyConfiguration do
   context "#ask_questions" do
     subject { Class.new(described_class).tap { |c| c.include(ManageIQ::ApplianceConsole::Prompts) }.new }

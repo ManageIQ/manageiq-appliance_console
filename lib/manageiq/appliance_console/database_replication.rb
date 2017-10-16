@@ -1,5 +1,3 @@
-require 'appliance_console/logging'
-require 'appliance_console/prompts'
 require 'pg'
 require 'English'
 

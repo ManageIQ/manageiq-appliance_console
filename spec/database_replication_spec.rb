@@ -1,5 +1,3 @@
-require "appliance_console/prompts"
-require "appliance_console/database_replication"
 require "tempfile"
 
 describe ManageIQ::ApplianceConsole::DatabaseReplication do

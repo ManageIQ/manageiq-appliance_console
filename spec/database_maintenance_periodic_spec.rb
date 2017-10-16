@@ -1,5 +1,3 @@
-require "appliance_console/database_maintenance_periodic"
-
 describe ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic do
   before do
     @test_crontab1 = Tempfile.new("crontab")

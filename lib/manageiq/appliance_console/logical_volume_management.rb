@@ -1,6 +1,5 @@
 require 'linux_admin'
 require 'fileutils'
-require 'appliance_console/logging'
 
 module ManageIQ
 module ApplianceConsole

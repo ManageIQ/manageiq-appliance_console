@@ -1,5 +1,3 @@
-require "appliance_console/principal"
-
 describe ManageIQ::ApplianceConsole::Principal do
   before { expect(Open3).not_to receive(:capture3) }
   let(:hostname) { "machine.network.com" }

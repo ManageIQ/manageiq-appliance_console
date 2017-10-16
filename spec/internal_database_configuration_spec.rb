@@ -1,5 +1,3 @@
-require "appliance_console/internal_database_configuration"
-
 describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
   before do
     @old_key_root = MiqPassword.key_root

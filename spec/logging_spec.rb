@@ -1,6 +1,3 @@
-require "appliance_console/logging"
-require "appliance_console/errors"
-
 describe ManageIQ::ApplianceConsole::Logging do
   subject do
     Class.new do
