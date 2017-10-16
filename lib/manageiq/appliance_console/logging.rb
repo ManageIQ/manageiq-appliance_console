@@ -2,19 +2,10 @@ require 'awesome_spawn'
 require 'active_support/all'
 
 module ManageIQ
-RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
-
 module ApplianceConsole
   module Logging
-    LOGFILE = File.join(RAILS_ROOT, "log", "appliance_console.log")
-
-    def self.logger
-      @logger ||= default_logger
-    end
-
     class << self
       attr_accessor :interactive
-      attr_writer :logger
 
       def interactive?
         @interactive != false
@@ -39,21 +30,6 @@ module ApplianceConsole
 
     def logger
       ManageIQ::ApplianceConsole.logger
-    end
-
-    def self.default_logger
-      @default_logger ||= begin
-        require 'logger'
-        l = Logger.new(LOGFILE)
-        l.level = Logger::INFO
-        l
-      end
-    end
-
-    def self.log_filename
-      @log_filename ||= begin
-        logger.logdev.filename if logger.respond_to?(:logdev)
-      end
     end
 
     # TODO: move say_error and say_info to prompting module?

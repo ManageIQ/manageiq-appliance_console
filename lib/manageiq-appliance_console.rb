@@ -3,11 +3,24 @@ module ManageIQ
     require 'pathname'
     require 'tempfile'
     RAILS_ROOT = File.exist?("/var/www/miq/vmdb") ? Pathname.new("/var/www/miq/vmdb") : Pathname.new(Dir.mktmpdir)
+
+    class << self
+      attr_writer :logger
+    end
+
+    def self.logger
+      @logger ||= ManageIQ::ApplianceConsole::Logger.instance
+    end
+
+    def self.logger=(logger)
+      @logger = logger
+    end
   end
 end
 
 require 'manageiq/appliance_console/version'
 require 'manageiq/appliance_console/errors'
+require 'manageiq/appliance_console/logger'
 require 'manageiq/appliance_console/logging'
 
 require 'manageiq-gems-pending'
