@@ -1,6 +1,6 @@
 require "appliance_console/database_maintenance_hourly"
 
-describe ApplianceConsole::DatabaseMaintenanceHourly do
+describe ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly do
   DIRNAME = File.dirname(__FILE__).freeze
 
   before do
@@ -18,7 +18,7 @@ describe ApplianceConsole::DatabaseMaintenanceHourly do
       before do
         subject.already_configured = false
         test_hourly_cron = "#{Dir.tmpdir}/miq-pg-maintenance-hourly.cron"
-        stub_const("ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", test_hourly_cron)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", test_hourly_cron)
       end
 
       it "returns true when configure is confirmed" do
@@ -36,7 +36,7 @@ describe ApplianceConsole::DatabaseMaintenanceHourly do
       before do
         subject.already_configured = true
         @test_hourly_cron = Tempfile.new(subject.class.name.split("::").last.downcase)
-        stub_const("ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron.path)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron.path)
       end
 
       after do
@@ -59,7 +59,7 @@ describe ApplianceConsole::DatabaseMaintenanceHourly do
     context "when activation requsted" do
       before do
         @test_hourly_cron = "#{Dir.tmpdir}/miq-pg-maintenance-hourly.cron"
-        stub_const("ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron)
         subject.requested_activate = true
       end
 
@@ -87,7 +87,7 @@ describe ApplianceConsole::DatabaseMaintenanceHourly do
     context "when deactivation requsted" do
       before do
         @test_hourly_cron = Tempfile.new(subject.class.name.split("::").last.downcase)
-        stub_const("ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron.path)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron.path)
         subject.requested_deactivate = true
       end
 

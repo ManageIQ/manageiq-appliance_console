@@ -78,27 +78,28 @@ require 'appliance_console/date_time_configuration'
 require 'appliance_console/database_replication_primary'
 require 'appliance_console/database_replication_standby'
 require 'appliance_console/prompts'
-include ApplianceConsole::Prompts
+include ManageIQ::ApplianceConsole::Prompts
 
 # Restore database choices
 RESTORE_LOCAL   = "Local file".freeze
 RESTORE_NFS     = "Network File System (NFS)".freeze
 RESTORE_SMB     = "Samba (SMB)".freeze
-RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, ApplianceConsole::CANCEL].freeze
+RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, ManageIQ::ApplianceConsole::CANCEL].freeze
 
 # Restart choices
 RE_RESTART  = "Restart".freeze
 RE_DELLOGS  = "Restart and Clean Logs".freeze
-RE_OPTIONS  = [RE_RESTART, RE_DELLOGS, ApplianceConsole::CANCEL].freeze
+RE_OPTIONS  = [RE_RESTART, RE_DELLOGS, ManageIQ::ApplianceConsole::CANCEL].freeze
 
 NETWORK_INTERFACE = "eth0".freeze
 CLOUD_INIT_NETWORK_CONFIG_FILE = "/etc/cloud/cloud.cfg.d/99_miq_disable_network_config.cfg".freeze
 CLOUD_INIT_DISABLE_NETWORK_CONFIG = "network: {config: disabled}\n".freeze
 
+module ManageIQ
 module ApplianceConsole
   eth0 = LinuxAdmin::NetworkInterface.new(NETWORK_INTERFACE)
   # Because it takes a few seconds, get the region once in the outside loop
-  region = ApplianceConsole::DatabaseConfiguration.region
+  region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
 
   # Calling stty to provide the equivalent line settings when the console is run via an ssh session or
   # over the virtual machine console.
@@ -119,8 +120,8 @@ module ApplianceConsole
       order       = dns.search_order.join(' ')
       timezone    = LinuxAdmin::TimeDate.system_timezone
       version     = File.read(VERSION_FILE).chomp if File.exist?(VERSION_FILE)
-      dbhost      = ApplianceConsole::DatabaseConfiguration.database_host
-      database    = ApplianceConsole::DatabaseConfiguration.database_name
+      dbhost      = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_host
+      database    = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_name
       evm_running = LinuxAdmin::Service.new("evmserverd").running?
 
       summary_attributes = [
@@ -292,7 +293,7 @@ Static Network Configuration
           end
 
         when 'testnet'
-          ApplianceConsole::Utilities.test_network
+          ManageIQ::ApplianceConsole::Utilities.test_network
 
         when 'hostname'
           say("Hostname Configuration\n\n")
@@ -314,7 +315,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.timezone")
         say("#{selection}\n\n")
-        timezone_config = ApplianceConsole::TimezoneConfiguration.new(timezone)
+        timezone_config = ManageIQ::ApplianceConsole::TimezoneConfiguration.new(timezone)
         if timezone_config.ask_questions && timezone_config.activate
           say("Timezone configured")
           press_any_key
@@ -326,7 +327,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.datetime")
         say("#{selection}\n\n")
-        date_time_config = ApplianceConsole::DateTimeConfiguration.new
+        date_time_config = ManageIQ::ApplianceConsole::DateTimeConfiguration.new
         if date_time_config.ask_questions && date_time_config.activate
           say("Date and time configured")
           press_any_key
@@ -389,7 +390,7 @@ Static Network Configuration
         if service.running?
           if ask_yn? "\nNote: It may take up to a few minutes for all #{I18n.t("product.name")} server processes to exit gracefully. Stop #{I18n.t("product.name")}"
             say("\nStopping #{I18n.t("product.name")} Server...")
-            Logging.logger.info("EVM server stop initiated by appliance console.")
+            logger.info("EVM server stop initiated by appliance console.")
             service.stop
           end
         else
@@ -401,7 +402,7 @@ Static Network Configuration
         say("#{selection}\n\n")
         if ask_yn?("\nStart #{I18n.t("product.name")}")
           say("\nStarting #{I18n.t("product.name")} Server...")
-          Logging.logger.info("EVM server start initiated by appliance console.")
+          logger.info("EVM server start initiated by appliance console.")
           begin
             LinuxAdmin::Service.new("evmserverd").start
           rescue AwesomeSpawn::CommandResultError => e
@@ -438,7 +439,7 @@ Static Network Configuration
           task = "evm:db:restore:remote"
           task_params = ["--", {:uri => uri, :uri_username => user, :uri_password => pass}]
 
-        when ApplianceConsole::CANCEL
+        when ManageIQ::ApplianceConsole::CANCEL
           raise MiqSignalError
         end
 
@@ -454,13 +455,13 @@ Static Network Configuration
         say "\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n"
         if agree("Are you sure you would like to restore the database? (Y/N): ")
           say("\nRestoring the database...")
-          rake_success = ApplianceConsole::Utilities.rake(task, task_params)
+          rake_success = ManageIQ::ApplianceConsole::Utilities.rake(task, task_params)
           if rake_success && delete_agreed
             say("\nRemoving the database restore file #{DB_RESTORE_FILE}...")
             File.delete(DB_RESTORE_FILE)
           elsif !rake_success
             say("\nDatabase restore failed")
-            connections = ApplianceConsole::Utilities.db_connections - 1
+            connections = ManageIQ::ApplianceConsole::Utilities.db_connections - 1
             say("\nThere #{connections > 1 ? "are #{connections} connections" : "is 1 connection"} preventing a database restore") if connections > 0
           end
         end
@@ -469,7 +470,7 @@ Static Network Configuration
       when I18n.t("advanced_settings.key_gen")
         say("#{selection}\n\n")
 
-        key_config = ApplianceConsole::KeyConfiguration.new
+        key_config = ManageIQ::ApplianceConsole::KeyConfiguration.new
         if key_config.ask_question_loop
           say("\nEncryption key now configured.")
           press_any_key
@@ -482,7 +483,7 @@ Static Network Configuration
       when I18n.t("advanced_settings.db_config")
         say("#{selection}\n\n")
 
-        key_config = ApplianceConsole::KeyConfiguration.new
+        key_config = ManageIQ::ApplianceConsole::KeyConfiguration.new
         unless key_config.key_exist?
           say "No encryption key found.\n"
           say "For migrations, copy encryption key from a hardened appliance."
@@ -509,11 +510,11 @@ Static Network Configuration
         database_configuration =
           case action
           when "create_internal"
-            ApplianceConsole::InternalDatabaseConfiguration.new
+            ManageIQ::ApplianceConsole::InternalDatabaseConfiguration.new
           when /_external/
-            ApplianceConsole::ExternalDatabaseConfiguration.new(:action => action.split("_").first.to_sym)
+            ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration.new(:action => action.split("_").first.to_sym)
           else
-            ApplianceConsole::DatabaseConfiguration.new
+            ManageIQ::ApplianceConsole::DatabaseConfiguration.new
           end
 
         case action
@@ -528,7 +529,7 @@ Static Network Configuration
           database_configuration.run_interactive
         end
         # Get the region again because it may have changed
-        region = ApplianceConsole::DatabaseConfiguration.region
+        region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
 
         press_any_key
 
@@ -544,20 +545,20 @@ Static Network Configuration
 
         case action
         when "primary"
-          db_replication = ApplianceConsole::DatabaseReplicationPrimary.new
-          Logging.logger.info("Configuring Server as Primary")
+          db_replication = ManageIQ::ApplianceConsole::DatabaseReplicationPrimary.new
+          logger.info("Configuring Server as Primary")
         when "standby"
-          db_replication = ApplianceConsole::DatabaseReplicationStandby.new
-          Logging.logger.info("Configuring Server as Standby")
+          db_replication = ManageIQ::ApplianceConsole::DatabaseReplicationStandby.new
+          logger.info("Configuring Server as Standby")
         end
 
         if db_replication.ask_questions && db_replication.activate
           say("Database Replication configured")
-          Logging.logger.info("Database Replication configured")
+          logger.info("Database Replication configured")
           press_any_key
         else
           say("Database Replication not configured")
-          Logging.logger.info("Database Replication not configured")
+          logger.info("Database Replication not configured")
           press_any_key
           raise MiqSignalError
         end
@@ -575,15 +576,15 @@ Static Network Configuration
         begin
           case action
           when "start"
-            Logging.logger.info("Starting and enabling evm-failover-monitor service")
+            logger.info("Starting and enabling evm-failover-monitor service")
             failover_service.enable.start
           when "stop"
-            Logging.logger.info("Stopping and disabling evm-failover-monitor service")
+            logger.info("Stopping and disabling evm-failover-monitor service")
             failover_service.disable.stop
           end
         rescue AwesomeSpawn::CommandResultError => e
           say("Failed to configure failover monitor")
-          Logging.logger.error("Failed to configure evm-failover-monitor service")
+          logger.error("Failed to configure evm-failover-monitor service")
           say(e.result.output)
           say(e.result.error)
           say("")
@@ -596,7 +597,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.db_maintenance")
         say("#{selection}\n\n")
-        db_maintenance = ApplianceConsole::DatabaseMaintenance.new
+        db_maintenance = ManageIQ::ApplianceConsole::DatabaseMaintenance.new
         if db_maintenance.ask_questions && db_maintenance.activate
           say("Database maintenance configuration updated")
           press_any_key
@@ -608,7 +609,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.log_config")
         say("#{selection}\n\n")
-        log_config = ApplianceConsole::LogfileConfiguration.new
+        log_config = ManageIQ::ApplianceConsole::LogfileConfiguration.new
         if log_config.ask_questions && log_config.activate
           say("Log file configuration updated.")
           say("The appliance may take a few minutes to fully restart.")
@@ -621,7 +622,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.tmp_config")
         say("#{selection}\n\n")
-        tmp_config = ApplianceConsole::TempStorageConfiguration.new
+        tmp_config = ManageIQ::ApplianceConsole::TempStorageConfiguration.new
         if tmp_config.ask_questions && tmp_config.activate
           say("Temp storage disk configured")
           press_any_key
@@ -633,24 +634,24 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.restart")
         case ask_with_menu("Restart Option", RE_OPTIONS, nil, false)
-        when ApplianceConsole::CANCEL
+        when ManageIQ::ApplianceConsole::CANCEL
           # don't do anything
         when RE_RESTART
           if are_you_sure?("restart the appliance now")
-            Logging.logger.info("Appliance restart initiated by appliance console.")
+            logger.info("Appliance restart initiated by appliance console.")
             LinuxAdmin::Service.new("evmserverd").stop
             LinuxAdmin::System.reboot!
           end
         when RE_DELLOGS
           if are_you_sure?("restart the appliance now")
-            Logging.logger.info("Appliance restart with clean logs initiated by appliance console.")
+            logger.info("Appliance restart with clean logs initiated by appliance console.")
             LinuxAdmin::Service.new("evmserverd").stop
             LinuxAdmin::Service.new("miqtop").stop
             LinuxAdmin::Service.new("miqvmstat").stop
             LinuxAdmin::Service.new("httpd").stop
             FileUtils.rm_rf(Dir.glob("/var/www/miq/vmdb/log/*.log*"))
             FileUtils.rm_rf(Dir.glob("/var/www/miq/vmdb/log/apache/*.log*"))
-            Logging.logger.info("Logs cleaned and appliance rebooted by appliance console.")
+            logger.info("Logs cleaned and appliance rebooted by appliance console.")
             LinuxAdmin::System.reboot!
           end
         end
@@ -659,14 +660,14 @@ Static Network Configuration
         say("#{selection}\n\n")
         if are_you_sure?("shut down the appliance now")
           say("\nShutting down appliance...  This process may take a few minutes.\n\n")
-          Logging.logger.info("Appliance shutdown initiated by appliance console")
+          logger.info("Appliance shutdown initiated by appliance console")
           LinuxAdmin::Service.new("evmserverd").stop
           LinuxAdmin::System.shutdown!
         end
 
       when I18n.t("advanced_settings.scap")
         say("#{selection}\n\n")
-        ApplianceConsole::Scap.new(SCAP_RULES_DIR).lockdown
+        ManageIQ::ApplianceConsole::Scap.new(SCAP_RULES_DIR).lockdown
         press_any_key
 
       when I18n.t("advanced_settings.summary")
@@ -680,4 +681,5 @@ Static Network Configuration
       next
     end
   end
+end
 end

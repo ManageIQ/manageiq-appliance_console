@@ -1,16 +1,16 @@
 require "appliance_console/logging"
 require "appliance_console/errors"
 
-describe ApplianceConsole::Logging do
+describe ManageIQ::ApplianceConsole::Logging do
   subject do
     Class.new do
-      include ApplianceConsole::Logging
+      include ManageIQ::ApplianceConsole::Logging
     end.new
   end
 
   before do
     subject.logger = nil
-    # ApplianceConsole::Logging's interactive flag uses a shared module instance variable
+    # ManageIQ::ApplianceConsole::Logging's interactive flag uses a shared module instance variable
     # It probably shouldn't be shared.  Hacky fix is to reset the flag back to true.
     subject.interactive = true
   end
@@ -25,7 +25,7 @@ describe ApplianceConsole::Logging do
   end
 
   it "should have a logger as the default_logger" do
-    expect(subject.logger).to be_instance_of(Logger)
+    expect(subject.logger).to be_kind_of(Logger)
     expect(subject.logger.level).to eq(1)
   end
 
@@ -43,7 +43,7 @@ describe ApplianceConsole::Logging do
       expect(subject).to receive(:say).with(/Test.*error.*Issue/)
       expect(subject).to receive(:press_any_key)
 
-      expect { subject.log_and_feedback("test") { raise "Issue" } }.to raise_error(MiqSignalError)
+      expect { subject.log_and_feedback("test") { raise "Issue" } }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
     end
 
     it "should log_and_feedback when non-interactively failing" do
@@ -53,7 +53,7 @@ describe ApplianceConsole::Logging do
         expect(subject).to receive(:say).with(/Test.*error.*Issue/)
         expect(subject).to_not receive(:press_any_key)
 
-        expect { subject.log_and_feedback("test") { raise "Issue" } }.to raise_error(MiqSignalError)
+        expect { subject.log_and_feedback("test") { raise "Issue" } }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
       ensure
         subject.interactive = true
       end
@@ -85,7 +85,7 @@ describe ApplianceConsole::Logging do
         expect(subject).to receive(:say).with(/Some method.*error.*some error/)
         expect(subject).to receive(:press_any_key)
 
-        expect { subject.log_and_feedback(:some_method) { raise exception } }.to raise_error(MiqSignalError)
+        expect { subject.log_and_feedback(:some_method) { raise exception } }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
       end
 
       it "ArgumentError" do
@@ -101,7 +101,7 @@ describe ApplianceConsole::Logging do
         expect(subject).to receive(:say).with("Some method starting")
         expect(subject).to receive(:say).with(/Some method.*error.*#{debugging}/)
         expect(subject).to receive(:press_any_key)
-        expect { subject.log_and_feedback(:some_method) { raise exception } }.to raise_error(MiqSignalError)
+        expect { subject.log_and_feedback(:some_method) { raise exception } }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
       end
     end
   end

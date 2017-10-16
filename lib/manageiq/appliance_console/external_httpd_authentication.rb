@@ -1,6 +1,6 @@
-require "appliance_console/external_httpd_authentication/external_httpd_configuration"
-require "appliance_console/principal"
+require "manageiq/appliance_console/external_httpd_authentication/external_httpd_configuration"
 
+module ManageIQ
 module ApplianceConsole
   class ExternalHttpdAuthentication
     include ExternalHttpdConfiguration
@@ -153,4 +153,5 @@ module ApplianceConsole
       end
     end
   end
+end
 end

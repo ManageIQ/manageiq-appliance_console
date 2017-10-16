@@ -1,6 +1,7 @@
 require 'awesome_spawn'
 require 'active_support/all'
 
+module ManageIQ
 RAILS_ROOT ||= Pathname.new(__dir__).join("../../..")
 
 module ApplianceConsole
@@ -21,23 +22,23 @@ module ApplianceConsole
     end
 
     def interactive=(interactive)
-      ApplianceConsole::Logging.interactive = interactive
+      ManageIQ::ApplianceConsole::Logging.interactive = interactive
     end
 
     def interactive?
-      ApplianceConsole::Logging.interactive?
+      ManageIQ::ApplianceConsole::Logging.interactive?
     end
 
     def interactive
-      ApplianceConsole::Logging.interactive
+      ManageIQ::ApplianceConsole::Logging.interactive
     end
 
     def logger=(logger)
-      ApplianceConsole::Logging.logger = logger
+      ManageIQ::ApplianceConsole.logger = logger
     end
 
     def logger
-      ApplianceConsole::Logging.logger
+      ManageIQ::ApplianceConsole.logger
     end
 
     def self.default_logger
@@ -57,11 +58,11 @@ module ApplianceConsole
 
     # TODO: move say_error and say_info to prompting module?
     def say_error(method, output)
-      log = "\nSee #{ApplianceConsole::Logging.log_filename} for details." if ApplianceConsole::Logging.log_filename
+      log = "\nSee #{ManageIQ::ApplianceConsole::Logger.log_file} for details."
       text = "#{method.to_s.humanize} failed with error - #{output.truncate(200)}.#{log}"
       say(text)
       press_any_key if interactive?
-      raise MiqSignalError
+      raise ManageIQ::ApplianceConsole::MiqSignalError
     end
 
     def say_info(method, output)
@@ -89,7 +90,7 @@ module ApplianceConsole
     end
 
     def log_and_feedback_info(method, message)
-      ApplianceConsole::Logging.logger.info("#{log_prefix(method)}: #{message}")
+      logger.info("#{log_prefix(method)}: #{message}")
       say_info(method, message)
     end
 
@@ -118,7 +119,8 @@ module ApplianceConsole
     end
 
     def log_error(failed_method, debugging)
-      ApplianceConsole::Logging.logger.error("#{log_prefix(failed_method)} #{debugging}")
+      logger.error("#{log_prefix(failed_method)} #{debugging}")
     end
   end # module Logging
 end # module ApplicationConsole
+end

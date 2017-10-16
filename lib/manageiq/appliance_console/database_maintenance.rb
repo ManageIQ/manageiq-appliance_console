@@ -4,16 +4,17 @@ require 'appliance_console/logging'
 require 'appliance_console/prompts'
 require 'fileutils'
 
+module ManageIQ
 module ApplianceConsole
   class DatabaseMaintenance
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     attr_accessor :hourly, :executed_hourly_action, :requested_hourly_action
     attr_accessor :periodic, :executed_periodic_action, :requested_periodic_action
 
     def initialize
-      self.hourly   = ApplianceConsole::DatabaseMaintenanceHourly.new
-      self.periodic = ApplianceConsole::DatabaseMaintenancePeriodic.new
+      self.hourly   = ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly.new
+      self.periodic = ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic.new
       self.requested_hourly_action = false
       self.requested_periodic_action = false
       self.executed_hourly_action = false
@@ -35,3 +36,4 @@ module ApplianceConsole
     end
   end # class DatabaseMaintenance < DatabaseConfiguration
 end # module ApplianceConsole
+end

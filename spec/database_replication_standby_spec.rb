@@ -5,12 +5,12 @@ require "linux_admin"
 require "pathname"
 require "tempfile"
 
-describe ApplianceConsole::DatabaseReplicationStandby do
+describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 
   before do
     allow(ENV).to receive(:fetch).and_return("/test/postgres/directory")
-    stub_const("ApplianceConsole::NETWORK_INTERFACE", "either_net")
+    stub_const("ManageIQ::ApplianceConsole::NETWORK_INTERFACE", "either_net")
     expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(SPEC_NAME, :address => "192.0.2.1"))
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
@@ -147,8 +147,8 @@ describe ApplianceConsole::DatabaseReplicationStandby do
     it "configures the postgres disk when given a disk" do
       subject.disk = "/dev/sdd"
 
-      lvm = double("ApplianceConsole::LogicalVolumeManagement")
-      expect(ApplianceConsole::LogicalVolumeManagement).to receive(:new)
+      lvm = double("ManageIQ::ApplianceConsole::LogicalVolumeManagement")
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new)
         .with(hash_including(:disk => "/dev/sdd")).and_return(lvm)
       expect(lvm).to receive(:setup)
       expect(PostgresAdmin).to receive(:prep_data_directory)
@@ -157,7 +157,7 @@ describe ApplianceConsole::DatabaseReplicationStandby do
 
     it "doesn't configure a disk if disk is not set" do
       subject.disk = nil
-      expect(ApplianceConsole::LogicalVolumeManagement).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).not_to receive(:new)
       expect(subject.activate).to be true
     end
   end

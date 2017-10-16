@@ -1,7 +1,7 @@
 require "appliance_console/logfile_configuration"
 require "tempfile"
 
-describe ApplianceConsole::LogfileConfiguration do
+describe ManageIQ::ApplianceConsole::LogfileConfiguration do
   let(:original_miq_logs_conf) do
     <<-EOT.strip_heredoc
       /var/www/miq/vmdb/log/*.log /var/www/miq/vmdb/log/apache/*.log {
@@ -27,7 +27,7 @@ describe ApplianceConsole::LogfileConfiguration do
   before do
     allow(LinuxAdmin::Service).to receive(:new).and_return(double(@spec_name, :running? => true))
     @spec_name = File.basename(__FILE__).split(".rb").first.freeze
-    stub_const("ApplianceConsole::LogfileConfiguration::MIQ_LOGS_CONF", miq_logs_conf)
+    stub_const("ManageIQ::ApplianceConsole::LogfileConfiguration::MIQ_LOGS_CONF", miq_logs_conf)
     miq_logs_conf.write(original_miq_logs_conf)
     miq_logs_conf.close
 
@@ -94,12 +94,12 @@ describe ApplianceConsole::LogfileConfiguration do
       subject.new_logrotate_count = 3
       subject.disk = double(@spec_name, :size => "9999999", :path => "fake disk")
 
-      expect(ApplianceConsole::LogicalVolumeManagement).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new)
         .and_return(double(@spec_name, :setup => true))
       expect(File).to receive(:executable?).with("/sbin/restorecon").and_return(true)
       expect(AwesomeSpawn).to receive(:run!).with('/sbin/restorecon -R -v /var/www/miq/vmdb/log')
       expect(FileUtils).to receive(:mkdir_p)
-        .with("#{ApplianceConsole::LogfileConfiguration::LOGFILE_DIRECTORY}/apache")
+        .with("#{ManageIQ::ApplianceConsole::LogfileConfiguration::LOGFILE_DIRECTORY}/apache")
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(@spec_name, :stop => nil)).twice
       expect(AwesomeSpawn).to receive(:run!)
         .with('/usr/sbin/semanage fcontext -a -t httpd_log_t "#{LOGFILE_DIRECTORY.to_path}(/.*)?"')
@@ -114,12 +114,12 @@ describe ApplianceConsole::LogfileConfiguration do
       subject.new_logrotate_count = 3
       subject.disk = double(@spec_name, :size => "9999999", :path => "fake disk")
 
-      expect(ApplianceConsole::LogicalVolumeManagement).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new)
         .and_return(double(@spec_name, :setup => true))
       expect(File).to receive(:executable?).with("/sbin/restorecon").and_return(true)
       expect(AwesomeSpawn).to receive(:run!).with('/sbin/restorecon -R -v /var/www/miq/vmdb/log')
       expect(FileUtils).to receive(:mkdir_p)
-        .with("#{ApplianceConsole::LogfileConfiguration::LOGFILE_DIRECTORY}/apache")
+        .with("#{ManageIQ::ApplianceConsole::LogfileConfiguration::LOGFILE_DIRECTORY}/apache")
       expect(AwesomeSpawn).to receive(:run!)
         .with('/usr/sbin/semanage fcontext -a -t httpd_log_t "#{LOGFILE_DIRECTORY.to_path}(/.*)?"')
       expect(LinuxAdmin::Service).to_not receive(:new)

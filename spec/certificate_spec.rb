@@ -1,6 +1,6 @@
 require "fileutils"
 
-describe ApplianceConsole::Certificate do
+describe ManageIQ::ApplianceConsole::Certificate do
   before { expect(Open3).not_to receive(:capture) }
   let(:host)  { "client.network.com" }
   let(:realm) { "NETWORK.COM" }

@@ -4,7 +4,7 @@ require "appliance_console/prompts"
 require "appliance_console/principal"
 require "linux_admin"
 
-describe ApplianceConsole::ExternalHttpdAuthentication do
+describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
   let(:host) { "this.server.com" }
   subject { described_class.new(host) }
 
@@ -41,7 +41,7 @@ describe ApplianceConsole::ExternalHttpdAuthentication do
     context "with just hostname" do
       subject do
         Class.new(described_class) do
-          include ApplianceConsole::Prompts
+          include ManageIQ::ApplianceConsole::Prompts
         end.new(host)
       end
       it "supports just host (appliance_console use case)" do
@@ -100,7 +100,7 @@ describe ApplianceConsole::ExternalHttpdAuthentication do
 
     before do
       @test_kerberos_config = Tempfile.new(subject.class.name.split("::").last.downcase)
-      stub_const("ApplianceConsole::ExternalHttpdAuthentication::ExternalHttpdConfiguration::KERBEROS_CONFIG_FILE",
+      stub_const("ManageIQ::ApplianceConsole::ExternalHttpdAuthentication::ExternalHttpdConfiguration::KERBEROS_CONFIG_FILE",
                  @test_kerberos_config.path)
     end
 
@@ -168,7 +168,7 @@ describe ApplianceConsole::ExternalHttpdAuthentication do
     before do
       allow(subject).to receive(:say)
       service = double("Principal")
-      allow(ApplianceConsole::Principal).to receive(:new).and_return(service)
+      allow(ManageIQ::ApplianceConsole::Principal).to receive(:new).and_return(service)
       allow(service).to receive(:register)
       allow(service).to receive(:name)
       allow(FileUtils).to receive(:chown)

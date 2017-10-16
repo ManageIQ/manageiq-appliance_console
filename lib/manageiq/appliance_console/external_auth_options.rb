@@ -1,6 +1,7 @@
 require 'pathname'
 require 'fileutils'
 
+module ManageIQ
 module ApplianceConsole
   class ExternalAuthOptions
     AUTH_PATH = "/authentication".freeze
@@ -11,7 +12,7 @@ module ApplianceConsole
       "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic => false}
     }.freeze
 
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     def initialize
       @updates = {}
@@ -78,7 +79,7 @@ module ApplianceConsole
       if update_hash.present?
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
-        result = ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
+        result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
         raise parse_errors(result).join(', ') if result.failure?
       end
     end
@@ -114,7 +115,7 @@ module ApplianceConsole
 
     def load_current
       say("\nFetching external authentication options from appliance ...")
-      result = ApplianceConsole::Utilities.rake_run("evm:settings:get", EXT_AUTH_OPTIONS.keys)
+      result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:get", EXT_AUTH_OPTIONS.keys)
 
       if result.success?
         return parse_response(result)
@@ -148,4 +149,5 @@ module ApplianceConsole
       value.present? ? option_value(value) : false
     end
   end
+end
 end

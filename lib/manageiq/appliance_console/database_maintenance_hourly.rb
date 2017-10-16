@@ -2,9 +2,10 @@ require 'appliance_console/logging'
 require 'appliance_console/prompts'
 require 'fileutils'
 
+module ManageIQ
 module ApplianceConsole
   class DatabaseMaintenanceHourly
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     HOURLY_CRON = "/etc/cron.hourly/miq-pg-maintenance-hourly.cron".freeze
 
@@ -56,3 +57,4 @@ module ApplianceConsole
     end
   end # class DatabaseMaintenance < DatabaseConfiguration
 end # module ApplianceConsole
+end

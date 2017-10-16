@@ -2,6 +2,7 @@ require 'fileutils'
 require 'tempfile'
 require 'util/postgres_admin'
 
+module ManageIQ
 module ApplianceConsole
   # configure ssl certificates for postgres communication
   # and appliance to appliance communications
@@ -122,7 +123,7 @@ module ApplianceConsole
     end
 
     def complete?
-      !status.values.detect { |v| v != ApplianceConsole::Certificate::STATUS_COMPLETE }
+      !status.values.detect { |v| v != ManageIQ::ApplianceConsole::Certificate::STATUS_COMPLETE }
     end
 
     def ipa?
@@ -135,4 +136,5 @@ module ApplianceConsole
       say yield if verbose && block_given?
     end
   end
+end
 end

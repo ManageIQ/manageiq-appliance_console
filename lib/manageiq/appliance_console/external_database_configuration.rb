@@ -1,3 +1,4 @@
+module ManageIQ
 module ApplianceConsole
   class ExternalDatabaseConfiguration < DatabaseConfiguration
     attr_accessor :action
@@ -29,4 +30,5 @@ module ApplianceConsole
       start_evm
     end
   end
+end
 end

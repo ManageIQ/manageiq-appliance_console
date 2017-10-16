@@ -1,6 +1,6 @@
 require "appliance_console/timezone_configuration"
 
-describe ApplianceConsole::TimezoneConfiguration do
+describe ManageIQ::ApplianceConsole::TimezoneConfiguration do
   subject { described_class.new('US/Eastern') }
 
   let(:timezone_hash) do

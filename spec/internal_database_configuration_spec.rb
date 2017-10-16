@@ -1,6 +1,6 @@
 require "appliance_console/internal_database_configuration"
 
-describe ApplianceConsole::InternalDatabaseConfiguration do
+describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
   before do
     @old_key_root = MiqPassword.key_root
     MiqPassword.key_root = ManageIQ::Gems::Pending.root.join("spec/support")

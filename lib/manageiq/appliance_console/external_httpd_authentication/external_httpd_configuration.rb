@@ -1,5 +1,7 @@
+require 'active_support/core_ext/module/delegation'
 require 'pathname'
 
+module ManageIQ
 module ApplianceConsole
   class ExternalHttpdAuthentication
     module ExternalHttpdConfiguration
@@ -243,4 +245,5 @@ module ApplianceConsole
 
     delegate :ipa_client_configured?, :config_file_read, :fetch_ipa_configuration, :config_status, :to => self
   end
+end
 end

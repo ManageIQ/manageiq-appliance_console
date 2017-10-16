@@ -1,5 +1,6 @@
 require 'linux_admin'
 
+module ManageIQ
 module ApplianceConsole
   class Scap
     def initialize(rules_dir)
@@ -48,4 +49,5 @@ module ApplianceConsole
       end
     end
   end
+end
 end

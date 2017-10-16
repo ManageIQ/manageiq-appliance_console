@@ -2,7 +2,7 @@ require 'appliance_console/logical_volume_management'
 require 'pathname'
 require 'tmpdir'
 
-describe ApplianceConsole::LogicalVolumeManagement do
+describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
   before do
     @spec_name = File.basename(__FILE__).split(".rb").first
     @disk_double = double(@spec_name, :path => "/dev/vtest")

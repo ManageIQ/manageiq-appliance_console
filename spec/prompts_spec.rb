@@ -7,7 +7,7 @@ require "active_support/all"
 require 'highline/import'
 require "linux_admin"
 
-describe ApplianceConsole::Prompts do
+describe ManageIQ::ApplianceConsole::Prompts do
   let(:input) do
     @temp_stdin = Tempfile.new("temp_stdin")
     File.open(@temp_stdin.path, 'w+')
@@ -26,7 +26,7 @@ describe ApplianceConsole::Prompts do
   subject do
     Readline.input = input
     Readline.output = readline_output
-    Class.new(HighLine) { include ApplianceConsole::Prompts }.new(input, output)
+    Class.new(HighLine) { include ManageIQ::ApplianceConsole::Prompts }.new(input, output)
   end
 
   after do
@@ -277,7 +277,7 @@ describe ApplianceConsole::Prompts do
 
       it "should raise an exception if dont put on root partition" do
         say %w(N)
-        expect { subject.ask_for_disk("special disk") }.to raise_error(MiqSignalError)
+        expect { subject.ask_for_disk("special disk") }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
         expect_heard [
           "No partition found for special disk. You probably want to add an unpartitioned disk and try again.",
           "",

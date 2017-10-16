@@ -3,9 +3,10 @@ require 'appliance_console/prompts'
 require 'pg'
 require 'English'
 
+module ManageIQ
 module ApplianceConsole
   class DatabaseReplication
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     REPMGR_CONFIG = '/etc/repmgr.conf'.freeze
     REPMGR_LOG    = '/var/log/repmgr/repmgrd.log'.freeze
@@ -42,7 +43,7 @@ Replication Server Configuration
 
     def confirm_reconfiguration
       say("Warning: File #{REPMGR_CONFIG} exists. Replication is already configured")
-      Logging.logger.warn("Warning: File #{REPMGR_CONFIG} exists. Replication is already configured")
+      logger.warn("Warning: File #{REPMGR_CONFIG} exists. Replication is already configured")
       agree("Continue with configuration? (Y/N): ")
     end
 
@@ -74,7 +75,7 @@ Replication Server Configuration
         self.cluster_name = "miq_region_#{primary_region_number}_cluster"
       rescue PG::ConnectionBad => e
         say("Failed to get primary region number #{e.message}")
-        Logging.logger.error("Failed to get primary region number #{e.message}")
+        logger.error("Failed to get primary region number #{e.message}")
         return false
       end
       true
@@ -144,3 +145,4 @@ Replication Server Configuration
     end
   end # class DatabaseReplication < DatabaseConfiguration
 end # module ApplianceConsole
+end

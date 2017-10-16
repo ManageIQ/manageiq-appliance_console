@@ -14,7 +14,7 @@ end
 Dir[File.expand_path(File.join(__dir__, "support/**/*.rb"))].each { |f| require f }
 
 require "manageiq-appliance_console"
-ApplianceConsole::Logging.logger = Logger.new("/dev/null")
+ManageIQ::ApplianceConsole.logger = Logger.new("/dev/null")
 
 # For encryption rspec matchers
 require "manageiq-gems-pending"

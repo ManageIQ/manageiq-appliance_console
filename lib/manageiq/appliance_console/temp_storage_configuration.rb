@@ -1,3 +1,4 @@
+module ManageIQ
 module ApplianceConsole
   class TempStorageConfiguration
     TEMP_DISK_FILESYSTEM_TYPE = "xfs".freeze
@@ -6,7 +7,7 @@ module ApplianceConsole
 
     attr_reader :disk
 
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     def initialize(config = {})
       @disk = config[:disk]
@@ -75,3 +76,4 @@ module ApplianceConsole
     end
   end # class TempStorageConfiguration
 end # module ApplianceConsole
+end

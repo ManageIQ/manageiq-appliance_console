@@ -5,11 +5,11 @@ require 'appliance_console/database_replication_primary'
 require 'linux_admin'
 require 'pg'
 
-describe ApplianceConsole::DatabaseReplicationPrimary do
+describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 
   before do
-    stub_const("ApplianceConsole::NETWORK_INTERFACE", "either_net")
+    stub_const("ManageIQ::ApplianceConsole::NETWORK_INTERFACE", "either_net")
     expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(SPEC_NAME, :address => "192.0.2.1"))
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
@@ -89,7 +89,7 @@ describe ApplianceConsole::DatabaseReplicationPrimary do
 
     it "Adds the schema to the search path when REGISTER_CMD succeeds" do
       expect(Process).to receive(:wait).with(1234)
-      stub_const("ApplianceConsole::DatabaseReplicationPrimary::REGISTER_CMD", "pwd")
+      stub_const("ManageIQ::ApplianceConsole::DatabaseReplicationPrimary::REGISTER_CMD", "pwd")
       expect(subject).to receive(:add_repmgr_schema_to_search_path).and_return(true)
       expect(subject.initialize_primary_server).to be true
     end

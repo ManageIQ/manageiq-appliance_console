@@ -1,3 +1,4 @@
+module ManageIQ
 require "appliance_console/logging"
 require 'appliance_console/prompts'
 
@@ -10,7 +11,7 @@ module ApplianceConsole
 
     attr_accessor :new_date, :new_time, :manual_time_sync
 
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     def initialize
       @new_date         = nil
@@ -91,7 +92,7 @@ Date and Time Configuration
       true
     rescue => e
       say("Failed to enable time synchronization")
-      Logging.logger.error("Failed to enable time synchronization: #{e.message}")
+      logger.error("Failed to enable time synchronization: #{e.message}")
       false
     end
 
@@ -101,7 +102,7 @@ Date and Time Configuration
       true
     rescue => e
       say("Failed to disable time synchronization")
-      Logging.logger.error("Failed to disable time synchronization: #{e.message}")
+      logger.error("Failed to disable time synchronization: #{e.message}")
       false
     end
 
@@ -111,8 +112,9 @@ Date and Time Configuration
       true
     rescue => e
       say("Failed to apply time configuration")
-      Logging.logger.error("Failed to apply time configuration: #{e.message}")
+      logger.error("Failed to apply time configuration: #{e.message}")
       false
     end
   end # class TimezoneConfiguration
 end # module ApplianceConsole
+end

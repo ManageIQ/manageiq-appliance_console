@@ -3,6 +3,7 @@ require 'pathname'
 require 'fileutils'
 require 'util/miq-system.rb'
 
+module ManageIQ
 module ApplianceConsole
   class LogfileConfiguration
     LOGFILE_DIRECTORY = Pathname.new("/var/www/miq/vmdb/log").freeze
@@ -11,7 +12,7 @@ module ApplianceConsole
 
     attr_accessor :size, :disk, :current_logrotate_count, :new_logrotate_count, :evm_was_running
 
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     def initialize(config = {})
       self.disk                = config[:disk]
@@ -112,4 +113,5 @@ module ApplianceConsole
       LinuxAdmin::Service.new("httpd").stop
     end
   end
+end
 end

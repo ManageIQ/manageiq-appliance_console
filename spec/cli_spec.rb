@@ -1,4 +1,4 @@
-describe ApplianceConsole::Cli do
+describe ManageIQ::ApplianceConsole::Cli do
   subject { described_class.new }
 
   describe "#parse" do
@@ -33,7 +33,7 @@ describe ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
     expect(subject).to receive(:say)
-    expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
       .with(:region            => 1,
             :database          => 'vmdb_production',
             :username          => 'root',
@@ -51,7 +51,7 @@ describe ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say)
-    expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
       .with(:region            => 1,
             :database          => 'vmdb_production',
             :username          => 'user',
@@ -69,7 +69,7 @@ describe ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say)
-    expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
       .with(:region            => 1,
             :database          => 'vmdb_production',
             :username          => 'user',
@@ -87,7 +87,7 @@ describe ApplianceConsole::Cli do
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say).twice
     config_double = double(:check_disk_is_mount_point => true, :activate => false)
-    expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
       .with(:region            => 1,
             :database          => 'vmdb_production',
             :username          => 'user',
@@ -107,7 +107,7 @@ describe ApplianceConsole::Cli do
     expect(subject).to receive(:disk_from_string).and_return(nil)
     expect(subject).to receive(:say).exactly(3).times
     config_double = double
-    expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
       .with(:region            => 1,
             :database          => 'vmdb_production',
             :username          => 'user',
@@ -126,7 +126,7 @@ describe ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:say).twice
     config_double = double(:activate => false)
-    expect(ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
       .with(:host        => 'host',
             :port        => 5432,
             :database    => 'db',
@@ -144,7 +144,7 @@ describe ApplianceConsole::Cli do
     subject.parse(%w(--hostname host --port 1234 --dbname db --username user --password pass -r 1))
     expect_v2_key
     expect(subject).to receive(:say)
-    expect(ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
       .with(:host        => 'host',
             :port        => 1234,
             :database    => 'db',
@@ -161,7 +161,7 @@ describe ApplianceConsole::Cli do
     subject.parse(%w(--hostname host --port 1234 --dbname db --username user --password pass))
     expect_v2_key
     expect(subject).to receive(:say)
-    expect(ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
+    expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
       .with(:host        => 'host',
             :port        => 1234,
             :database    => 'db',
@@ -182,22 +182,22 @@ describe ApplianceConsole::Cli do
   context "#ipa" do
     it "should handle uninstalling ipa" do
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
         .and_return(double(:ipa_client_configured? => true, :deactivate => nil))
       subject.parse(%w(--uninstall-ipa)).run
     end
 
     it "should skip uninstalling ipa if not installed" do
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
         .and_return(double(:ipa_client_configured? => false))
       subject.parse(%w(--uninstall-ipa)).run
     end
 
     it "should install ipa" do
       expect_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('client.domain.com')
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(false)
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(false)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
         .with('client.domain.com',
               :ipaserver => 'ipa.domain.com',
               :principal => 'admin',
@@ -212,8 +212,8 @@ describe ApplianceConsole::Cli do
       expect_any_instance_of(LinuxAdmin::Hosts).to receive(:save).and_return(true)
       expect_any_instance_of(LinuxAdmin::Service.new("test").class).to receive(:restart).and_return(true)
       expect_any_instance_of(LinuxAdmin::Hosts).to_not receive(:hostname)
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(false)
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(false)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:new)
         .with('client.domain.com',
               :ipaserver => 'ipa.domain.com',
               :principal => 'admin',
@@ -224,7 +224,7 @@ describe ApplianceConsole::Cli do
     end
 
     it "should complain if installing ipa-client when ipa is already installed" do
-      expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(true)
+      expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?).and_return(true)
       expect do
         subject.parse(%w(--ipaserver ipa.domain.com --ipaprincipal admin --ipapassword pass)).run
       end.to raise_error(/uninstall/)
@@ -237,7 +237,7 @@ describe ApplianceConsole::Cli do
       expect_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('client.domain.com')
       expect(subject).to receive(:say).with(/certificate result/)
       expect(subject).not_to receive(:say).with(/rerun/)
-      expect(ApplianceConsole::CertificateAuthority).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::CertificateAuthority).to receive(:new)
         .with(
           :hostname => "client.domain.com",
           :realm    => nil,
@@ -256,7 +256,7 @@ describe ApplianceConsole::Cli do
       expect_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('client.domain.com')
       expect(subject).to receive(:say).with(/certificate result/)
       expect(subject).to receive(:say).with(/rerun/)
-      expect(ApplianceConsole::CertificateAuthority).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::CertificateAuthority).to receive(:new)
         .with(
           :hostname => "client.domain.com",
           :realm    => "realm.domain.com",
@@ -307,7 +307,7 @@ describe ApplianceConsole::Cli do
     it "configures disk" do
       expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::TempStorageConfiguration).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::TempStorageConfiguration).to receive(:new)
         .with(:disk      => '/dev/x')
         .and_return(double(:activate => true))
 
@@ -317,7 +317,7 @@ describe ApplianceConsole::Cli do
     it "configures disk with auto" do
       expect(subject).to receive(:disk_from_string).with('auto').and_return('/dev/x')
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::TempStorageConfiguration).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::TempStorageConfiguration).to receive(:new)
         .with(:disk      => '/dev/x')
         .and_return(double(:activate => true))
 
@@ -329,7 +329,7 @@ describe ApplianceConsole::Cli do
       expect(subject).to receive(:disk).and_return(double(:path => 'dev-good'))
       expect(subject).to receive(:say).with(/abc/)
       expect(subject).to receive(:say).with(/dev-good/)
-      expect(ApplianceConsole::TempStorageConfiguration).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::TempStorageConfiguration).not_to receive(:new)
 
       subject.parse(%w(--tmpdisk abc)).run
     end
@@ -338,7 +338,7 @@ describe ApplianceConsole::Cli do
       expect(subject).to receive(:disk_from_string).with('abc').and_return(nil)
       expect(subject).to receive(:disk).and_return(nil)
       expect(subject).to receive(:say).with(/no disk/)
-      expect(ApplianceConsole::TempStorageConfiguration).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::TempStorageConfiguration).not_to receive(:new)
 
       subject.parse(%w(--tmpdisk abc)).run
     end
@@ -348,7 +348,7 @@ describe ApplianceConsole::Cli do
     it "configures disk" do
       expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::LogfileConfiguration).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogfileConfiguration).to receive(:new)
         .with(:disk => '/dev/x')
         .and_return(double(:activate => true))
 
@@ -358,7 +358,7 @@ describe ApplianceConsole::Cli do
     it "configures disk with auto" do
       expect(subject).to receive(:disk_from_string).with('auto').and_return('/dev/x')
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::LogfileConfiguration).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogfileConfiguration).to receive(:new)
         .with(:disk => '/dev/x')
         .and_return(double(:activate => true))
 
@@ -370,7 +370,7 @@ describe ApplianceConsole::Cli do
       expect(subject).to receive(:disk).and_return(double(:path => 'dev-good'))
       expect(subject).to receive(:say).with(/abc/)
       expect(subject).to receive(:say).with(/dev-good/)
-      expect(ApplianceConsole::LogfileConfiguration).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogfileConfiguration).not_to receive(:new)
 
       subject.parse(%w(--logdisk abc)).run
     end
@@ -379,7 +379,7 @@ describe ApplianceConsole::Cli do
       expect(subject).to receive(:disk_from_string).with('abc').and_return(nil)
       expect(subject).to receive(:disk).and_return(nil)
       expect(subject).to receive(:say).with(/no disk/)
-      expect(ApplianceConsole::LogfileConfiguration).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::LogfileConfiguration).not_to receive(:new)
 
       subject.parse(%w(--logdisk abc)).run
     end
@@ -532,14 +532,14 @@ describe ApplianceConsole::Cli do
     let(:timezone) { double("time zone") }
     it "should set timezone" do
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::TimezoneConfiguration).to receive(:new).with("Europe/Madrid").and_return(timezone)
+      expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("Europe/Madrid").and_return(timezone)
       expect(timezone).to receive(:activate).and_return(true)
       subject.parse(%w(--timezone Europe/Madrid)).run
     end
 
     it "should not set timezone" do
       expect(subject).to receive(:say)
-      expect(ApplianceConsole::TimezoneConfiguration).to receive(:new).with("ss/dd").and_return(timezone)
+      expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("ss/dd").and_return(timezone)
       expect(timezone).to receive(:activate).and_return(false)
       subject.parse(%w(--timezone ss/dd)).run
     end
@@ -548,7 +548,7 @@ describe ApplianceConsole::Cli do
   context "#config_db_hourly_maintenance" do
     before do
       @test_hourly_cron = "#{Dir.tmpdir}/miq-pg-maintenance-hourly.cron"
-      stub_const("ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron)
+      stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly::HOURLY_CRON", @test_hourly_cron)
     end
 
     after do
@@ -597,7 +597,7 @@ describe ApplianceConsole::Cli do
   context "#extauth_opts" do
     it "should handle setting external auth options with partial key" do
       extauth_opts = double
-      expect(ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
+      expect(ManageIQ::ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
       expect(extauth_opts).to receive(:parse)
         .with("sso_enabled=true")
         .and_return("/authentication/sso_enabled" => true)
@@ -607,7 +607,7 @@ describe ApplianceConsole::Cli do
 
     it "should handle setting external auth options with fully qualified key" do
       extauth_opts = double
-      expect(ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
+      expect(ManageIQ::ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
       expect(extauth_opts).to receive(:parse)
         .with("/authentication/local_login_disabled=false")
         .and_return("/authentication/local_login_disabled" => false)
@@ -617,7 +617,7 @@ describe ApplianceConsole::Cli do
 
     it "should fail with invalid external auth options" do
       extauth_opts = double
-      expect(ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
+      expect(ManageIQ::ApplianceConsole::ExternalAuthOptions).to receive(:new).and_return(extauth_opts)
       expect(extauth_opts).to receive(:parse).with("invalid_auth_option=true").and_return({})
       expect do
         subject.parse(%w(--extauth-opts invalid_auth_option=true)).run

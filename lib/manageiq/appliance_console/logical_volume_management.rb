@@ -2,9 +2,10 @@ require 'linux_admin'
 require 'fileutils'
 require 'appliance_console/logging'
 
+module ManageIQ
 module ApplianceConsole
   class LogicalVolumeManagement
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     # Required instantiation parameters
     attr_accessor :disk, :mount_point, :name
@@ -90,4 +91,5 @@ module ApplianceConsole
       fstab.write! # Test this more, whitespace is removed
     end
   end
+end
 end

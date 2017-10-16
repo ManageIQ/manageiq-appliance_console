@@ -1,6 +1,6 @@
 require "tempfile"
 
-describe ApplianceConsole::DatabaseConfiguration do
+describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
   before do
     @old_key_root = MiqPassword.key_root
     MiqPassword.key_root = ManageIQ::Gems::Pending.root.join("spec/support")
@@ -116,13 +116,13 @@ describe ApplianceConsole::DatabaseConfiguration do
 
   context "#create_region" do
     it "normal case" do
-      expect(ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
+      expect(ManageIQ::ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
       allow(@config).to receive_messages(:log_and_feedback => :some_object)
       expect(@config.create_region).to be_truthy
     end
 
     it "failure" do
-      expect(ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
+      expect(ManageIQ::ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
       allow(@config).to receive_messages(:log_and_feedback => nil)
       expect(@config.create_region).to be_falsey
     end
@@ -131,7 +131,7 @@ describe ApplianceConsole::DatabaseConfiguration do
   context "#ask_for_database_credentials" do
     subject do
       # Note: this will move from External to DatabaseConfiguration
-      stubbed_say(ApplianceConsole::ExternalDatabaseConfiguration)
+      stubbed_say(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration)
     end
 
     it "should default prompts based upon previous values (no default password)" do
@@ -181,13 +181,13 @@ describe ApplianceConsole::DatabaseConfiguration do
 
   context "#ask_for_database_credentials (internal)" do
     subject do
-      Class.new(ApplianceConsole::InternalDatabaseConfiguration) do
-        include ApplianceConsole::Prompts
+      Class.new(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration) do
+        include ManageIQ::ApplianceConsole::Prompts
         # global variable
         def say(*_args)
         end
       end.new
-      stubbed_say(ApplianceConsole::InternalDatabaseConfiguration)
+      stubbed_say(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration)
     end
 
     it "should ask for password (with confirm) if local" do
@@ -239,17 +239,19 @@ describe ApplianceConsole::DatabaseConfiguration do
   it "#say_error" do
     error = "NoMethodError: undefined method `[]' for NilClass"
     expected_message = "Create region failed with error - #{error}."
-    expect(@config).to receive(:say).with(expected_message)
+    expect(@config).to receive(:say) do |message|
+       expect(message).to include(expected_message)
+    end
     @config.interactive = true
     expect(@config).to receive(:press_any_key)
-    expect { @config.say_error(:create_region, error) }.to raise_error MiqSignalError
+    expect { @config.say_error(:create_region, error) }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
   end
 
   it "#say_error interactive=> false" do
     config = described_class.new(:interactive => false)
     expect(config).to receive(:say)
     expect(config).to_not receive(:press_any_key)
-    expect { config.say_error(:create_region, "Error message") }.to raise_error(MiqSignalError)
+    expect { config.say_error(:create_region, "Error message") }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
   end
 
   context "#log_and_feedback" do
@@ -426,7 +428,7 @@ DBYML
 
     before do
       stub_const("#{described_class}::DB_YML", db_yml.path)
-      stub_const("ApplianceConsole::KEY_FILE", key_file.path)
+      stub_const("ManageIQ::ApplianceConsole::KEY_FILE", key_file.path)
     end
 
     describe ".database_host" do
@@ -475,7 +477,7 @@ DBYML
 
   def stubbed_say(klass)
     Class.new(klass) do
-      include ApplianceConsole::Prompts
+      include ManageIQ::ApplianceConsole::Prompts
       # don't display the messages prompted to the end user
       def say(*_args)
       end

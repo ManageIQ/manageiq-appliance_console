@@ -1,3 +1,4 @@
+module ManageIQ
 require 'appliance_console/logging'
 require 'appliance_console/prompts'
 require 'appliance_console/database_configuration'
@@ -5,7 +6,7 @@ require 'appliance_console/database_replication'
 
 module ApplianceConsole
   class DatabaseReplicationPrimary < DatabaseReplication
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     REGISTER_CMD = 'repmgr master register'.freeze
 
@@ -53,10 +54,11 @@ module ApplianceConsole
         pg_conn.exec("ALTER ROLE #{database_user} SET search_path = #{new_path.join(",")}")
       rescue PG::ConnectionBad => e
         say("Failed to add #{schema_name} to search path for #{database_user} #{e.message}")
-        Logging.logger.error("Failed to add #{schema_name} to search path for #{database_user} #{e.message}")
+        logger.error("Failed to add #{schema_name} to search path for #{database_user} #{e.message}")
         return false
       end
       true
     end
   end # class DatabaseReplicationPrimary < DatabaseReplication
 end # module ApplianceConsole
+end

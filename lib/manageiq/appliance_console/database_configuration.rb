@@ -5,6 +5,7 @@ require 'pathname'
 require 'util/miq-password'
 require 'fileutils'
 
+module ManageIQ
 module ApplianceConsole
   class DatabaseConfiguration
     attr_accessor :adapter, :host, :username, :database, :password, :port, :region
@@ -25,7 +26,7 @@ module ApplianceConsole
     REGION_RANGE = 0..9223371
     DEFAULT_PORT = 5432
 
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     def initialize(hash = {})
       initialize_from_hash(hash)
@@ -79,14 +80,14 @@ module ApplianceConsole
     end
 
     def create_region
-      ApplianceConsole::Utilities.bail_if_db_connections("preventing the setup of a database region")
+      ManageIQ::ApplianceConsole::Utilities.bail_if_db_connections("preventing the setup of a database region")
       log_and_feedback(__method__) do
-        ApplianceConsole::Utilities.rake("evm:db:region", ["--", {:region => region}])
+        ManageIQ::ApplianceConsole::Utilities.rake("evm:db:region", ["--", {:region => region}])
       end
     end
 
     def join_region
-      ApplianceConsole::Utilities.rake("evm:join_region", {})
+      ManageIQ::ApplianceConsole::Utilities.rake("evm:join_region", {})
     end
 
     def reset_region
@@ -208,7 +209,7 @@ FRIENDLY
     end
 
     def self.region
-      database_yml_configured? ? ApplianceConsole::Utilities.db_region : nil
+      database_yml_configured? ? ManageIQ::ApplianceConsole::Utilities.db_region : nil
     end
 
     def validated
@@ -281,4 +282,5 @@ FRIENDLY
       end
     end
   end
+end
 end

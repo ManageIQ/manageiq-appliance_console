@@ -4,6 +4,7 @@ require 'net/scp'
 require 'active_support/all'
 require 'util/miq-password'
 
+module ManageIQ
 module ApplianceConsole
   CERT_DIR = ENV['KEY_ROOT'] || RAILS_ROOT.join("certs")
   KEY_FILE = "#{CERT_DIR}/v2_key".freeze
@@ -113,4 +114,5 @@ module ApplianceConsole
       fetch_key? ? fetch_key : create_key
     end
   end
+end
 end

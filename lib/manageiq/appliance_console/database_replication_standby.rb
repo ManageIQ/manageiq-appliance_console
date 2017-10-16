@@ -6,9 +6,10 @@ require 'util/postgres_admin'
 require 'fileutils'
 require 'linux_admin'
 
+module ManageIQ
 module ApplianceConsole
   class DatabaseReplicationStandby < DatabaseReplication
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     REGISTER_CMD    = 'repmgr standby register'.freeze
     REPMGRD_SERVICE = 'rh-postgresql95-repmgr'.freeze
@@ -80,7 +81,7 @@ module ApplianceConsole
     end
 
     def confirm_data_resync
-      Logging.logger.info("Appliance database found under: #{PostgresAdmin.data_directory}")
+      logger.info("Appliance database found under: #{PostgresAdmin.data_directory}")
       say("")
       say("Appliance database found under: #{PostgresAdmin.data_directory}")
       say("Replication standby server can not be configured if the database already exists")
@@ -118,7 +119,7 @@ module ApplianceConsole
       true
     rescue AwesomeSpawn::CommandResultError => e
       message = "Failed to start repmgrd: #{e.message}"
-      Logging.logger.error(message)
+      logger.error(message)
       say(message)
       false
     end
@@ -140,7 +141,7 @@ module ApplianceConsole
     rescue PG::Error => e
       error_msg = "Failed to validate node number #{node_number}. #{e.message}"
       say(error_msg)
-      Logging.logger.error(error_msg)
+      logger.error(error_msg)
       return false
     end
 
@@ -166,3 +167,4 @@ module ApplianceConsole
     end
   end # class DatabaseReplicationStandby < DatabaseReplication
 end # module ApplianceConsole
+end

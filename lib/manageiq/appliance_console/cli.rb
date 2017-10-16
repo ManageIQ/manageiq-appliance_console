@@ -8,6 +8,7 @@ unless defined?(say)
   end
 end
 
+module ManageIQ
 module ApplianceConsole
   class Cli
     attr_accessor :options
@@ -182,7 +183,7 @@ module ApplianceConsole
 
     def set_internal_db
       say "configuring internal database"
-      config = ApplianceConsole::InternalDatabaseConfiguration.new({
+      config = ManageIQ::ApplianceConsole::InternalDatabaseConfiguration.new({
         :database          => options[:dbname],
         :region            => options[:region],
         :username          => options[:username],
@@ -211,7 +212,7 @@ module ApplianceConsole
 
     def set_external_db
       say "configuring external database"
-      config = ApplianceConsole::ExternalDatabaseConfiguration.new({
+      config = ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration.new({
         :host        => options[:hostname],
         :port        => options[:port],
         :database    => options[:dbname],
@@ -232,7 +233,7 @@ module ApplianceConsole
     end
 
     def set_time_zone
-      timezone_config = ApplianceConsole::TimezoneConfiguration.new(options[:timezone])
+      timezone_config = ManageIQ::ApplianceConsole::TimezoneConfiguration.new(options[:timezone])
       if timezone_config.activate
         say("Timezone configured")
       else
@@ -299,7 +300,7 @@ module ApplianceConsole
     def config_tmp_disk
       if (tmp_disk = disk_from_string(options[:tmpdisk]))
         say "creating temp disk"
-        config = ApplianceConsole::TempStorageConfiguration.new(:disk => tmp_disk)
+        config = ManageIQ::ApplianceConsole::TempStorageConfiguration.new(:disk => tmp_disk)
         config.activate
       else
         report_disk_error(options[:tmpdisk])
@@ -309,7 +310,7 @@ module ApplianceConsole
     def config_log_disk
       if (log_disk = disk_from_string(options[:logdisk]))
         say "creating log disk"
-        config = ApplianceConsole::LogfileConfiguration.new(:disk => log_disk)
+        config = ManageIQ::ApplianceConsole::LogfileConfiguration.new(:disk => log_disk)
         config.activate
       else
         report_disk_error(options[:logdisk])
@@ -349,7 +350,7 @@ module ApplianceConsole
     end
 
     def config_db_hourly_maintenance
-      hourly = ApplianceConsole::DatabaseMaintenanceHourly.new
+      hourly = ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly.new
       hourly.requested_activate = true
       hourly.activate
     end
@@ -358,4 +359,5 @@ module ApplianceConsole
       new.parse(args).run
     end
   end
+end
 end

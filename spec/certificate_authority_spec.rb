@@ -1,4 +1,4 @@
-describe ApplianceConsole::CertificateAuthority do
+describe ManageIQ::ApplianceConsole::CertificateAuthority do
   let(:host)  { "client.network.com" }
   let(:realm) { "NETWORK.COM" }
   subject { described_class.new(:ca_name => 'ipa', :hostname => host) }
@@ -42,7 +42,7 @@ describe ApplianceConsole::CertificateAuthority do
       ipa_configured(true)
       expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
 
-      expect(ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
         .and_return(double("config", :activate => true, :configure_postgres => true))
       allow(PostgresAdmin).to receive_messages(:service_name => "postgresql")
       expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
@@ -59,7 +59,7 @@ describe ApplianceConsole::CertificateAuthority do
       ipa_configured(true)
       expect_run(/getcert/, anything, response(3)) # getcert returns: waiting on the CA
 
-      expect(ApplianceConsole::InternalDatabaseConfiguration).not_to receive(:new)
+      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).not_to receive(:new)
       expect(LinuxAdmin::Service).not_to receive(:new)
       subject.activate
       expect(subject.pgserver).to eq(:waiting)
@@ -71,7 +71,7 @@ describe ApplianceConsole::CertificateAuthority do
   private
 
   def ipa_configured(ipa_client_installed)
-    expect(ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?)
+    expect(ManageIQ::ApplianceConsole::ExternalHttpdAuthentication).to receive(:ipa_client_configured?)
       .and_return(ipa_client_installed)
   end
 

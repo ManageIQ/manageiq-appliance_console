@@ -1,9 +1,9 @@
 require "appliance_console/database_maintenance_periodic"
 
-describe ApplianceConsole::DatabaseMaintenancePeriodic do
+describe ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic do
   before do
     @test_crontab1 = Tempfile.new("crontab")
-    stub_const("ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab1.path)
+    stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab1.path)
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
     allow(subject).to receive(:agree)
@@ -65,7 +65,7 @@ describe ApplianceConsole::DatabaseMaintenancePeriodic do
 
         subject.crontab_schedule_expression = "0 23 26 * *"
         @test_crontab = Tempfile.new(subject.class.name.split("::").last.downcase)
-        stub_const("ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab.path)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab.path)
       end
 
       after do
@@ -108,7 +108,7 @@ describe ApplianceConsole::DatabaseMaintenancePeriodic do
         subject.requested_deactivate = true
 
         @test_crontab = Tempfile.new(subject.class.name.split("::").last.downcase)
-        stub_const("ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab.path)
+        stub_const("ManageIQ::ApplianceConsole::DatabaseMaintenancePeriodic::CRONTAB_FILE", @test_crontab.path)
         File.open(@test_crontab, "a") do |f|
           f.write(seeded_crontab_file)
         end

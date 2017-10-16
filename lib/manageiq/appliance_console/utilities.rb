@@ -3,6 +3,7 @@
 require "util/postgres_admin"
 require "awesome_spawn"
 
+module ManageIQ
 module ApplianceConsole
   module Utilities
     def self.rake(task, params)
@@ -11,7 +12,7 @@ module ApplianceConsole
 
     def self.rake_run(task, params)
       result = AwesomeSpawn.run("rake #{task}", :chdir => RAILS_ROOT, :params => params)
-      ApplianceConsole::Logging.logger.error(result.error) if result.failure?
+      ManageIQ::ApplianceConsole.logger.error(result.error) if result.failure?
       result
     end
 
@@ -25,7 +26,7 @@ module ApplianceConsole
 
     def self.bail_if_db_connections(message)
       say("Checking for connections to the database...\n\n")
-      if (conns = ApplianceConsole::Utilities.db_connections - 1) > 0
+      if (conns = ManageIQ::ApplianceConsole::Utilities.db_connections - 1) > 0
         say("Warning: There are #{conns} existing connections to the database #{message}.\n\n")
         press_any_key
         raise MiqSignalError
@@ -40,7 +41,7 @@ module ApplianceConsole
       )
 
       if result.failure?
-        logger = ApplianceConsole::Logging.logger
+        logger = ManageIQ::ApplianceConsole.logger
         logger.error "db_region: Failed to detect region_number"
         logger.error "Output: #{result.output.inspect}" unless result.output.blank?
         logger.error "Error:  #{result.error.inspect}"  unless result.error.blank?
@@ -62,4 +63,5 @@ module ApplianceConsole
       end
     end
   end
+end
 end

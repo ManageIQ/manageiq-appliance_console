@@ -1,6 +1,6 @@
 require "appliance_console/date_time_configuration"
 
-describe ApplianceConsole::DateTimeConfiguration do
+describe ManageIQ::ApplianceConsole::DateTimeConfiguration do
   subject { described_class.new }
 
   before do

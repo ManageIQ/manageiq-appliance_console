@@ -2,7 +2,7 @@ require "appliance_console/prompts"
 require "appliance_console/database_replication"
 require "tempfile"
 
-describe ApplianceConsole::DatabaseReplication do
+describe ManageIQ::ApplianceConsole::DatabaseReplication do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 
   before do

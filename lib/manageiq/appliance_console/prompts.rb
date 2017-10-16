@@ -1,5 +1,6 @@
 require 'resolv'
 
+module ManageIQ
 module ApplianceConsole
   CANCEL = 'Cancel'.freeze
 
@@ -206,4 +207,5 @@ module ApplianceConsole
       end
     end
   end
+end
 end

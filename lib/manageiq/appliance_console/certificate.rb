@@ -1,5 +1,6 @@
 require "awesome_spawn"
 
+module ManageIQ
 module ApplianceConsole
   class Certificate
     STATUS_COMPLETE = :complete
@@ -141,4 +142,5 @@ module ApplianceConsole
       extensions.collect { |n| "id-kp-#{n}Auth" }.join(",")
     end
   end
+end
 end

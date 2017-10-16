@@ -3,6 +3,7 @@ require "util/postgres_admin"
 require "pg"
 require "linux_admin"
 
+module ManageIQ
 module ApplianceConsole
   class InternalDatabaseConfiguration < DatabaseConfiguration
     attr_accessor :disk, :ssl, :run_as_evm_server
@@ -182,4 +183,5 @@ module ApplianceConsole
       restart_postgres
     end
   end
+end
 end

@@ -1,9 +1,10 @@
+module ManageIQ
 require 'appliance_console/logging'
 require 'appliance_console/prompts'
 
 module ApplianceConsole
   class DatabaseMaintenancePeriodic
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     RUN_AS           = 'root'.freeze
     PERIODIC_CMD     = '/usr/bin/periodic_vacuum_full_tables'.freeze
@@ -83,3 +84,4 @@ module ApplianceConsole
     end
   end # class DatabaseMaintenancePeriodic
 end # module ApplianceConsole
+end

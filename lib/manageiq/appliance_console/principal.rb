@@ -1,5 +1,6 @@
 require 'awesome_spawn'
 
+module ManageIQ
 module ApplianceConsole
   # Kerberos principal
   class Principal
@@ -41,4 +42,5 @@ module ApplianceConsole
       AwesomeSpawn.run!("/usr/bin/ipa", :params => ["-e", "skip_version_check=1", "service-add", "--force", name])
     end
   end
+end
 end

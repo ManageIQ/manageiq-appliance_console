@@ -1,8 +1,9 @@
 require "linux_admin"
 
+module ManageIQ
 module ApplianceConsole
   class TimezoneConfiguration
-    include ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Logging
 
     attr_reader   :current_timzone
     attr_accessor :new_timezone
@@ -18,7 +19,7 @@ module ApplianceConsole
           LinuxAdmin::TimeDate.system_timezone = new_timezone
         rescue LinuxAdmin::TimeDate::TimeCommandError => e
           say("Failed to apply timezone configuration")
-          Logging.logger.error("Failed to timezone configuration: #{e.message}")
+          logger.error("Failed to timezone configuration: #{e.message}")
           return false
         end
       end
@@ -54,3 +55,4 @@ module ApplianceConsole
     end
   end # class TimezoneConfiguration
 end # module ApplianceConsole
+end

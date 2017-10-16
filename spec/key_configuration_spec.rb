@@ -1,9 +1,9 @@
 require "appliance_console/prompts"
 require "appliance_console/key_configuration"
 
-describe ApplianceConsole::KeyConfiguration do
+describe ManageIQ::ApplianceConsole::KeyConfiguration do
   context "#ask_questions" do
-    subject { Class.new(described_class).tap { |c| c.include(ApplianceConsole::Prompts) }.new }
+    subject { Class.new(described_class).tap { |c| c.include(ManageIQ::ApplianceConsole::Prompts) }.new }
 
     context "creating" do
       it "asks for nothing else" do
@@ -107,12 +107,12 @@ describe ApplianceConsole::KeyConfiguration do
           mock_key = Tempfile.new('v2_key')
           mock_key.print(key_content)
           mock_key.close
-          stub_const("ApplianceConsole::KEY_FILE", mock_key.path)
-          stub_const("ApplianceConsole::NEW_KEY_FILE", mock_key.path + ".tmp")
+          stub_const("ManageIQ::ApplianceConsole::KEY_FILE", mock_key.path)
+          stub_const("ManageIQ::ApplianceConsole::NEW_KEY_FILE", mock_key.path + ".tmp")
           expect(subject).to receive(:fetch_key).and_return(false)
           expect(subject.activate).to be_falsey
           expect(FileUtils).not_to receive(:mv)
-          expect(File.open(ApplianceConsole::KEY_FILE).read).to eq(key_content)
+          expect(File.open(ManageIQ::ApplianceConsole::KEY_FILE).read).to eq(key_content)
           mock_key.unlink
         end
       end
