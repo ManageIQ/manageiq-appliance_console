@@ -1,3 +1,11 @@
+module ManageIQ
+  module ApplianceConsole
+    require 'pathname'
+    require 'tempfile'
+    RAILS_ROOT = File.exist?("/var/www/miq/vmdb") ? Pathname.new("/var/www/miq/vmdb") : Pathname.new(Dir.mktmpdir)
+  end
+end
+
 require 'manageiq/appliance_console/version'
 require 'manageiq/appliance_console/errors'
 require 'manageiq/appliance_console/logging'

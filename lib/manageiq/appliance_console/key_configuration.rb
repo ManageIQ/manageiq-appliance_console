@@ -6,7 +6,7 @@ require 'util/miq-password'
 
 module ManageIQ
 module ApplianceConsole
-  CERT_DIR = ENV['KEY_ROOT'] || RAILS_ROOT.join("certs")
+  CERT_DIR = ENV['KEY_ROOT'] || ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs")
   KEY_FILE = "#{CERT_DIR}/v2_key".freeze
   NEW_KEY_FILE = "#{KEY_FILE}.tmp".freeze
 

@@ -5,10 +5,8 @@
 require 'manageiq-appliance_console'
 require 'pathname'
 
-RAILS_ROOT ||= Pathname.new("/var/www/miq/vmdb") if File.exist?("/var/www/miq/vmdb")
-
 # Set up Environment
-ENV['BUNDLE_GEMFILE'] ||= RAILS_ROOT.join("Gemfile").to_s
+ENV['BUNDLE_GEMFILE'] ||= ManageIQ::ApplianceConsole::RAILS_ROOT.join("Gemfile").to_s
 require 'bundler'
 Bundler.setup
 
@@ -26,13 +24,13 @@ require 'i18n'
 locales_dir = ENV['CONTAINER'] ? "container" : "appliance"
 locales_paths = [
   File.expand_path(File.join("appliance_console/locales", locales_dir, "*.yml"), __dir__),
-  File.expand_path(File.join("productization/appliance_console/locales", locales_dir, "*.yml"), RAILS_ROOT)
+  File.expand_path(File.join("productization/appliance_console/locales", locales_dir, "*.yml"), ManageIQ::ApplianceConsole::RAILS_ROOT)
 ]
 locales_paths.each { |p| I18n.load_path += Dir[p].sort }
 I18n.enforce_available_locales = true
 I18n.backend.load_translations
 
-SCAP_RULES_DIR = File.expand_path("productization/appliance_console/config", RAILS_ROOT)
+SCAP_RULES_DIR = File.expand_path("productization/appliance_console/config", ManageIQ::ApplianceConsole::RAILS_ROOT)
 
 $terminal.wrap_at = 80
 $terminal.page_at = 35
@@ -44,8 +42,8 @@ end
 
 [:INT, :TERM, :ABRT, :TSTP].each { |s| trap(s) { raise MiqSignalError } }
 
-VERSION_FILE  = RAILS_ROOT.join("VERSION")
-LOGFILE       = RAILS_ROOT.join("log", "appliance_console.log")
+VERSION_FILE  = ManageIQ::ApplianceConsole::RAILS_ROOT.join("VERSION")
+LOGFILE       = ManageIQ::ApplianceConsole::RAILS_ROOT.join("log", "appliance_console.log")
 DB_RESTORE_FILE = "/tmp/evm_db.backup".freeze
 
 AS_OPTIONS = I18n.t("advanced_settings.menu_order").collect do |item|
@@ -53,7 +51,7 @@ AS_OPTIONS = I18n.t("advanced_settings.menu_order").collect do |item|
 end
 
 require 'util/miq-password'
-MiqPassword.key_root = "#{RAILS_ROOT}/certs"
+MiqPassword.key_root = ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs").to_s
 
 # Load appliance_console libraries
 include ManageIQ::ApplianceConsole::Prompts

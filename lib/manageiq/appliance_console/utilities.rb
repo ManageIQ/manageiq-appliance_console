@@ -11,7 +11,7 @@ module ApplianceConsole
     end
 
     def self.rake_run(task, params)
-      result = AwesomeSpawn.run("rake #{task}", :chdir => RAILS_ROOT, :params => params)
+      result = AwesomeSpawn.run("rake #{task}", :chdir => ManageIQ::ApplianceConsole::RAILS_ROOT, :params => params)
       ManageIQ::ApplianceConsole.logger.error(result.error) if result.failure?
       result
     end
@@ -19,7 +19,7 @@ module ApplianceConsole
     def self.db_connections
       result = AwesomeSpawn.run("bin/rails runner",
                                 :params => ["exit EvmDatabaseOps.database_connections"],
-                                :chdir  => RAILS_ROOT
+                                :chdir  => ManageIQ::ApplianceConsole::RAILS_ROOT
                                )
       Integer(result.exit_status)
     end
@@ -37,7 +37,7 @@ module ApplianceConsole
       result = AwesomeSpawn.run(
         "bin/rails runner",
         :params => ["puts ApplicationRecord.my_region_number"],
-        :chdir  => RAILS_ROOT
+        :chdir  => ManageIQ::ApplianceConsole::RAILS_ROOT
       )
 
       if result.failure?

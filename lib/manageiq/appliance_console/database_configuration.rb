@@ -13,8 +13,8 @@ module ApplianceConsole
     class ModelWithNoBackingTable < ActiveRecord::Base
     end
 
-    DB_YML      = RAILS_ROOT.join("config/database.yml")
-    DB_YML_TMPL = RAILS_ROOT.join("config/database.pg.yml")
+    DB_YML      = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config/database.yml")
+    DB_YML_TMPL = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config/database.pg.yml")
 
     CREATE_REGION_AGREE = "WARNING: Creating a database region will destroy any existing data and cannot be undone.\n\nAre you sure you want to continue? (Y/N):".freeze
     FAILED_WITH_ERROR_HYPHEN = "failed with error -".freeze
