@@ -1,6 +1,3 @@
-require "active_support/all"
-require "linux_admin"
-
 describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
   let(:host) { "this.server.com" }
   subject { described_class.new(host) }

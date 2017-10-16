@@ -1,6 +1,3 @@
-require 'linux_admin'
-require 'pg'
-
 describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 

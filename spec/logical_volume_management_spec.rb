@@ -1,6 +1,3 @@
-require 'pathname'
-require 'tmpdir'
-
 describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
   before do
     @spec_name = File.basename(__FILE__).split(".rb").first

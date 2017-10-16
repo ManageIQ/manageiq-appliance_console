@@ -1,5 +1,3 @@
-require "fileutils"
-
 describe ManageIQ::ApplianceConsole::Certificate do
   before { expect(Open3).not_to receive(:capture) }
   let(:host)  { "client.network.com" }

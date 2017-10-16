@@ -1,5 +1,3 @@
-require "tempfile"
-
 describe ManageIQ::ApplianceConsole::LogfileConfiguration do
   let(:original_miq_logs_conf) do
     <<-EOT.strip_heredoc

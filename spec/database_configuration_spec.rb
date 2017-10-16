@@ -1,5 +1,3 @@
-require "tempfile"
-
 describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
   before do
     @old_key_root = MiqPassword.key_root

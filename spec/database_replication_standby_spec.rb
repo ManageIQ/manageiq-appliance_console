@@ -1,7 +1,3 @@
-require "linux_admin"
-require "pathname"
-require "tempfile"
-
 describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
   SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
 

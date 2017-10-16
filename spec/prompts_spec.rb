@@ -1,9 +1,4 @@
-require 'stringio'
-require 'tempfile'
 require 'readline'
-require "active_support/all"
-require 'highline/import'
-require "linux_admin"
 
 describe ManageIQ::ApplianceConsole::Prompts do
   let(:input) do
