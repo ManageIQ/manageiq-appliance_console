@@ -2,14 +2,13 @@
 # description: ManageIQ appliance console
 #
 
+require 'bundler'
+Bundler.setup
+
 require 'manageiq-appliance_console'
 require 'pathname'
 
 gem_root = Pathname.new(__dir__).join("..")
-# Set up Environment
-ENV['BUNDLE_GEMFILE'] ||= ManageIQ::ApplianceConsole::RAILS_ROOT.join("Gemfile").to_s
-require 'bundler'
-Bundler.setup
 
 require 'fileutils'
 require 'highline/import'
