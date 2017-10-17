@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require 'bundler'
+Bundler.setup
+
+require 'manageiq-appliance_console'
+ManageIQ::ApplianceConsole::Cli.parse(ARGV)
