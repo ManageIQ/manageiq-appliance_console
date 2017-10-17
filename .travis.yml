@@ -1,7 +1,7 @@
 language: ruby
 rvm:
-- '2.3.3'
-- '2.4.1'
+- '2.3.5'
+- '2.4.2'
 sudo: false
 cache: bundler
 env:
@@ -10,3 +10,10 @@ env:
   - RUBY_GC_HEAP_INIT_SLOTS=600000
   - RUBY_GC_HEAP_GROWTH_FACTOR=1.25
 after_script: bundle exec codeclimate-test-reporter
+notifications:
+  webhooks:
+    urls:
+    - https://webhooks.gitter.im/e/115ada1099c46977b0d3
+    on_success: change
+    on_failure: always
+    on_start: never
