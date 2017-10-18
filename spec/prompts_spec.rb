@@ -419,9 +419,16 @@ describe ManageIQ::ApplianceConsole::Prompts do
   context "#ask_yn?" do
     it "should respond to yes (and enforce y/n)" do
       error = "Please provide yes or no."
-      say %w(x z yes)
+      answers = %w(x z yes)
+      say(answers)
       expect(subject.ask_yn?("prompt")).to be_truthy
-      expect_heard ["prompt? (Y/N): ", error, prompt + error, prompt]
+      # output.rewind
+      # readline_output.rewind
+      # input.rewind
+      # p output.read
+      # p readline_output.read
+      # p input.read
+      expect_heard_yn(["prompt? (Y/N): ", error + prompt, error + prompt], answers)
     end
 
     it "should respond to no" do
@@ -601,6 +608,16 @@ describe ManageIQ::ApplianceConsole::Prompts do
     expect(readline_output_content).to include(strs.shift) unless readline_output_content.empty?
     strs = strs.collect { |s| s == "" ? "\n" : s }.join
     expect(output.string).to eq(strs)
+    expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
+    expect(input).to be_eof
+  end
+
+  def expect_heard_yn(strs, yns, check_eof = true)
+    readline_output.rewind
+    readline_output_content = readline_output.read
+    yns = yns.collect { |yn| yn+"\n" }
+    output_content = strs.zip(yns).join
+    expect(readline_output_content).to eq(output_content)
     expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
     expect(input).to be_eof
   end
