@@ -1,6 +1,5 @@
 # TODO: add appropriate requires instead of depending on appliance_console.rb.
 # TODO: Further refactor these unrelated methods.
-require "util/postgres_admin"
 require "awesome_spawn"
 
 module ManageIQ
@@ -52,7 +51,8 @@ module ApplianceConsole
     end
 
     def self.pg_status
-      LinuxAdmin::Service.new(PostgresAdmin.service_name).running? ? "running" : "not running"
+      require "manageiq-postgres_admin"
+      LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).running? ? "running" : "not running"
     end
 
     def self.test_network
