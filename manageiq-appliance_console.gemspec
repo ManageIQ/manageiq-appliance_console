@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "awesome_spawn",           "~> 1.4"
   spec.add_runtime_dependency "bcrypt",                  "~> 3.1.10"
   spec.add_runtime_dependency "highline",                "~> 1.6.21"
-  spec.add_runtime_dependency "i18n",                    "~> 0.9"
+  spec.add_runtime_dependency "i18n",                    "~> 0.7"
   spec.add_runtime_dependency "linux_admin",             "~> 1.0"
   spec.add_runtime_dependency "manageiq-gems-pending"
   spec.add_runtime_dependency "pg"
