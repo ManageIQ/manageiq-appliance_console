@@ -1,6 +1,6 @@
-require 'util/postgres_admin'
 require 'fileutils'
 require 'linux_admin'
+require 'manageiq-postgres_admin'
 
 module ManageIQ
 module ApplianceConsole
@@ -62,7 +62,7 @@ module ApplianceConsole
       stop_postgres
       stop_repmgrd
       initialize_postgresql_disk if disk
-      PostgresAdmin.prep_data_directory if disk || resync_data
+      ManageIQ::PostgresAdmin.prep_data_directory if disk || resync_data
       generate_cluster_name &&
         create_config_file(standby_host) &&
         clone_standby_server &&
@@ -73,13 +73,13 @@ module ApplianceConsole
     end
 
     def data_dir_empty?
-      Dir[PostgresAdmin.data_directory.join("*")].empty?
+      Dir[ManageIQ::PostgresAdmin.data_directory.join("*")].empty?
     end
 
     def confirm_data_resync
-      logger.info("Appliance database found under: #{PostgresAdmin.data_directory}")
+      logger.info("Appliance database found under: #{ManageIQ::PostgresAdmin.data_directory}")
       say("")
-      say("Appliance database found under: #{PostgresAdmin.data_directory}")
+      say("Appliance database found under: #{ManageIQ::PostgresAdmin.data_directory}")
       say("Replication standby server can not be configured if the database already exists")
       say("Would you like to remove the existing database before configuring as a standby server?")
       say("  WARNING: This is destructive. This will remove all previous data from this server")
@@ -90,19 +90,19 @@ module ApplianceConsole
       params = { :h  => primary_host,
                  :U  => database_user,
                  :d  => database_name,
-                 :D  => PostgresAdmin.data_directory,
+                 :D  => ManageIQ::PostgresAdmin.data_directory,
                  nil => %w(standby clone)
                }
       run_repmgr_command("repmgr", params)
     end
 
     def start_postgres
-      LinuxAdmin::Service.new(PostgresAdmin.service_name).enable.start
+      LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).enable.start
       true
     end
 
     def stop_postgres
-      LinuxAdmin::Service.new(PostgresAdmin.service_name).stop
+      LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).stop
       true
     end
 
@@ -154,11 +154,11 @@ module ApplianceConsole
     def initialize_postgresql_disk
       log_and_feedback(__method__) do
         LogicalVolumeManagement.new(:disk                => disk,
-                                    :mount_point         => PostgresAdmin.mount_point,
+                                    :mount_point         => ManageIQ::PostgresAdmin.mount_point,
                                     :name                => "pg",
-                                    :volume_group_name   => PostgresAdmin.volume_group_name,
-                                    :filesystem_type     => PostgresAdmin.database_disk_filesystem,
-                                    :logical_volume_path => PostgresAdmin.logical_volume_path).setup
+                                    :volume_group_name   => ManageIQ::PostgresAdmin.volume_group_name,
+                                    :filesystem_type     => ManageIQ::PostgresAdmin.database_disk_filesystem,
+                                    :logical_volume_path => ManageIQ::PostgresAdmin.logical_volume_path).setup
       end
     end
   end # class DatabaseReplicationStandby < DatabaseReplication

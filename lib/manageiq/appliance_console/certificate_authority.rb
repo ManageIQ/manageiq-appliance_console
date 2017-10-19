@@ -1,6 +1,5 @@
 require 'fileutils'
 require 'tempfile'
-require 'util/postgres_admin'
 
 module ManageIQ
 module ApplianceConsole
@@ -91,7 +90,8 @@ module ApplianceConsole
         # only telling postgres to rewrite server configuration files
         # no need for username/password since not writing database.yml
         InternalDatabaseConfiguration.new(:ssl => true).configure_postgres
-        LinuxAdmin::Service.new(PostgresAdmin.service_name).restart
+        require 'manageiq-postgres_admin'
+        LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).restart
       end
       self.pgserver = cert.status
     end

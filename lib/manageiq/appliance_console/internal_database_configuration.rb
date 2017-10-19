@@ -1,7 +1,7 @@
 require "pathname"
-require "util/postgres_admin"
 require "pg"
 require "linux_admin"
+require "manageiq-postgres_admin"
 
 module ManageIQ
 module ApplianceConsole
@@ -12,11 +12,11 @@ module ApplianceConsole
     SHARED_DB_SHARED_BUFFERS = "'128MB'".freeze
 
     def self.postgres_dir
-      PostgresAdmin.data_directory.relative_path_from(Pathname.new("/"))
+      ManageIQ::PostgresAdmin.data_directory.relative_path_from(Pathname.new("/"))
     end
 
     def self.postgresql_template
-      PostgresAdmin.template_directory.join(postgres_dir)
+      ManageIQ::PostgresAdmin.template_directory.join(postgres_dir)
     end
 
     def initialize(hash = {})
@@ -32,7 +32,7 @@ module ApplianceConsole
     end
 
     def activate
-      if PostgresAdmin.initialized?
+      if ManageIQ::PostgresAdmin.initialized?
         say(<<-EOF.gsub!(/^\s+/, ""))
           An internal database already exists.
           Choose "Reset Configured Database" to reset the existing installation
@@ -78,15 +78,15 @@ module ApplianceConsole
         LogicalVolumeManagement.new(:disk                => disk,
                                     :mount_point         => mount_point,
                                     :name                => "pg",
-                                    :volume_group_name   => PostgresAdmin.volume_group_name,
-                                    :filesystem_type     => PostgresAdmin.database_disk_filesystem,
-                                    :logical_volume_path => PostgresAdmin.logical_volume_path).setup
+                                    :volume_group_name   => ManageIQ::PostgresAdmin.volume_group_name,
+                                    :filesystem_type     => ManageIQ::PostgresAdmin.database_disk_filesystem,
+                                    :logical_volume_path => ManageIQ::PostgresAdmin.logical_volume_path).setup
       end
     end
 
     def initialize_postgresql
       log_and_feedback(__method__) do
-        PostgresAdmin.prep_data_directory
+        ManageIQ::PostgresAdmin.prep_data_directory
         run_initdb
         relabel_postgresql_dir
         configure_postgres
@@ -98,7 +98,7 @@ module ApplianceConsole
     end
 
     def configure_postgres
-      self.ssl = File.exist?(PostgresAdmin.certificate_location.join("postgres.key"))
+      self.ssl = File.exist?(ManageIQ::PostgresAdmin.certificate_location.join("postgres.key"))
 
       copy_template "postgresql.conf"
       copy_template "pg_hba.conf.erb"
@@ -112,10 +112,10 @@ module ApplianceConsole
     private
 
     def mount_point
-      PostgresAdmin.mount_point
+      ManageIQ::PostgresAdmin.mount_point
     end
 
-    def copy_template(src, src_dir = self.class.postgresql_template, dest_dir = PostgresAdmin.data_directory)
+    def copy_template(src, src_dir = self.class.postgresql_template, dest_dir = ManageIQ::PostgresAdmin.data_directory)
       full_src = src_dir.join(src)
       if src.include?(".erb")
         full_dest = dest_dir.join(src.gsub(".erb", ""))
@@ -130,16 +130,16 @@ module ApplianceConsole
     end
 
     def run_initdb
-      AwesomeSpawn.run!("service", :params => {nil => [PostgresAdmin.service_name, "initdb"]})
+      AwesomeSpawn.run!("service", :params => {nil => [ManageIQ::PostgresAdmin.service_name, "initdb"]})
     end
 
     def start_postgres
-      LinuxAdmin::Service.new(PostgresAdmin.service_name).enable.start
+      LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).enable.start
       block_until_postgres_accepts_connections
     end
 
     def restart_postgres
-      LinuxAdmin::Service.new(PostgresAdmin.service_name).restart
+      LinuxAdmin::Service.new(ManageIQ::PostgresAdmin.service_name).restart
       block_until_postgres_accepts_connections
     end
 
