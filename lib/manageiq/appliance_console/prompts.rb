@@ -55,21 +55,26 @@ module ApplianceConsole
 
     def are_you_sure?(clarifier = nil)
       clarifier = " you want to #{clarifier}" if clarifier && !clarifier.include?("want")
-      agree("Are you sure#{clarifier}? (Y/N): ")
+      answer = ask("Are you sure#{clarifier}? (Y/N): ") do |q|
+        q.readline = true
+      end
+      validator = ->(p) { !p.blank? && %(y n).include?(p.downcase[0]) }
+      until validator.call(answer.to_s)
+        answer = ask("Please enter \"yes\" or \"no\".\nAre you sure#{clarifier}? (Y/N): ") do |q|
+          q.readline = true
+        end
+      end
+      answer.downcase[0] == 'y'
     end
 
     def ask_yn?(prompt, default = nil)
-      just_ask_yn?(prompt, default)
-    end
-
-    def just_ask_yn?(prompt, default = nil, error_msg = "Please provide yes or no.")
       answer = ask("#{prompt}? (Y/N): ") do |q|
         q.readline = true
         q.default = default if default
       end
       validator = ->(p) { (p.blank? && default) || (!p.blank? && %(y n).include?(p.downcase[0])) }
       until validator.call(answer.to_s)
-        answer = ask("#{error_msg}\n?  ") do |q|
+        answer = ask("Please provide yes or no.\n?  ") do |q|
           q.readline = true
           q.default = defualt if default
         end
