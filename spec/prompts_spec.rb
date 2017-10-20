@@ -124,9 +124,10 @@ describe ManageIQ::ApplianceConsole::Prompts do
     it "should ask are you sure without clarifier" do
       prompt = "Are you sure? (Y/N): "
       error = %(Please enter "yes" or "no".\n)
-      say %w(um yes)
+      answer = %w(um yes)
+      say(answer)
       expect(subject.are_you_sure?).to be_truthy
-      expect_heard [prompt + error, prompt]
+      expect_heard_yn([prompt, error + prompt], answer)
     end
 
     it "should ask are you sure with clarifier" do
@@ -261,21 +262,35 @@ describe ManageIQ::ApplianceConsole::Prompts do
       it "should be ok with not partitioning" do
         say %w(Y)
         expect(subject.ask_for_disk("database disk")).to be_nil
-        expect_heard [
-          "No partition found for database disk. You probably want to add an unpartitioned disk and try again.",
-          "",
-          "Are you sure you don't want to partition the database disk? (Y/N): ",
-        ]
+        output.rewind
+        p output.read
+        expect_heard_from_output(
+          [
+            "No partition found for database disk. You probably want to add an unpartitioned disk and try again.",
+            ""
+          ]
+        )
+        expect_heard_yn(
+          [
+            "Are you sure you don't want to partition the database disk? (Y/N): "
+          ], %w(Y)
+        )
       end
 
-      it "should raise an exception if dont put on root partition" do
+      it "should raise an exception if don't put on root partition" do
         say %w(N)
         expect { subject.ask_for_disk("special disk") }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
-        expect_heard [
-          "No partition found for special disk. You probably want to add an unpartitioned disk and try again.",
-          "",
-          "Are you sure you don't want to partition the special disk? (Y/N): ",
-        ]
+        expect_heard_from_output(
+          [
+            "No partition found for special disk. You probably want to add an unpartitioned disk and try again.",
+            ""
+          ]
+        )
+        expect_heard_yn(
+          [
+            "Are you sure you don't want to partition the special disk? (Y/N): ",
+          ], %w(N)
+        )
       end
 
       it "can skip confirmation prompt" do
@@ -422,12 +437,6 @@ describe ManageIQ::ApplianceConsole::Prompts do
       answers = %w(x z yes)
       say(answers)
       expect(subject.ask_yn?("prompt")).to be_truthy
-      # output.rewind
-      # readline_output.rewind
-      # input.rewind
-      # p output.read
-      # p readline_output.read
-      # p input.read
       expect_heard_yn(["prompt? (Y/N): ", error + prompt, error + prompt], answers)
     end
 
@@ -615,10 +624,15 @@ describe ManageIQ::ApplianceConsole::Prompts do
   def expect_heard_yn(strs, yns, check_eof = true)
     readline_output.rewind
     readline_output_content = readline_output.read
-    yns = yns.collect { |yn| yn+"\n" }
+    yns = yns.collect { |yn| yn + "\n" }
     output_content = strs.zip(yns).join
     expect(readline_output_content).to eq(output_content)
     expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
     expect(input).to be_eof
+  end
+
+  def expect_heard_from_output(strs)
+    output.rewind
+    expect(Array(strs).join("\n")).to eq(output.read)
   end
 end
