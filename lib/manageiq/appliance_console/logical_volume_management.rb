@@ -41,10 +41,19 @@ module ApplianceConsole
     private
 
     def create_partition_to_fill_disk
-      disk.create_partition_table
-      AwesomeSpawn.run!("parted -s #{disk.path} mkpart primary 0% 100%")
-
+      # Check if you need to create a GPT part table or a MSDOS one in base of
+      # max size of partition table
+      max_msdos_ptable_size = 2199023255552
       self.disk = LinuxAdmin::Disk.local.find { |d| d.path == disk.path }
+
+      if self.disk.size  >= max_msdos_ptable_size
+        partition_type = 'gpt'
+      else
+        partition_type = 'msdos'
+      end
+      disk.create_partition_table(partition_type)
+
+      AwesomeSpawn.run!("parted -s #{disk.path} mkpart primary 0% 100%")
       @partition = disk.partitions.first
     end
 
