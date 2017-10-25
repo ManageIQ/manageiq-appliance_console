@@ -71,7 +71,7 @@ Replication Server Configuration
         primary_region_number =
           pg_conn.exec("SELECT last_value FROM miq_databases_id_seq").first["last_value"].to_i / 1_000_000_000_000
         self.cluster_name = "miq_region_#{primary_region_number}_cluster"
-      rescue PG::ConnectionBad => e
+      rescue PG::ConnectionBad, PG::UndefinedTable => e
         say("Failed to get primary region number #{e.message}")
         logger.error("Failed to get primary region number #{e.message}")
         return false
