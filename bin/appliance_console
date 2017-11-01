@@ -13,6 +13,7 @@ gem_root = Pathname.new(__dir__).join("..")
 require 'fileutils'
 require 'highline/import'
 require 'highline/system_extensions'
+require 'manageiq/appliance_console/highline_patch'
 require 'rubygems'
 require 'bcrypt'
 require 'linux_admin'
