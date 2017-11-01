@@ -110,5 +110,6 @@ class HighLine
 end
 
 module Kernel
+  extend Forwardable
   def_delegators :$terminal, :readline_ask_for_choose, :readline_choose
 end
