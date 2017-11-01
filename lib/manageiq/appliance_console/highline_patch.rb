@@ -5,6 +5,7 @@ require 'highline'
 class HighLine
   def readline_ask_for_choose( question, answer_type = String, &details ) # :yields: question
     @question ||= Question.new(question, answer_type, &details)
+    @question.readline = true
     return gather if @question.gather
 
     # changes here, show question here but not when reask question after invalid
@@ -15,6 +16,7 @@ class HighLine
       # we don't want to redisplay the question again, but just show `? ' for
       # user to answer again.
       @question = Question.new("", answer_type, &details)
+      @question.readline = true
       @answer = @question.answer_or_default(get_response)
       unless @question.valid_answer?(@answer)
         explain_error(:not_valid)
@@ -105,4 +107,8 @@ class HighLine
       @menu.select(self, selected)
     end
   end
+end
+
+module Kernel
+  def_delegators :$terminal, :readline_ask_for_choose, :readline_choose
 end
