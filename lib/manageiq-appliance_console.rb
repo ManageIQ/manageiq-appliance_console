@@ -25,8 +25,6 @@ require 'manageiq/appliance_console/logging'
 
 require 'manageiq-gems-pending'
 
-require 'manageiq/appliance_console/highline_patch'
-
 require 'manageiq/appliance_console/certificate'
 require 'manageiq/appliance_console/certificate_authority'
 require 'manageiq/appliance_console/cli'
