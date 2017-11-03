@@ -41,7 +41,7 @@ module ApplianceConsole
     private
 
     def create_partition_to_fill_disk
-      disk.create_partition_table
+      disk.create_partition_table("GPT")
       AwesomeSpawn.run!("parted -s #{disk.path} mkpart primary 0% 100%")
 
       self.disk = LinuxAdmin::Disk.local.find { |d| d.path == disk.path }

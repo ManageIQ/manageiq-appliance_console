@@ -67,7 +67,7 @@ module ApplianceConsole
     # FIXME: Copied from InternalDatabaseConfiguration - remove both when LinuxAdmin updated
     def create_partition_to_fill_disk(disk)
       # @disk.create_partition('primary', '100%')
-      disk.create_partition_table # LinuxAdmin::Disk.create_partition has this already...
+      disk.create_partition_table("GPT") # LinuxAdmin::Disk.create_partition has this already...
       AwesomeSpawn.run!("parted -s #{disk.path} mkpart primary 0% 100%")
 
       # FIXME: Refetch the disk after creating the partition
