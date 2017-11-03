@@ -15,7 +15,9 @@ class HighLine
       # delete the question string, because after user give an invalid answer,
       # we don't want to redisplay the question again, but just show `? ' for
       # user to answer again.
-      @question = Question.new("", answer_type, &details)
+      # Also can't use "" as new question, otherwise user can delete the part
+      # from say(@question)
+      @question = Question.new("#{8.chr} ", answer_type, &details)
       @question.readline = true
       @answer = @question.answer_or_default(get_response)
       unless @question.valid_answer?(@answer)
