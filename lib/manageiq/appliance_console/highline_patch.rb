@@ -17,8 +17,10 @@ class HighLine
       # user to answer again.
       # Also can't use "" as new question, otherwise user can delete the part
       # from say(@question)
-      @question = Question.new("#{8.chr} ", answer_type, &details)
-      @question.readline = true
+      new_question = Question.new("\b ", answer_type, &details)
+      new_question.default = @question.default
+      new_question.readline = true
+      @question = new_question
       @answer = @question.answer_or_default(get_response)
       unless @question.valid_answer?(@answer)
         explain_error(:not_valid)
