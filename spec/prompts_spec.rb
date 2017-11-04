@@ -311,10 +311,10 @@ describe ManageIQ::ApplianceConsole::Prompts do
         say ""
         expect_cls
         expect(subject.ask_for_disk("database disk").path).to eq("/dev/a")
-        expect_heard ["database disk", "", "",
-                      "1) /dev/a: 10 MB", "",
-                      "2) Don't partition the disk", "", "",
-                      "Choose the database disk: |1| "]
+        expect_heard_from_output ["database disk\n",
+                                  "1) /dev/a: 10 MB",
+                                  "2) Don't partition the disk\n",
+                                  "Choose the database disk: |1| "]
       end
     end
 
@@ -330,13 +330,12 @@ describe ManageIQ::ApplianceConsole::Prompts do
         say %w(x 1)
         expect_cls
         expect(subject.ask_for_disk("database disk").path).to eq("/dev/a")
-        expect_heard ["database disk", "", "",
-                      "1) /dev/a: 10 MB", "",
-                      "2) /dev/b: 20 MB", "",
-                      "3) Don't partition the disk", "", "",
-                      "Choose the database disk: " \
-                      "You must choose one of [1, 2, 3, /dev/a: 10 MB, /dev/b: 20 MB, Don't partition the disk].",
-                      prompt]
+        expect_heard_from_output ["database disk\n",
+                                  "1) /dev/a: 10 MB",
+                                  "2) /dev/b: 20 MB",
+                                  "3) Don't partition the disk\n",
+                                  "Choose the database disk: " \
+                                  "You must choose one of [1, 2, 3, /dev/a: 10 MB, /dev/b: 20 MB, Don't partition the disk].#{prompt}"]
       end
     end
   end
@@ -347,45 +346,45 @@ describe ManageIQ::ApplianceConsole::Prompts do
       say %w(5 1)
       expect_cls
       expect(subject.ask_with_menu("q?", %w(a b))).to eq("a")
-      expect_heard ["q?", "", "",
-                    "1) a", "",
-                    "2) b", "", "",
-                    "Choose the q?: #{error}", prompt]
+      expect_heard_from_output ["q?\n",
+                                "1) a",
+                                "2) b\n",
+                                "Choose the q?: #{error}#{prompt}"]
     end
 
     it "should ask for a menu with a hash" do
       say %w(1)
       expect_cls
       expect(subject.ask_with_menu("q?", "a" => "a1", "b" => "b1")).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: "]
     end
 
     it "default to the index of a menu array option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", %w(a b), 1)).to eq("a")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the number of a menu option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, 1)).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash key option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "a")).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash value option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "b1")).to eq("b1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |2| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |2| "]
     end
   end
 
