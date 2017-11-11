@@ -6,9 +6,10 @@ module ApplianceConsole
   class DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
 
-    REPMGR_CONFIG = '/etc/repmgr.conf'.freeze
-    REPMGR_LOG    = '/var/log/repmgr/repmgrd.log'.freeze
-    PGPASS_FILE   = '/var/lib/pgsql/.pgpass'.freeze
+    REPMGR_CONFIG     = '/etc/repmgr.conf'.freeze
+    REPMGR_LOG        = '/var/log/repmgr/repmgrd.log'.freeze
+    PGPASS_FILE       = '/var/lib/pgsql/.pgpass'.freeze
+    NETWORK_INTERFACE = 'eth0'.freeze
 
     attr_accessor :cluster_name, :node_number, :database_name, :database_user,
                   :database_password, :primary_host

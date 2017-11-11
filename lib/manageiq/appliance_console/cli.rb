@@ -79,6 +79,14 @@ module ApplianceConsole
       options[:db_hourly_maintenance]
     end
 
+    def set_replication?
+      options[:cluster_node_number] && options[:password] && replication_params?
+    end
+
+    def replication_params?
+      options[:replication] == "primary" || (options[:replication] == "standby" && options[:primary_host])
+    end
+
     def initialize(options = {})
       self.options = options
     end
@@ -116,6 +124,11 @@ module ApplianceConsole
         opt :force_key, "Forcefully create encryption key", :type => :boolean, :short => "f"
         opt :sshlogin,  "SSH login",         :type => :string,                 :default => "root"
         opt :sshpassword, "SSH password",    :type => :string
+        opt :replication, "Configure database replication as primary or standby", :type => :string, :short => :none
+        opt :primary_host, "Primary database host IP address", :type => :string, :short => :none
+        opt :standby_host, "Standby database host IP address", :type => :string, :short => :none
+        opt :auto_failover, "Configure Replication Manager (repmgrd) for automatic failover", :type => :bool, :short => :none
+        opt :cluster_node_number, "Database unique cluster node number", :type => :integer, :short => :none
         opt :verbose,  "Verbose",            :type => :boolean, :short => "v"
         opt :dbdisk,   "Database Disk Path", :type => :string
         opt :logdisk,  "Log Disk Path",      :type => :string
@@ -141,7 +154,8 @@ module ApplianceConsole
     def run
       Trollop.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             time_zone? || set_server_state? || db_hourly_maintenance?
+                             time_zone? || set_server_state? || db_hourly_maintenance? ||
+                             set_replication?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -151,6 +165,7 @@ module ApplianceConsole
       end
       create_key if key?
       set_db if database?
+      set_replication if set_replication?
       set_time_zone if time_zone?
       config_db_hourly_maintenance if db_hourly_maintenance?
       config_tmp_disk if tmp_disk?
@@ -230,6 +245,25 @@ module ApplianceConsole
 
       # enable/start related services
       config.post_activation
+    end
+
+    def set_replication
+      if options[:replication] == "primary"
+        db_replication = ManageIQ::ApplianceConsole::DatabaseReplicationPrimary.new
+        say("Configuring Server as Primary")
+      else
+        db_replication = ManageIQ::ApplianceConsole::DatabaseReplicationStandby.new
+        say("Configuring Server as Standby")
+        db_replication.disk = disk_from_string(options[:dbdisk])
+        db_replication.primary_host = options[:primary_host]
+        db_replication.standby_host = options[:standby_host] if options[:standby_host]
+        db_replication.run_repmgrd_configuration = options[:auto_failover] ? true : false
+      end
+      db_replication.database_name = options[:dbname] if options[:dbname]
+      db_replication.database_user = options[:username] if options[:username]
+      db_replication.node_number = options[:cluster_node_number]
+      db_replication.database_password = options[:password]
+      db_replication.activate
     end
 
     def set_time_zone
