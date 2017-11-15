@@ -65,11 +65,11 @@ module ApplianceConsole
     end
 
     def choose_disk
-      @disk = ask_for_disk("database disk")
+      @disk = ask_for_disk("database disk", false, true)
     end
 
     def check_disk_is_mount_point
-      error_message = "The disk for database must be a mount point"
+      error_message = "Internal databases require a volume mounted at #{mount_point}. Please add an unpartitioned disk and try again."
       raise error_message unless disk || pg_mount_point?
     end
 
