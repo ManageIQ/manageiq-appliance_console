@@ -144,12 +144,12 @@ module ApplianceConsole
       just_ask(prompt, default, INT_REGEXP, "an integer", Integer) { |q| q.in = range if range }
     end
 
-    def ask_for_disk(disk_name, verify = true)
+    def ask_for_disk(disk_name, verify = true, silent = false)
       require "linux_admin"
       disks = LinuxAdmin::Disk.local.select { |d| d.partitions.empty? }
 
       if disks.empty?
-        say "No partition found for #{disk_name}. You probably want to add an unpartitioned disk and try again."
+        say("No partition found for #{disk_name}. You probably want to add an unpartitioned disk and try again.") unless silent
       else
         default_choice = disks.size == 1 ? "1" : nil
         disk = ask_with_menu(
@@ -160,9 +160,8 @@ module ApplianceConsole
           q.choice("Don't partition the disk") { nil }
         end
       end
-
       if verify && disk.nil?
-        say ""
+        say("")
         raise MiqSignalError unless are_you_sure?(" you don't want to partition the #{disk_name}")
       end
       disk
