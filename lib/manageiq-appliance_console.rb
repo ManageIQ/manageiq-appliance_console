@@ -18,6 +18,8 @@ module ManageIQ
   end
 end
 
+require 'manageiq/appliance_console/highline_patch'
+
 require 'manageiq/appliance_console/version'
 require 'manageiq/appliance_console/errors'
 require 'manageiq/appliance_console/logger'

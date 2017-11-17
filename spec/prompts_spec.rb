@@ -124,9 +124,10 @@ describe ManageIQ::ApplianceConsole::Prompts do
     it "should ask are you sure without clarifier" do
       prompt = "Are you sure? (Y/N): "
       error = %(Please enter "yes" or "no".\n)
-      say %w(um yes)
+      answer = %w(um yes)
+      say(answer)
       expect(subject.are_you_sure?).to be_truthy
-      expect_heard [prompt + error, prompt]
+      expect_heard_yn([prompt, error + prompt], answer)
     end
 
     it "should ask are you sure with clarifier" do
@@ -261,21 +262,35 @@ describe ManageIQ::ApplianceConsole::Prompts do
       it "should be ok with not partitioning" do
         say %w(Y)
         expect(subject.ask_for_disk("database disk")).to be_nil
-        expect_heard [
-          "No partition found for database disk. You probably want to add an unpartitioned disk and try again.",
-          "",
-          "Are you sure you don't want to partition the database disk? (Y/N): ",
-        ]
+        output.rewind
+        p output.read
+        expect_heard_from_output(
+          [
+            "No partition found for database disk. You probably want to add an unpartitioned disk and try again.",
+            ""
+          ]
+        )
+        expect_heard_yn(
+          [
+            "Are you sure you don't want to partition the database disk? (Y/N): "
+          ], %w(Y)
+        )
       end
 
-      it "should raise an exception if dont put on root partition" do
+      it "should raise an exception if don't put on root partition" do
         say %w(N)
         expect { subject.ask_for_disk("special disk") }.to raise_error(ManageIQ::ApplianceConsole::MiqSignalError)
-        expect_heard [
-          "No partition found for special disk. You probably want to add an unpartitioned disk and try again.",
-          "",
-          "Are you sure you don't want to partition the special disk? (Y/N): ",
-        ]
+        expect_heard_from_output(
+          [
+            "No partition found for special disk. You probably want to add an unpartitioned disk and try again.",
+            ""
+          ]
+        )
+        expect_heard_yn(
+          [
+            "Are you sure you don't want to partition the special disk? (Y/N): ",
+          ], %w(N)
+        )
       end
 
       it "can skip confirmation prompt" do
@@ -296,10 +311,10 @@ describe ManageIQ::ApplianceConsole::Prompts do
         say ""
         expect_cls
         expect(subject.ask_for_disk("database disk").path).to eq("/dev/a")
-        expect_heard ["database disk", "", "",
-                      "1) /dev/a: 10 MB", "",
-                      "2) Don't partition the disk", "", "",
-                      "Choose the database disk: |1| "]
+        expect_heard_from_output ["database disk\n",
+                                  "1) /dev/a: 10 MB",
+                                  "2) Don't partition the disk\n",
+                                  "Choose the database disk: |1| "]
       end
     end
 
@@ -315,13 +330,12 @@ describe ManageIQ::ApplianceConsole::Prompts do
         say %w(x 1)
         expect_cls
         expect(subject.ask_for_disk("database disk").path).to eq("/dev/a")
-        expect_heard ["database disk", "", "",
-                      "1) /dev/a: 10 MB", "",
-                      "2) /dev/b: 20 MB", "",
-                      "3) Don't partition the disk", "", "",
-                      "Choose the database disk: " \
-                      "You must choose one of [1, 2, 3, /dev/a: 10 MB, /dev/b: 20 MB, Don't partition the disk].",
-                      prompt]
+        expect_heard_from_output ["database disk\n",
+                                  "1) /dev/a: 10 MB",
+                                  "2) /dev/b: 20 MB",
+                                  "3) Don't partition the disk\n",
+                                  "Choose the database disk: " \
+                                  "You must choose one of [1, 2, 3, /dev/a: 10 MB, /dev/b: 20 MB, Don't partition the disk].#{prompt}"]
       end
     end
   end
@@ -332,45 +346,45 @@ describe ManageIQ::ApplianceConsole::Prompts do
       say %w(5 1)
       expect_cls
       expect(subject.ask_with_menu("q?", %w(a b))).to eq("a")
-      expect_heard ["q?", "", "",
-                    "1) a", "",
-                    "2) b", "", "",
-                    "Choose the q?: #{error}", prompt]
+      expect_heard_from_output ["q?\n",
+                                "1) a",
+                                "2) b\n",
+                                "Choose the q?: #{error}#{prompt}"]
     end
 
     it "should ask for a menu with a hash" do
       say %w(1)
       expect_cls
       expect(subject.ask_with_menu("q?", "a" => "a1", "b" => "b1")).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: "]
     end
 
     it "default to the index of a menu array option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", %w(a b), 1)).to eq("a")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the number of a menu option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, 1)).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash key option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "a")).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash value option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "b1")).to eq("b1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |2| "]
+      expect_heard_from_output ["q?\n", "1) a", "2) b\n", "Choose the q?: |2| "]
     end
   end
 
@@ -419,9 +433,10 @@ describe ManageIQ::ApplianceConsole::Prompts do
   context "#ask_yn?" do
     it "should respond to yes (and enforce y/n)" do
       error = "Please provide yes or no."
-      say %w(x z yes)
+      answers = %w(x z yes)
+      say(answers)
       expect(subject.ask_yn?("prompt")).to be_truthy
-      expect_heard ["prompt? (Y/N): ", error, prompt + error, prompt]
+      expect_heard_yn(["prompt? (Y/N): ", error + prompt, error + prompt], answers)
     end
 
     it "should respond to no" do
@@ -603,5 +618,20 @@ describe ManageIQ::ApplianceConsole::Prompts do
     expect(output.string).to eq(strs)
     expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
     expect(input).to be_eof
+  end
+
+  def expect_heard_yn(strs, yns, check_eof = true)
+    readline_output.rewind
+    readline_output_content = readline_output.read
+    yns = yns.collect { |yn| yn + "\n" }
+    output_content = strs.zip(yns).join
+    expect(readline_output_content).to eq(output_content)
+    expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
+    expect(input).to be_eof
+  end
+
+  def expect_heard_from_output(strs)
+    output.rewind
+    expect(Array(strs).join("\n")).to eq(output.read)
   end
 end
