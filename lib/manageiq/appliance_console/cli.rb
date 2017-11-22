@@ -254,7 +254,8 @@ module ApplianceConsole
     def create_key
       say "#{key_configuration.action} encryption key"
       unless key_configuration.activate
-        raise "Could not create encryption key (v2_key)"
+        say("Could not create encryption key (v2_key)")
+        exit(1)
       end
     end
 
