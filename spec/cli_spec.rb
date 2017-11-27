@@ -528,6 +528,81 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
+  context "#set_replication?" do
+    it "should not return true if password is not passed while configuring primary replication" do
+      subject.options = {:replication => "primary", :cluster_node_number => 1}
+      expect(subject.set_replication?).not_to be_truthy
+    end
+
+    it "should not return true if cluster node is not passed while configuring primary replication" do
+      subject.options = {:replication => "primary", :password => "pass"}
+      expect(subject.set_replication?).not_to be_truthy
+    end
+  end
+
+  context "#replication_params?" do
+    it "should return false if replication type is not passed" do
+      subject.options = {:primary_host => "10.0.0.1"}
+      expect(subject.replication_params?).to be_falsey
+    end
+
+    it "should not return true if primary-host is not passed while configuring standby replication" do
+      subject.options = {:replication => "standby"}
+      expect(subject.replication_params?).not_to be_truthy
+    end
+  end
+
+  context "#set_replication" do
+    let(:replication_primary) { ManageIQ::ApplianceConsole::DatabaseReplicationPrimary.new }
+    let(:replication_standby) { ManageIQ::ApplianceConsole::DatabaseReplicationStandby.new }
+
+    before do
+      allow(ManageIQ::ApplianceConsole::DatabaseReplicationPrimary).to receive(:new).and_return(replication_primary)
+      allow(ManageIQ::ApplianceConsole::DatabaseReplicationStandby).to receive(:new).and_return(replication_standby)
+    end
+
+    it "should configure DB as primary when the required arguments are specified" do
+      expect(replication_primary).to receive(:activate)
+      subject.parse(%w(--replication primary --cluster-node-number 1 --password pass)).run
+      expect(replication_primary.database_name).to eq("vmdb_production")
+      expect(replication_primary.database_user).to eq("root")
+      expect(replication_primary.node_number).to eq(1)
+      expect(replication_primary.database_password).to eq("pass")
+    end
+
+    it "should configure primary replication with a fixed database name and user when specified in the flags" do
+      expect(replication_primary).to receive(:activate)
+      subject.parse(%w(--replication primary --cluster-node-number 1 --password pass --dbname vmdb_development --username guest)).run
+      expect(replication_primary.database_name).to eq("vmdb_development")
+      expect(replication_primary.database_user).to eq("guest")
+      expect(replication_primary.node_number).to eq(1)
+      expect(replication_primary.database_password).to eq("pass")
+    end
+
+    it "should configure DDBB replication as standby when the required parameters are specified" do
+      expect(replication_standby).to receive(:activate)
+      subject.parse(%w(--replication standby --cluster-node-number 2 --password pass --dbname vmdb_development --primary-host 10.0.0.1)).run
+      expect(replication_standby.disk).to eq(nil)
+      expect(replication_standby.primary_host).to eq("10.0.0.1")
+      expect(replication_standby.run_repmgrd_configuration).to eq(false)
+      expect(replication_standby.database_name).to eq("vmdb_development")
+      expect(replication_standby.node_number).to eq(2)
+      expect(replication_standby.database_password).to eq("pass")
+    end
+
+    it "should configure repmgrd when auto-failover flag is set" do
+      expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
+      expect(replication_standby).to receive(:activate)
+      subject.parse(%w(--replication standby --username dbuser --password pass --cluster-node-number 2 --dbdisk x --primary-host 10.0.0.1 --auto-failover)).run
+      expect(replication_standby.primary_host).to eq("10.0.0.1")
+      expect(replication_standby.run_repmgrd_configuration).to eq(true)
+      expect(replication_standby.database_user).to eq("dbuser")
+      expect(replication_standby.database_password).to eq("pass")
+      expect(replication_standby.node_number).to eq(2)
+      expect(replication_standby.disk).to eq("/dev/x")
+    end
+  end
+
   context "#set_time_zone" do
     let(:timezone) { double("time zone") }
     it "should set timezone" do
