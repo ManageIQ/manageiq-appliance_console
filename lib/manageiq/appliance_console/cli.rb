@@ -36,11 +36,11 @@ module ApplianceConsole
     end
 
     def database?
-      hostname
+      options[:standalone] || hostname
     end
 
     def local_database?
-      database? && local?(hostname)
+      database? && (local?(hostname) || options[:standalone])
     end
 
     def certs?
@@ -147,8 +147,12 @@ module ApplianceConsole
         opt :extauth_opts,         "External Authentication Options",   :type => :string
         opt :server,               "Server status",                     :type => :string
       end
-      Trollop.die :region, "needed when setting up a local database" if options[:region].nil? && local_database?
+      Trollop.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       self
+    end
+
+    def region_number_required?
+      !options[:standalone] && local_database?
     end
 
     def run
