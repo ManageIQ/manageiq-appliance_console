@@ -81,6 +81,22 @@ describe ManageIQ::ApplianceConsole::Cli do
     subject.run
   end
 
+  it "should not have run_as_evm_server flag when pass standalone" do
+    subject.parse(%w(--username user --password pass --standalone --dbdisk x))
+    expect_v2_key
+    expect(subject).to receive(:disk_from_string).and_return('x')
+    expect(subject).to receive(:say)
+    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
+      .with(:database          => 'vmdb_production',
+            :username          => 'user',
+            :password          => 'pass',
+            :interactive       => false,
+            :disk              => 'x',
+            :run_as_evm_server => false)
+      .and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
+    subject.run
+  end
+
   it "should not run post activation if internal database activation fails" do
     subject.parse(%w(--internal --username user --password pass -r 1 --dbdisk x))
     expect_v2_key
@@ -428,6 +444,48 @@ describe ManageIQ::ApplianceConsole::Cli do
 
       it "should know otherhost is not local" do
         expect(subject).not_to be_local("otherhost")
+      end
+    end
+
+    context "#local_database?" do
+      it "should return false when no database given" do
+        expect(subject).to receive(:database?).and_return(false)
+        expect(subject.local_database?).to be_falsy
+      end
+
+      it "should return true for a database with local host" do
+        expect(subject).to receive(:database?).and_return(true)
+        expect(subject.local_database?).to be_truthy
+      end
+
+      it "should return true for a standalone and non-local database" do
+        expect(subject).to receive(:database?).and_return(true)
+        expect(subject).to receive(:local?).and_return(false)
+        subject.options[:standalone] = true
+        expect(subject.local_database?).to be_truthy
+      end
+
+      it "should return false for a non-standalone remote database" do
+        expect(subject).to receive(:database?).and_return(true)
+        expect(subject).to receive(:local?).and_return(false)
+        expect(subject.local_database?).to be_falsy
+      end
+    end
+
+    context "#region_number_required?" do
+      it "don't require region_number if standalone" do
+        subject.options[:standalone] = true
+        expect(subject.region_number_required?).to be_falsy
+      end
+
+      it "require region number for non-standablone local database" do
+        expect(subject).to receive(:local_database?).and_return(true)
+        expect(subject.region_number_required?).to be_truthy
+      end
+
+      it "don't require region number for remote database" do
+        expect(subject).to receive(:local_database?).and_return(false)
+        expect(subject.region_number_required?).to be_falsy
       end
     end
 
