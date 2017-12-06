@@ -6,7 +6,7 @@ require "linux_admin"
 module ManageIQ
 module ApplianceConsole
   class InternalDatabaseConfiguration < DatabaseConfiguration
-    attr_accessor :disk, :ssl, :run_as_evm_server
+    attr_accessor :disk, :run_as_evm_server
 
     DEDICATED_DB_SHARED_BUFFERS = "'1GB'".freeze
     SHARED_DB_SHARED_BUFFERS = "'128MB'".freeze
@@ -98,8 +98,6 @@ module ApplianceConsole
     end
 
     def configure_postgres
-      self.ssl = File.exist?(PostgresAdmin.certificate_location.join("postgres.key"))
-
       copy_template "postgresql.conf"
       copy_template "pg_hba.conf.erb"
       copy_template "pg_ident.conf"
@@ -175,10 +173,7 @@ module ApplianceConsole
 
     def apply_initial_configuration
       shared_buffers = run_as_evm_server ? SHARED_DB_SHARED_BUFFERS : DEDICATED_DB_SHARED_BUFFERS
-      with_pg_connection do |conn|
-        conn.exec("ALTER SYSTEM SET ssl TO on") if ssl
-        conn.exec("ALTER SYSTEM SET shared_buffers TO #{shared_buffers}")
-      end
+      with_pg_connection { |conn| conn.exec("ALTER SYSTEM SET shared_buffers TO #{shared_buffers}") }
 
       restart_postgres
     end
