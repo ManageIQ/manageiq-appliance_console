@@ -113,14 +113,8 @@ module ApplianceConsole
       PostgresAdmin.mount_point
     end
 
-    def copy_template(src, src_dir = self.class.postgresql_template, dest_dir = PostgresAdmin.data_directory)
-      full_src = src_dir.join(src)
-      if src.include?(".erb")
-        full_dest = dest_dir.join(src.gsub(".erb", ""))
-        File.open(full_dest, "w") { |f| f.puts ERB.new(File.read(full_src), nil, '-').result(binding) }
-      else
-        FileUtils.cp full_src, dest_dir
-      end
+    def copy_template(src)
+      FileUtils.cp(self.class.postgresql_template.join(src), PostgresAdmin.data_directory)
     end
 
     def pg_mount_point?
