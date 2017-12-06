@@ -666,6 +666,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     it "should set timezone" do
       expect(subject).to receive(:say)
       expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("Europe/Madrid").and_return(timezone)
+      expect(timezone).to receive(:new_timezone=).with("Europe/Madrid")
       expect(timezone).to receive(:activate).and_return(true)
       subject.parse(%w(--timezone Europe/Madrid)).run
     end
@@ -673,6 +674,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     it "should not set timezone" do
       expect(subject).to receive(:say)
       expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("ss/dd").and_return(timezone)
+      expect(timezone).to receive(:new_timezone=).with("ss/dd")
       expect(timezone).to receive(:activate).and_return(false)
       subject.parse(%w(--timezone ss/dd)).run
     end

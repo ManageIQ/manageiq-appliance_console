@@ -272,6 +272,7 @@ module ApplianceConsole
 
     def set_time_zone
       timezone_config = ManageIQ::ApplianceConsole::TimezoneConfiguration.new(options[:timezone])
+      timezone_config.new_timezone = options[:timezone]
       if timezone_config.activate
         say("Timezone configured")
       else
