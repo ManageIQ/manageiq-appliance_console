@@ -99,7 +99,7 @@ module ApplianceConsole
 
     def configure_postgres
       copy_template "postgresql.conf"
-      copy_template "pg_hba.conf.erb"
+      copy_template "pg_hba.conf"
       copy_template "pg_ident.conf"
     end
 
