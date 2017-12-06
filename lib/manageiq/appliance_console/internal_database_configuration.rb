@@ -88,6 +88,7 @@ module ApplianceConsole
       log_and_feedback(__method__) do
         PostgresAdmin.prep_data_directory
         run_initdb
+        configure_ssl
         relabel_postgresql_dir
         configure_postgres
         start_postgres
@@ -170,6 +171,17 @@ module ApplianceConsole
       with_pg_connection { |conn| conn.exec("ALTER SYSTEM SET shared_buffers TO #{shared_buffers}") }
 
       restart_postgres
+    end
+
+    def configure_ssl
+      cert_file = self.class.postgres_dir.join("server.crt").to_s
+      key_file  = self.class.postgres_dir.join("server.key").to_s
+      AwesomeSpawn.run!("/usr/bin/generate_miq_server_cert.sh", :env => {"NEW_CERT_FILE" => cert_file, "NEW_KEY_FILE"  => key_file})
+
+      FileUtils.chown("postgres", "postgres", cert_file)
+      FileUtils.chown("postgres", "postgres", key_file)
+      FileUtils.chmod(0644, cert_file)
+      FileUtils.chmod(0600, key_file)
     end
   end
 end
