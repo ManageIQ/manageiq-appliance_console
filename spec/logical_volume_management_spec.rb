@@ -29,7 +29,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
 
   describe "#setup" do
     before do
-      expect(@disk_double).to receive(:create_partition_table)
+      expect(@disk_double).to receive(:create_partition_table).with("gpt")
+      expect(@disk_double).to receive(:create_partition_table).with("msdos")
       expect(@disk_double).to receive(:partitions).and_return([:fake_partition])
       @config.disk = @disk_double
 
