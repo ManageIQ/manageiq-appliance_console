@@ -46,11 +46,7 @@ module ApplianceConsole
       max_msdos_ptable_size = 2.terabyte
       self.disk = LinuxAdmin::Disk.local.find { |d| d.path == disk.path }
 
-      if self.disk.size >= max_msdos_ptable_size
-        partition_type = 'gpt'
-      else
-        partition_type = 'msdos'
-      end
+      partition_type = disk.size >= max_msdos_ptable_size ? 'gpt' : 'msdos'
       disk.create_partition_table(partition_type)
 
       AwesomeSpawn.run!("parted -s #{disk.path} mkpart primary 0% 100%")
