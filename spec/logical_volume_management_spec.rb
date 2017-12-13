@@ -29,7 +29,6 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
 
   describe "#setup" do
     before do
-      expect(@disk_double).to receive(:create_partition_table)
       expect(@disk_double).to receive(:partitions).and_return([:fake_partition])
       @config.disk = @disk_double
 
@@ -46,6 +45,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
 
       @fake_logical_volume = double(@spec_name, :path => "/dev/vg_test/lv_test")
       expect(LinuxAdmin::LogicalVolume).to receive(:create).and_return(@fake_logical_volume)
+      @dos_disk_size = 2.terabyte - 1
+      @gpt_disk_size = 2.terabyte
     end
 
     after do
@@ -54,6 +55,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
     end
 
     it "sets up the logical disk when mount point is not a symbolic link" do
+      expect(@disk_double).to receive(:size).and_return(@dos_disk_size)
+      expect(@disk_double).to receive(:create_partition_table).with("msdos")
       @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
       expect(@fstab).to receive(:write!)
       expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
@@ -70,6 +73,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
     end
 
     it "recreates the new mount point and sets up the logical disk when mount point is a symbolic link" do
+      expect(@disk_double).to receive(:size).and_return(@dos_disk_size)
+      expect(@disk_double).to receive(:create_partition_table).with("msdos")
       @tmp_mount_point = Pathname.new(Dir.mktmpdir)
       @config.mount_point = Pathname.new("#{Dir.tmpdir}/#{@spec_name}")
       FileUtils.ln_s(@tmp_mount_point, @config.mount_point)
@@ -90,6 +95,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
     end
 
     it "skips update if mount point is in fstab when mount point is in already fstab" do
+      expect(@disk_double).to receive(:size).and_return(@dos_disk_size)
+      expect(@disk_double).to receive(:create_partition_table).with("msdos")
       @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
       expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
       expect(AwesomeSpawn).to receive(:run!)
@@ -101,6 +108,24 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
 
       @config.setup
 
+      expect(@config.partition).to eq(:fake_partition)
+      expect(@config.physical_volume).to eq(:fake_physical_volume)
+      expect(@config.volume_group).to eq(:fake_volume_group)
+      expect(@config.logical_volume).to eq(@fake_logical_volume)
+      expect(@fstab.entries.count).to eq(1)
+    end
+
+    it "uses gpt partition table when disk size is over 2TB" do
+      expect(@disk_double).to receive(:size).and_return(@gpt_disk_size)
+      expect(@disk_double).to receive(:create_partition_table).with("gpt")
+      @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
+      expect(@fstab).to receive(:write!)
+      expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
+      expect(AwesomeSpawn).to receive(:run!)
+        .with("mount",
+              :params => {"-t" => @config.filesystem_type, nil => ["/dev/vg_test/lv_test", @config.mount_point]})
+
+      @config.setup
       expect(@config.partition).to eq(:fake_partition)
       expect(@config.physical_volume).to eq(:fake_physical_volume)
       expect(@config.volume_group).to eq(:fake_volume_group)
