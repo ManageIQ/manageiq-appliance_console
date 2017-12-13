@@ -53,6 +53,6 @@ module ApplianceConsole
         f.write("exit 0\n")
       end
     end
-  end # class DatabaseMaintenance < DatabaseConfiguration
+  end # class DatabaseMaintenanceHourly
 end # module ApplianceConsole
 end

@@ -112,6 +112,6 @@ Date and Time Configuration
       logger.error("Failed to apply time configuration: #{e.message}")
       false
     end
-  end # class TimezoneConfiguration
+  end # class DateTimeConfiguration
 end # module ApplianceConsole
 end
