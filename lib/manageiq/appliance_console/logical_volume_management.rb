@@ -43,10 +43,10 @@ module ApplianceConsole
     def create_partition_to_fill_disk
       # Check if you need to create a GPT part table or a MSDOS one in base of
       # max size of partition table
-      max_msdos_ptable_size = 2199023255552
+      max_msdos_ptable_size = 2.terabyte
       self.disk = LinuxAdmin::Disk.local.find { |d| d.path == disk.path }
 
-      if self.disk.size  >= max_msdos_ptable_size
+      if self.disk.size >= max_msdos_ptable_size
         partition_type = 'gpt'
       else
         partition_type = 'msdos'
