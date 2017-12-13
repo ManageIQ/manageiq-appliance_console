@@ -142,6 +142,6 @@ Replication Server Configuration
         :password => database_password
       }
     end
-  end # class DatabaseReplication < DatabaseConfiguration
+  end # class DatabaseReplication
 end # module ApplianceConsole
 end

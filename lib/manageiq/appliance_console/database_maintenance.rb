@@ -30,6 +30,6 @@ module ApplianceConsole
       self.executed_periodic_action = periodic.activate
       executed_hourly_action || executed_periodic_action
     end
-  end # class DatabaseMaintenance < DatabaseConfiguration
+  end # class DatabaseMaintenance
 end # module ApplianceConsole
 end
