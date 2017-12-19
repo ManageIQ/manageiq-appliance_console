@@ -174,8 +174,8 @@ module ApplianceConsole
     end
 
     def configure_ssl
-      cert_file = self.class.postgres_dir.join("server.crt").to_s
-      key_file  = self.class.postgres_dir.join("server.key").to_s
+      cert_file = PostgresAdmin.data_directory.join("server.crt").to_s
+      key_file  = PostgresAdmin.data_directory.join("server.key").to_s
       AwesomeSpawn.run!("/usr/bin/generate_miq_server_cert.sh", :env => {"NEW_CERT_FILE" => cert_file, "NEW_KEY_FILE"  => key_file})
 
       FileUtils.chown("postgres", "postgres", cert_file)
