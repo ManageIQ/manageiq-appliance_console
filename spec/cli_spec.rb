@@ -680,6 +680,28 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
+  context "#set_date_time" do
+    let(:datetime) { ManageIQ::ApplianceConsole::DateTimeConfiguration.new }
+
+    before do
+      expect(ManageIQ::ApplianceConsole::DateTimeConfiguration).to receive(:new).and_return(datetime)
+    end
+
+    it "should set auto sync when datetime option is auto" do
+      expect(datetime).to receive(:activate).and_return(true)
+      subject.parse(%w(--datetime auto)).run
+      expect(datetime.manual_time_sync).to be_falsy
+    end
+
+    it "should set date time according to given date time" do
+      expect(datetime).to receive(:activate).and_return(true)
+      subject.parse(%w(--datetime 2017-06-08T09:00:00)).run
+      expect(datetime.manual_time_sync).to be_truthy
+      expect(datetime.new_date).to eq("2017-06-08")
+      expect(datetime.new_time).to eq("09:00:00")
+    end
+  end
+
   context "#config_db_hourly_maintenance" do
     before do
       @test_hourly_cron = "#{Dir.tmpdir}/miq-pg-maintenance-hourly.cron"
