@@ -150,7 +150,7 @@ module ApplianceConsole
         opt :postgres_server_cert, "install certs for postgres server", :type => :boolean
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
-        opt :server,               "Server status",                     :type => :string
+        opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
       end
       Trollop.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       self
