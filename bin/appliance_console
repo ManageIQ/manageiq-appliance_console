@@ -435,6 +435,8 @@ Static Network Configuration
           if rake_success && delete_agreed
             say("\nRemoving the database restore file #{DB_RESTORE_FILE}...")
             File.delete(DB_RESTORE_FILE)
+          elsif !rake_success
+            say("\nDatabase restore failed. Check the logs for more information")
           end
         end
         press_any_key
