@@ -394,14 +394,6 @@ Static Network Configuration
         task_params = []
         uri = nil
 
-        connections = ManageIQ::ApplianceConsole::Utilities.db_connections - 1
-        if connections > 0
-          say("\nDatabase restore failed")
-          say("\nThere #{connections > 1 ? "are #{connections} connections" : "is 1 connection"} preventing a database restore")
-          press_any_key
-          raise MiqSignalError
-        end
-
         # TODO: merge into 1 prompt
         case ask_with_menu("Restore Database File", RESTORE_OPTIONS, RESTORE_LOCAL, nil)
         when RESTORE_LOCAL
