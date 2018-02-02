@@ -20,7 +20,6 @@ en:
     dbrestore: Restore Database From Backup
     db_config: Configure Database
     db_replication: Configure Database Replication
-    db_maintenance: Configure Database Maintenance
     failover_monitor: Configure Application Database Failover Monitor
     evmstop: Stop EVM Server Processes
     key_gen: Generate Custom Encryption Key

@@ -28,7 +28,6 @@ en:
     dbrestore: Restore Database From Backup
     db_config: Configure Database
     db_replication: Configure Database Replication
-    db_maintenance: Configure Database Maintenance
     log_config: Logfile Configuration
     failover_monitor: Configure Application Database Failover Monitor
     httpdauth: Configure External Authentication (httpd)
