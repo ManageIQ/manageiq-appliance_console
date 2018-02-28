@@ -575,18 +575,6 @@ Static Network Configuration
         say("Failover Monitor Service configured successfully")
         press_any_key
 
-      when I18n.t("advanced_settings.db_maintenance")
-        say("#{selection}\n\n")
-        db_maintenance = ManageIQ::ApplianceConsole::DatabaseMaintenance.new
-        if db_maintenance.ask_questions && db_maintenance.activate
-          say("Database maintenance configuration updated")
-          press_any_key
-        else
-          say("Database maintenance configuration unchanged")
-          press_any_key
-          raise MiqSignalError
-        end
-
       when I18n.t("advanced_settings.log_config")
         say("#{selection}\n\n")
         log_config = ManageIQ::ApplianceConsole::LogfileConfiguration.new

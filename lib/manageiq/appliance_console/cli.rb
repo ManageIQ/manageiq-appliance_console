@@ -79,10 +79,6 @@ module ApplianceConsole
       options[:server]
     end
 
-    def db_hourly_maintenance?
-      options[:db_hourly_maintenance]
-    end
-
     def set_replication?
       options[:cluster_node_number] && options[:password] && replication_params?
     end
@@ -121,7 +117,6 @@ module ApplianceConsole
         opt :username, "Database Username",  :type => :string,  :short => 'U', :default => "root"
         opt :password, "Database Password",  :type => :string,  :short => "p"
         opt :dbname,   "Database Name",      :type => :string,  :short => "d", :default => "vmdb_production"
-        opt :db_hourly_maintenance, "Configure database hourly maintenance", :type => :bool, :short => :none
         opt :standalone, "Run this server as a standalone database server", :type => :bool, :short => 'S'
         opt :key,      "Create encryption key",  :type => :boolean, :short => "k"
         opt :fetch_key, "SSH host with encryption key", :type => :string, :short => "K"
@@ -163,8 +158,7 @@ module ApplianceConsole
     def run
       Trollop.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             time_zone? || date_time? || set_server_state? ||
-                             db_hourly_maintenance? || set_replication?
+                             time_zone? || date_time? || set_server_state? || set_replication?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -177,7 +171,6 @@ module ApplianceConsole
       set_replication if set_replication?
       set_time_zone if time_zone?
       set_date_time if date_time?
-      config_db_hourly_maintenance if db_hourly_maintenance?
       config_tmp_disk if tmp_disk?
       config_log_disk if log_disk?
       uninstall_ipa if uninstall_ipa?
@@ -413,12 +406,6 @@ module ApplianceConsole
       else
         raise "Invalid server action"
       end
-    end
-
-    def config_db_hourly_maintenance
-      hourly = ManageIQ::ApplianceConsole::DatabaseMaintenanceHourly.new
-      hourly.requested_activate = true
-      hourly.activate
     end
 
     def self.parse(args)
