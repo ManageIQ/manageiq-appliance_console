@@ -8,7 +8,6 @@ en:
     - dbrestore
     - db_config
     - db_replication
-    - db_maintenance
     - failover_monitor
     - key_gen
     - evmstop

@@ -10,7 +10,6 @@ en:
     - dbrestore
     - db_config
     - db_replication
-    - db_maintenance
     - log_config
     - failover_monitor
     - httpdauth
