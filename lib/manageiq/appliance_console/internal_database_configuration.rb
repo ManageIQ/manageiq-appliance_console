@@ -41,7 +41,7 @@ module ApplianceConsole
       end
       initialize_postgresql_disk if disk
       initialize_postgresql
-      return super if run_as_evm_server
+      run_as_evm_server ? (return super) : save
       true
     end
 
