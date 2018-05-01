@@ -111,6 +111,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
     before do
       expect(subject).to receive(:stop_postgres)
       expect(subject).to receive(:stop_repmgrd)
+      expect(subject).to receive(:save_database_yml)
       expect(subject).to receive(:generate_cluster_name).and_return(true)
       expect(subject).to receive(:create_config_file).and_return(true)
       expect(subject).to receive(:clone_standby_server).and_return(true)
@@ -333,6 +334,16 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
         expect(PG::Connection).to receive(:new).and_return(connection)
         expect(connection).to receive(:exec_params).and_raise(PG::Error)
         expect(subject.node_number_valid?).to be_falsey
+      end
+    end
+
+    context "#save_database_yml (private)" do
+      it "passes the configured password" do
+        subject.database_password = "supersecret"
+        conf = double("InternalDatabaseConfiguration")
+        expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new).with(:password => "supersecret").and_return(conf)
+        expect(conf).to receive(:save)
+        subject.send(:save_database_yml)
       end
     end
   end
