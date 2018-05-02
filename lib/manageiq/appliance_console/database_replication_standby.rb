@@ -63,6 +63,7 @@ module ApplianceConsole
       stop_repmgrd
       initialize_postgresql_disk if disk
       PostgresAdmin.prep_data_directory if disk || resync_data
+      save_database_yml
       generate_cluster_name &&
         create_config_file(standby_host) &&
         clone_standby_server &&
@@ -142,6 +143,10 @@ module ApplianceConsole
     end
 
     private
+
+    def save_database_yml
+      InternalDatabaseConfiguration.new(:password => database_password).save
+    end
 
     def record_for_node_number
       c = PG::Connection.new(primary_connection_hash)
