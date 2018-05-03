@@ -40,6 +40,24 @@ def summary_entry(field, value)
   "#{dfield.ljust(24)} #{value}"
 end
 
+def ensure_key_configured
+  key_config = ManageIQ::ApplianceConsole::KeyConfiguration.new
+  unless key_config.key_exist?
+    say "No encryption key found.\n"
+    say "For migrations, copy encryption key from a hardened appliance."
+    say "For worker and multi-region setups, copy key from another appliance.\n"
+    say "If this is your first appliance, just generate one now.\n\n"
+
+    if key_config.ask_question_loop
+      say("\nEncryption key now configured.\n\n")
+    else
+      say("\nEncryption key not configured.")
+      press_any_key
+      raise MiqSignalError
+    end
+  end
+end
+
 [:INT, :TERM, :ABRT, :TSTP].each { |s| trap(s) { raise MiqSignalError } }
 
 VERSION_FILE  = ManageIQ::ApplianceConsole::RAILS_ROOT.join("VERSION")
@@ -73,24 +91,6 @@ CLOUD_INIT_DISABLE_NETWORK_CONFIG = "network: {config: disabled}\n".freeze
 
 module ManageIQ
 module ApplianceConsole
-  def ensure_key_configured
-    key_config = ManageIQ::ApplianceConsole::KeyConfiguration.new
-    unless key_config.key_exist?
-      say "No encryption key found.\n"
-      say "For migrations, copy encryption key from a hardened appliance."
-      say "For worker and multi-region setups, copy key from another appliance.\n"
-      say "If this is your first appliance, just generate one now.\n\n"
-
-      if key_config.ask_question_loop
-        say("\nEncryption key now configured.\n\n")
-      else
-        say("\nEncryption key not configured.")
-        press_any_key
-        raise MiqSignalError
-      end
-    end
-  end
-
   eth0 = LinuxAdmin::NetworkInterface.new(NETWORK_INTERFACE)
   # Because it takes a few seconds, get the region once in the outside loop
   region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
