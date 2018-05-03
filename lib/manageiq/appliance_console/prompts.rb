@@ -2,8 +2,6 @@ require 'resolv'
 
 module ManageIQ
 module ApplianceConsole
-  CANCEL = 'Cancel'.freeze
-
   module Prompts
     CLEAR_CODE    = `clear`
     IPV4_REGEXP   = Resolv::IPv4::Regex

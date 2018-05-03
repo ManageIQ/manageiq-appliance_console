@@ -62,17 +62,18 @@ MiqPassword.key_root = ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs").to_s
 
 # Load appliance_console libraries
 include ManageIQ::ApplianceConsole::Prompts
+CANCEL = "Cancel".freeze
 
 # Restore database choices
 RESTORE_LOCAL   = "Local file".freeze
 RESTORE_NFS     = "Network File System (NFS)".freeze
 RESTORE_SMB     = "Samba (SMB)".freeze
-RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, ManageIQ::ApplianceConsole::CANCEL].freeze
+RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, CANCEL].freeze
 
 # Restart choices
 RE_RESTART  = "Restart".freeze
 RE_DELLOGS  = "Restart and Clean Logs".freeze
-RE_OPTIONS  = [RE_RESTART, RE_DELLOGS, ManageIQ::ApplianceConsole::CANCEL].freeze
+RE_OPTIONS  = [RE_RESTART, RE_DELLOGS, CANCEL].freeze
 
 NETWORK_INTERFACE = "eth0".freeze
 CLOUD_INIT_NETWORK_CONFIG_FILE = "/etc/cloud/cloud.cfg.d/99_miq_disable_network_config.cfg".freeze
@@ -550,7 +551,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.restart")
         case ask_with_menu("Restart Option", RE_OPTIONS, nil, false)
-        when ManageIQ::ApplianceConsole::CANCEL
+        when CANCEL
           # don't do anything
         when RE_RESTART
           if are_you_sure?("restart the appliance now")

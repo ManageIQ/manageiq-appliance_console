@@ -8,6 +8,7 @@ module ManageIQ
       LOCAL_FILE     = "Local file".freeze
       NFS_FILE       = "Network File System (NFS)".freeze
       SMB_FILE       = "Samba (SMB)".freeze
+      CANCEL         = "Cancel".freeze
       FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, CANCEL].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
