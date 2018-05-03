@@ -34,8 +34,8 @@ module ApplianceConsole
       current_item = timezone_hash
 
       while current_item.is_a?(Hash)
-        selection = ask_with_menu("Geographic Location", current_item.keys, nil, false)
-        return false if selection == CANCEL
+        selection = ask_with_menu("Geographic Location", current_item.keys << "Cancel", nil, false)
+        return false if selection == "Cancel"
         current_item = current_item[selection]
       end
 

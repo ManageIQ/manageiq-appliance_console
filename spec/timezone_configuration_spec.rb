@@ -30,7 +30,7 @@ describe ManageIQ::ApplianceConsole::TimezoneConfiguration do
 
     it "prompts once for non-nested timezones" do
       expect(subject).to receive(:ask_with_menu).once
-        .with("Geographic Location", %w(Africa America UTC), nil, false)
+        .with("Geographic Location", %w(Africa America UTC Cancel), nil, false)
         .and_return("UTC")
 
       expect(subject.ask_for_timezone).to be true
@@ -40,13 +40,13 @@ describe ManageIQ::ApplianceConsole::TimezoneConfiguration do
 
     it "prompts multiple times for nested timezones" do
       expect(subject).to receive(:ask_with_menu)
-        .with("Geographic Location", %w(Africa America UTC), nil, false)
+        .with("Geographic Location", %w(Africa America UTC Cancel), nil, false)
         .and_return("America").ordered
       expect(subject).to receive(:ask_with_menu)
-        .with("Geographic Location", ["Argentina"], nil, false)
+        .with("Geographic Location", %w(Argentina Cancel), nil, false)
         .and_return("Argentina").ordered
       expect(subject).to receive(:ask_with_menu)
-        .with("Geographic Location", ["Buenos_Aires"], nil, false)
+        .with("Geographic Location", %w(Buenos_Aires Cancel), nil, false)
         .and_return("Buenos_Aires").ordered
 
       expect(subject.ask_for_timezone).to be true
