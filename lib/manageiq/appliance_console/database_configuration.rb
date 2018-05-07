@@ -68,6 +68,7 @@ module ApplianceConsole
       begin
         save
         success = create_or_join_region
+        validate_encryption_key!
       rescue
         success = false
       ensure
@@ -264,6 +265,10 @@ FRIENDLY
         FileUtils.cp(DB_YML_TMPL, DB_YML) if File.exist?(DB_YML_TMPL)
       end
       YAML.load_file(DB_YML)
+    end
+
+    def validate_encryption_key!
+      raise "Encryption key invalid" unless ManageIQ::ApplianceConsole::Utilities.rake("evm:validate_encryption_key", {})
     end
 
     def do_save(settings)

@@ -345,6 +345,7 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
       it "normal case" do
         allow(@config).to receive_messages(:validated => true)
         expect(@config).to receive(:create_or_join_region).and_return(true)
+        expect(@config).to receive(:validate_encryption_key!).and_return(true)
 
         allow(@config).to receive_messages(:merged_settings => @settings)
         expect(@config).to receive(:do_save).with(@settings)
@@ -375,6 +376,11 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
 
         it "where an exception is raised" do
           allow(@config).to receive(:create_or_join_region).and_raise
+          expect(@config.activate).to be_falsey
+        end
+
+        it "where the encryption key is invalid" do
+          allow(ManageIQ::ApplianceConsole::Utilities).to receive(:rake).with("evm:validate_encryption_key", {}).and_return(false)
           expect(@config.activate).to be_falsey
         end
       end
