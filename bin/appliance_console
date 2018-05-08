@@ -397,56 +397,8 @@ Static Network Configuration
         end
 
       when I18n.t("advanced_settings.dbrestore")
-        say("#{selection}\n\n")
-        task_params = []
-        uri = nil
-
-        # TODO: merge into 1 prompt
-        case ask_with_menu("Restore Database File", RESTORE_OPTIONS, RESTORE_LOCAL, nil)
-        when RESTORE_LOCAL
-          validate = ->(a) { File.exist?(a) }
-          uri = just_ask("location of the local restore file", DB_RESTORE_FILE, validate, "file that exists")
-          task = "evm:db:restore:local"
-          task_params = ["--", {:local_file => uri}]
-
-        when RESTORE_NFS
-          uri = ask_for_uri("location of the remote backup file\nExample: #{sample_url('nfs')})", "nfs")
-          task = "evm:db:restore:remote"
-          task_params = ["--", {:uri => uri}]
-
-        when RESTORE_SMB
-          uri = ask_for_uri("location of the remote backup file\nExample: #{sample_url('smb')}", "smb")
-          user = just_ask("username with access to this file.\nExample: 'mydomain.com/user'")
-          pass = ask_for_password("password for #{user}")
-
-          task = "evm:db:restore:remote"
-          task_params = ["--", {:uri => uri, :uri_username => user, :uri_password => pass}]
-
-        when ManageIQ::ApplianceConsole::CANCEL
-          raise MiqSignalError
-        end
-
-        clear_screen
-        say("#{selection}\n\n")
-
-        delete_agreed = false
-        if selection == RESTORE_LOCAL
-          say "The local database restore file is located at: '#{uri}'.\n"
-          delete_agreed = agree("Should this file be deleted after completing the restore? (Y/N): ")
-        end
-
-        say "\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n"
-        if agree("Are you sure you would like to restore the database? (Y/N): ")
-          say("\nRestoring the database...")
-          rake_success = ManageIQ::ApplianceConsole::Utilities.rake(task, task_params)
-          if rake_success && delete_agreed
-            say("\nRemoving the database restore file #{DB_RESTORE_FILE}...")
-            File.delete(DB_RESTORE_FILE)
-          elsif !rake_success
-            say("\nDatabase restore failed. Check the logs for more information")
-          end
-        end
-        press_any_key
+        db_admin = ManageIQ::ApplianceConsole::DatabaseAdmin.new
+        db_admin.ask_questions && db_admin.activate
 
       when I18n.t("advanced_settings.key_gen")
         say("#{selection}\n\n")
