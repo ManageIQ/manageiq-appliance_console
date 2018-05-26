@@ -8,6 +8,7 @@ en:
     - timezone
     - datetime
     - dbbackup
+    - dbdump
     - dbrestore
     - db_config
     - db_replication
@@ -26,6 +27,7 @@ en:
     timezone: Set Timezone
     datetime: Set Date and Time
     dbbackup: Create Database Backup
+    dbdump: Create Database Dump
     dbrestore: Restore Database From Backup
     db_config: Configure Database
     db_replication: Configure Database Replication
