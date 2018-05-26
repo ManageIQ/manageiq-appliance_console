@@ -19,7 +19,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
   end
 
   describe "#ask_questions" do
-    it "asks for file location, asks to delete backup, runs restore" do
+    it "asks for file location" do
       expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
       expect(subject).to receive(:ask_file_location)
 
@@ -28,7 +28,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
   end
 
   describe "#activate" do
-    it "asks for file location, asks to delete backup, runs restore" do
+    it "asks to delete backup and runs restore" do
       expect(subject).to receive(:clear_screen)
       expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
       expect(subject).to receive(:ask_to_delete_backup_after_restore)
