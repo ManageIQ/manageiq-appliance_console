@@ -7,6 +7,7 @@ en:
     - networking
     - timezone
     - datetime
+    - dbbackup
     - dbrestore
     - db_config
     - db_replication
@@ -24,6 +25,7 @@ en:
     networking: Configure Network
     timezone: Set Timezone
     datetime: Set Date and Time
+    dbbackup: Create Database Backup
     dbrestore: Restore Database From Backup
     db_config: Configure Database
     db_replication: Configure Database Replication

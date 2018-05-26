@@ -9,28 +9,21 @@ module ManageIQ
       NFS_FILE       = "Network File System (NFS)".freeze
       SMB_FILE       = "Samba (SMB)".freeze
       FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, CANCEL].freeze
-      FILE_MENU_ARGS = ["Restore Database File", FILE_OPTIONS, LOCAL_FILE, nil].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
 
-      NFS_PROMPT = <<-PROMPT.strip_heredoc.chomp
-        location of the remote backup file
-        Example: #{SAMPLE_URLS['nfs']}
-      PROMPT
-      SMB_PROMPT = <<-PROMPT.strip_heredoc.chomp
-        location of the remote backup file
-        Example: #{SAMPLE_URLS['smb']}
-      PROMPT
       USER_PROMPT = <<-PROMPT.strip_heredoc.chomp
         username with access to this file.
         Example: 'mydomain.com/user'
       PROMPT
 
-      attr_accessor :backup_type, :task, :task_params, :delete_agree, :uri
+      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri
 
-      def initialize(input = $stdin, output = $stdout)
-        super
+      def initialize(action = :restore, input = $stdin, output = $stdout)
+        super(input, output)
+
+        @action      = action
         @task_params = []
       end
 
@@ -48,7 +41,7 @@ module ManageIQ
       end
 
       def ask_file_location
-        case @backup_type = ask_with_menu(*FILE_MENU_ARGS)
+        case @backup_type = ask_with_menu(*file_menu_args)
         when LOCAL_FILE then ask_local_file_options
         when NFS_FILE   then ask_nfs_file_options
         when SMB_FILE   then ask_smb_file_options
@@ -57,26 +50,26 @@ module ManageIQ
       end
 
       def ask_local_file_options
-        @uri = just_ask("location of the local restore file",
+        @uri = just_ask(local_file_prompt,
                         DB_RESTORE_FILE, LOCAL_FILE_VALIDATOR,
                         "file that exists")
 
-        @task        = "evm:db:restore:local"
+        @task        = "evm:db:#{action}:local"
         @task_params = ["--", {:local_file => uri}]
       end
 
       def ask_nfs_file_options
-        @uri         = ask_for_uri(NFS_PROMPT, "nfs")
-        @task        = "evm:db:restore:remote"
+        @uri         = ask_for_uri(*remote_file_prompt_args_for("nfs"))
+        @task        = "evm:db:#{action}:remote"
         @task_params = ["--", {:uri => uri}]
       end
 
       def ask_smb_file_options
-        @uri         = ask_for_uri(SMB_PROMPT, "smb")
+        @uri         = ask_for_uri(*remote_file_prompt_args_for("smb"))
         user         = just_ask(USER_PROMPT)
         pass         = ask_for_password("password for #{user}")
 
-        @task        = "evm:db:restore:remote"
+        @task        = "evm:db:#{action}:remote"
         @task_params = [
           "--",
           {
@@ -88,29 +81,71 @@ module ManageIQ
       end
 
       def ask_to_delete_backup_after_restore
-        if backup_type == LOCAL_FILE
+        if action == :restore && backup_type == LOCAL_FILE
           say("The local database restore file is located at: '#{uri}'.\n")
           @delete_agree = agree("Should this file be deleted after completing the restore? (Y/N): ")
         end
       end
 
       def confirm_and_execute
-        say("\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n")
-        if agree("Are you sure you would like to restore the database? (Y/N): ")
-          say("\nRestoring the database...")
-          rake_success = ManageIQ::ApplianceConsole::Utilities.rake(task, task_params)
-          if rake_success && delete_agree
-            say("\nRemoving the database restore file #{uri}...")
-            File.delete(uri)
-          elsif !rake_success
-            say("\nDatabase restore failed. Check the logs for more information")
-          end
+        if allowed_to_execute?
+          processing_message
+          run_rake
         end
         press_any_key
       end
 
+      def allowed_to_execute?
+        return true unless action == :restore
+        say("\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n")
+        agree("Are you sure you would like to restore the database? (Y/N): ")
+      end
+
+      def file_menu_args
+        [
+          action == :restore ? "Restore Database File" : "Backup Output File Name",
+          FILE_OPTIONS,
+          LOCAL_FILE,
+          nil
+        ]
+      end
+
       def setting_header
-        say("#{I18n.t("advanced_settings.dbrestore")}\n\n")
+        say("#{I18n.t("advanced_settings.db#{action}")}\n\n")
+      end
+
+      private
+
+      def local_file_prompt
+        if action == :restore
+          "location of the local restore file"
+        else
+          "location to save the backup file to"
+        end
+      end
+
+      def remote_file_prompt_args_for(remote_type)
+        prompt  = if action == :restore
+                    "location of the remote backup file"
+                  else
+                    "location to save the remote backup file to"
+                  end
+        prompt += "\nExample: #{SAMPLE_URLS[remote_type]}"
+        [prompt, remote_type]
+      end
+
+      def processing_message
+        say("\n#{action == :restore ? "Restoring the database" : "Running Database backup to #{uri}"}...")
+      end
+
+      def run_rake
+        rake_success = ManageIQ::ApplianceConsole::Utilities.rake(task, task_params)
+        if rake_success && action == :restore && delete_agree
+          say("\nRemoving the database restore file #{uri}...")
+          File.delete(uri)
+        elsif !rake_success
+          say("\nDatabase #{action} failed. Check the logs for more information")
+        end
       end
     end
   end
