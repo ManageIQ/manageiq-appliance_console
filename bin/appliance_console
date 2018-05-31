@@ -400,6 +400,10 @@ Static Network Configuration
         db_admin = ManageIQ::ApplianceConsole::DatabaseAdmin.new(:backup)
         db_admin.ask_questions && db_admin.activate
 
+      when I18n.t("advanced_settings.dbdump")
+        db_admin = ManageIQ::ApplianceConsole::DatabaseAdmin.new(:dump)
+        db_admin.ask_questions && db_admin.activate
+
       when I18n.t("advanced_settings.dbrestore")
         db_admin = ManageIQ::ApplianceConsole::DatabaseAdmin.new(:restore)
         db_admin.ask_questions && db_admin.activate

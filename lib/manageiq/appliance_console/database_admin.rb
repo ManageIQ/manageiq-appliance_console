@@ -18,6 +18,14 @@ module ManageIQ
         Example: 'mydomain.com/user'
       PROMPT
 
+      DB_DUMP_WARNING = <<-WARN.strip_heredoc
+        WARNING:  This is not the recommended and supported way of running a
+        database backup, and is strictly meant for exporting a database for
+        support/debugging purposes!
+
+
+      WARN
+
       attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
@@ -29,6 +37,7 @@ module ManageIQ
 
       def ask_questions
         setting_header
+        say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
       end
 
@@ -103,7 +112,7 @@ module ManageIQ
 
       def file_menu_args
         [
-          action == :restore ? "Restore Database File" : "Backup Output File Name",
+          action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
           FILE_OPTIONS,
           LOCAL_FILE,
           nil
@@ -120,7 +129,7 @@ module ManageIQ
         if action == :restore
           "location of the local restore file"
         else
-          "location to save the backup file to"
+          "location to save the #{action} file to"
         end
       end
 
@@ -128,14 +137,19 @@ module ManageIQ
         prompt  = if action == :restore
                     "location of the remote backup file"
                   else
-                    "location to save the remote backup file to"
+                    "location to save the remote #{action} file to"
                   end
         prompt += "\nExample: #{SAMPLE_URLS[remote_type]}"
         [prompt, remote_type]
       end
 
       def processing_message
-        say("\n#{action == :restore ? "Restoring the database" : "Running Database backup to #{uri}"}...")
+        msg = if action == :restore
+                "\nRestoring the database..."
+              else
+                "\nRunning Database #{action} to #{uri}..."
+              end
+        say(msg)
       end
 
       def run_rake
