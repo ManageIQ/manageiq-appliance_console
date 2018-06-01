@@ -304,31 +304,56 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect_output ""
         end
       end
+    end
 
-      describe "#confirm_and_execute" do
-        let(:uri)             { "/tmp/my_db.backup" }
-        let(:agree)           { "y" }
-        let(:task)            { "evm:db:restore:local" }
-        let(:task_params)     { ["--", { :uri => uri }] }
-        let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+    describe "#confirm_and_execute" do
+      let(:uri)             { "/tmp/my_db.backup" }
+      let(:agree)           { "y" }
+      let(:task)            { "evm:db:restore:local" }
+      let(:task_params)     { ["--", { :uri => uri }] }
+      let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
 
-        before do
-          subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@delete_agree, true)
-          expect(STDIN).to receive(:getc)
-          allow(File).to receive(:delete)
+      before do
+        subject.instance_variable_set(:@uri, uri)
+        subject.instance_variable_set(:@delete_agree, true)
+        expect(STDIN).to receive(:getc)
+        allow(File).to receive(:delete)
+      end
+
+      def confirm_and_execute
+        say agree
+        subject.confirm_and_execute
+      end
+
+      context "when it is successful" do
+        before { expect(utils).to receive(:rake).and_return(true) }
+
+        it "deletes the backup file" do
+          expect(File).to receive(:delete).with(uri).once
+          confirm_and_execute
         end
 
-        def confirm_and_execute
-          say agree
-          subject.confirm_and_execute
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
+
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Restoring the database...
+
+            Removing the database restore file #{uri}...
+
+            Press any key to continue.
+          PROMPT
         end
 
-        context "when it is successful" do
-          before { expect(utils).to receive(:rake).and_return(true) }
+        context "without a delete agreement" do
+          before do
+            subject.instance_variable_set(:@delete_agree, false)
+          end
 
-          it "deletes the backup file" do
-            expect(File).to receive(:delete).with(uri).once
+          it "does not delete the backup file" do
+            expect(File).to receive(:delete).with(uri).never
             confirm_and_execute
           end
 
@@ -340,38 +365,38 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
               Are you sure you would like to restore the database? (Y/N): 
               Restoring the database...
 
-              Removing the database restore file #{uri}...
-
               Press any key to continue.
             PROMPT
           end
+        end
+      end
 
-          context "without a delete agreement" do
-            before do
-              subject.instance_variable_set(:@delete_agree, false)
-            end
+      context "when it is not successful" do
+        before { expect(utils).to receive(:rake).and_return(false) }
 
-            it "does not delete the backup file" do
-              expect(File).to receive(:delete).with(uri).never
-              confirm_and_execute
-            end
-
-            it "outputs waits for user to press a key to continue" do
-              confirm_and_execute
-              expect_output <<-PROMPT.strip_heredoc
-
-                Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-                Are you sure you would like to restore the database? (Y/N): 
-                Restoring the database...
-
-                Press any key to continue.
-              PROMPT
-            end
-          end
+        it "does not delete the backup file" do
+          expect(File).to receive(:delete).with(uri).never
+          confirm_and_execute
         end
 
-        context "when it is not successful" do
-          before { expect(utils).to receive(:rake).and_return(false) }
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
+
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Restoring the database...
+
+            Database restore failed. Check the logs for more information
+
+            Press any key to continue.
+          PROMPT
+        end
+
+        context "without a delete agreement" do
+          before do
+            subject.instance_variable_set(:@delete_agree, false)
+          end
 
           it "does not delete the backup file" do
             expect(File).to receive(:delete).with(uri).never
@@ -391,51 +416,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
               Press any key to continue.
             PROMPT
           end
+        end
+      end
 
-          context "without a delete agreement" do
-            before do
-              subject.instance_variable_set(:@delete_agree, false)
-            end
+      context "when the user aborts" do
+        let(:agree) { 'n' }
 
-            it "does not delete the backup file" do
-              expect(File).to receive(:delete).with(uri).never
-              confirm_and_execute
-            end
-
-            it "outputs waits for user to press a key to continue" do
-              confirm_and_execute
-              expect_output <<-PROMPT.strip_heredoc
-
-                Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-                Are you sure you would like to restore the database? (Y/N): 
-                Restoring the database...
-
-                Database restore failed. Check the logs for more information
-
-                Press any key to continue.
-              PROMPT
-            end
-          end
+        it "does not delete the backup file" do
+          expect(File).to  receive(:delete).with(uri).never
+          expect(utils).to receive(:rake).never
+          confirm_and_execute
         end
 
-        context "when the user aborts" do
-          let(:agree) { 'n' }
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
 
-          it "does not delete the backup file" do
-            expect(File).to  receive(:delete).with(uri).never
-            expect(utils).to receive(:rake).never
-            confirm_and_execute
-          end
-
-          it "outputs waits for user to press a key to continue" do
-            confirm_and_execute
-            expect_output <<-PROMPT.strip_heredoc
-
-              Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-              Are you sure you would like to restore the database? (Y/N): 
-              Press any key to continue.
-            PROMPT
-          end
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Press any key to continue.
+          PROMPT
         end
       end
     end
