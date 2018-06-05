@@ -96,6 +96,26 @@ module ManageIQ
         end
       end
 
+      def ask_for_tables_to_exclude_in_dump
+        if action == :dump && should_exclude_tables?
+          say(<<-PROMPT.strip_heredoc)
+
+            To exclude tables from the dump, enter them in a space separated
+            list.  For example:
+
+                > metrics_* vim_performance_states event_streams
+
+          PROMPT
+          table_excludes = ask_for_many("table",
+                                        "tables to exclude",
+                                        "metrics_* vim_performance_states event_streams",
+                                        255,
+                                        Float::INFINITY)
+
+          @task_params.last[:"exclude-table-data"] = table_excludes
+        end
+      end
+
       def confirm_and_execute
         if allowed_to_execute?
           processing_message
@@ -124,6 +144,12 @@ module ManageIQ
       end
 
       private
+
+      def should_exclude_tables?
+        ask_yn?("Would you like to exclude tables in the dump") do |q|
+          q.readline = true
+        end
+      end
 
       def local_file_prompt
         if action == :restore

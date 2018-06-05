@@ -4,7 +4,8 @@ require 'tempfile'
 #
 # Rational:  Needed for heredoc when testing HighLine output
 describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
-  let(:signal_error) { ManageIQ::ApplianceConsole::MiqSignalError }
+  let(:signal_error)           { ManageIQ::ApplianceConsole::MiqSignalError }
+  let(:default_table_excludes) { "metrics_* vim_performance_states event_streams" }
 
   describe "#initialize" do
     it "defaults @action, @backup_type, @task, @task_params, @delete_agree, and @uri" do
@@ -303,6 +304,25 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           subject.ask_to_delete_backup_after_restore
           expect_output ""
         end
+      end
+    end
+
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
+        expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+        subject.ask_for_tables_to_exclude_in_dump
+      end
+
+      it "does not modify the @task_params" do
+        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
       end
     end
 
@@ -713,6 +733,25 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
+        expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+        subject.ask_for_tables_to_exclude_in_dump
+      end
+
+      it "does not modify the @task_params" do
+        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
+      end
+    end
+
     describe "#confirm_and_execute" do
       let(:uri)             { "/tmp/my_db.backup" }
       let(:agree)           { "y" }
@@ -1112,6 +1151,61 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         it "no-ops" do
           subject.ask_to_delete_backup_after_restore
           expect_output ""
+        end
+      end
+    end
+
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      context "when not excluding tables" do
+        it "does not add :exclude-table-data to @task_params" do
+          expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
+          expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+
+          say "n"
+          subject.ask_for_tables_to_exclude_in_dump
+
+          expect(subject.task_params).to eq(["--", {:uri => uri}])
+        end
+      end
+
+      context "when excluding tables" do
+        it "asks to input tables, providing an example and sensible defaults" do
+          say ["y", "metrics_*"]
+          subject.ask_for_tables_to_exclude_in_dump
+          expect_output <<-EXAMPLE.strip_heredoc
+
+            To exclude tables from the dump, enter them in a space separated
+            list.  For example:
+
+                > metrics_* vim_performance_states event_streams
+
+          EXAMPLE
+          expect_readline_question_asked <<-PROMPT.strip_heredoc.chomp
+            Would you like to exclude tables in the dump? (Y/N): y
+            Enter the tables to exclude: |metrics_* vim_performance_states event_streams|
+          PROMPT
+        end
+
+        it "adds `:exclude-table-data => ['metrics_*', 'vms']` to @task_params" do
+          expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
+          expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).once.and_call_original
+          say ["y", "metrics_* vms"]
+
+          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vms"]}])
+        end
+
+        it "defaults to 'metrics_* vim_performance_states event_streams'" do
+          say ["y", ""]
+
+          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
         end
       end
     end
