@@ -63,6 +63,7 @@ module ApplianceConsole
         q.default = default if default
         q.validate = ->(p) { (p.blank? && default) || %w(y n).include?(p.downcase[0]) }
         q.responses[:not_valid] = "Please provide yes or no."
+        yield q if block_given?
       end.downcase[0] == 'y'
     end
 
