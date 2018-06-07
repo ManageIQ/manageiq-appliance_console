@@ -4,7 +4,8 @@ require 'tempfile'
 #
 # Rational:  Needed for heredoc when testing HighLine output
 describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
-  let(:signal_error) { ManageIQ::ApplianceConsole::MiqSignalError }
+  let(:signal_error)           { ManageIQ::ApplianceConsole::MiqSignalError }
+  let(:default_table_excludes) { "metrics_* vim_performance_states event_streams" }
 
   describe "#initialize" do
     it "defaults @action, @backup_type, @task, @task_params, @delete_agree, and @uri" do
@@ -25,6 +26,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "asks for file location" do
         expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
         expect(subject).to receive(:ask_file_location)
+        expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
 
         subject.ask_questions
       end
@@ -304,31 +306,75 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect_output ""
         end
       end
+    end
 
-      describe "#confirm_and_execute" do
-        let(:uri)             { "/tmp/my_db.backup" }
-        let(:agree)           { "y" }
-        let(:task)            { "evm:db:restore:local" }
-        let(:task_params)     { ["--", { :uri => uri }] }
-        let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
 
-        before do
-          subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@delete_agree, true)
-          expect(STDIN).to receive(:getc)
-          allow(File).to receive(:delete)
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
+        expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+        subject.ask_for_tables_to_exclude_in_dump
+      end
+
+      it "does not modify the @task_params" do
+        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
+      end
+    end
+
+    describe "#confirm_and_execute" do
+      let(:uri)             { "/tmp/my_db.backup" }
+      let(:agree)           { "y" }
+      let(:task)            { "evm:db:restore:local" }
+      let(:task_params)     { ["--", { :uri => uri }] }
+      let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+
+      before do
+        subject.instance_variable_set(:@uri, uri)
+        subject.instance_variable_set(:@delete_agree, true)
+        expect(STDIN).to receive(:getc)
+        allow(File).to receive(:delete)
+      end
+
+      def confirm_and_execute
+        say agree
+        subject.confirm_and_execute
+      end
+
+      context "when it is successful" do
+        before { expect(utils).to receive(:rake).and_return(true) }
+
+        it "deletes the backup file" do
+          expect(File).to receive(:delete).with(uri).once
+          confirm_and_execute
         end
 
-        def confirm_and_execute
-          say agree
-          subject.confirm_and_execute
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
+
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Restoring the database...
+
+            Removing the database restore file #{uri}...
+
+            Press any key to continue.
+          PROMPT
         end
 
-        context "when it is successful" do
-          before { expect(utils).to receive(:rake).and_return(true) }
+        context "without a delete agreement" do
+          before do
+            subject.instance_variable_set(:@delete_agree, false)
+          end
 
-          it "deletes the backup file" do
-            expect(File).to receive(:delete).with(uri).once
+          it "does not delete the backup file" do
+            expect(File).to receive(:delete).with(uri).never
             confirm_and_execute
           end
 
@@ -340,38 +386,38 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
               Are you sure you would like to restore the database? (Y/N): 
               Restoring the database...
 
-              Removing the database restore file #{uri}...
-
               Press any key to continue.
             PROMPT
           end
+        end
+      end
 
-          context "without a delete agreement" do
-            before do
-              subject.instance_variable_set(:@delete_agree, false)
-            end
+      context "when it is not successful" do
+        before { expect(utils).to receive(:rake).and_return(false) }
 
-            it "does not delete the backup file" do
-              expect(File).to receive(:delete).with(uri).never
-              confirm_and_execute
-            end
-
-            it "outputs waits for user to press a key to continue" do
-              confirm_and_execute
-              expect_output <<-PROMPT.strip_heredoc
-
-                Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-                Are you sure you would like to restore the database? (Y/N): 
-                Restoring the database...
-
-                Press any key to continue.
-              PROMPT
-            end
-          end
+        it "does not delete the backup file" do
+          expect(File).to receive(:delete).with(uri).never
+          confirm_and_execute
         end
 
-        context "when it is not successful" do
-          before { expect(utils).to receive(:rake).and_return(false) }
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
+
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Restoring the database...
+
+            Database restore failed. Check the logs for more information
+
+            Press any key to continue.
+          PROMPT
+        end
+
+        context "without a delete agreement" do
+          before do
+            subject.instance_variable_set(:@delete_agree, false)
+          end
 
           it "does not delete the backup file" do
             expect(File).to receive(:delete).with(uri).never
@@ -391,51 +437,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
               Press any key to continue.
             PROMPT
           end
+        end
+      end
 
-          context "without a delete agreement" do
-            before do
-              subject.instance_variable_set(:@delete_agree, false)
-            end
+      context "when the user aborts" do
+        let(:agree) { 'n' }
 
-            it "does not delete the backup file" do
-              expect(File).to receive(:delete).with(uri).never
-              confirm_and_execute
-            end
-
-            it "outputs waits for user to press a key to continue" do
-              confirm_and_execute
-              expect_output <<-PROMPT.strip_heredoc
-
-                Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-                Are you sure you would like to restore the database? (Y/N): 
-                Restoring the database...
-
-                Database restore failed. Check the logs for more information
-
-                Press any key to continue.
-              PROMPT
-            end
-          end
+        it "does not delete the backup file" do
+          expect(File).to  receive(:delete).with(uri).never
+          expect(utils).to receive(:rake).never
+          confirm_and_execute
         end
 
-        context "when the user aborts" do
-          let(:agree) { 'n' }
+        it "outputs waits for user to press a key to continue" do
+          confirm_and_execute
+          expect_output <<-PROMPT.strip_heredoc
 
-          it "does not delete the backup file" do
-            expect(File).to  receive(:delete).with(uri).never
-            expect(utils).to receive(:rake).never
-            confirm_and_execute
-          end
-
-          it "outputs waits for user to press a key to continue" do
-            confirm_and_execute
-            expect_output <<-PROMPT.strip_heredoc
-
-              Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
-              Are you sure you would like to restore the database? (Y/N): 
-              Press any key to continue.
-            PROMPT
-          end
+            Note: A database restore cannot be undone.  The restore will use the file: #{uri}.
+            Are you sure you would like to restore the database? (Y/N): 
+            Press any key to continue.
+          PROMPT
         end
       end
     end
@@ -448,6 +469,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "asks for file location" do
         expect(subject).to receive(:say).with("Create Database Backup\n\n")
         expect(subject).to receive(:ask_file_location)
+        expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
 
         subject.ask_questions
       end
@@ -713,6 +735,25 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
+        expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+        subject.ask_for_tables_to_exclude_in_dump
+      end
+
+      it "does not modify the @task_params" do
+        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
+      end
+    end
+
     describe "#confirm_and_execute" do
       let(:uri)             { "/tmp/my_db.backup" }
       let(:agree)           { "y" }
@@ -836,12 +877,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Create Database Dump\n\n")
         expect(subject).to receive(:say).with(pg_dump_warning)
         expect(subject).to receive(:ask_file_location)
+        expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
 
         subject.ask_questions
       end
 
       it "has proper formatting for the pg_dump warning" do
         allow(subject).to receive(:ask_file_location)
+        allow(subject).to receive(:ask_for_tables_to_exclude_in_dump)
         subject.ask_questions
 
         expect_output <<-PROMPT.strip_heredoc
@@ -1112,6 +1155,61 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         it "no-ops" do
           subject.ask_to_delete_backup_after_restore
           expect_output ""
+        end
+      end
+    end
+
+    describe "#ask_for_tables_to_exclude_in_dump" do
+      let(:uri) { "/tmp/my_db.dump" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      context "when not excluding tables" do
+        it "does not add :exclude-table-data to @task_params" do
+          expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
+          expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
+
+          say "n"
+          subject.ask_for_tables_to_exclude_in_dump
+
+          expect(subject.task_params).to eq(["--", {:uri => uri}])
+        end
+      end
+
+      context "when excluding tables" do
+        it "asks to input tables, providing an example and sensible defaults" do
+          say ["y", "metrics_*"]
+          subject.ask_for_tables_to_exclude_in_dump
+          expect_output <<-EXAMPLE.strip_heredoc
+
+            To exclude tables from the dump, enter them in a space separated
+            list.  For example:
+
+                > metrics_* vim_performance_states event_streams
+
+          EXAMPLE
+          expect_readline_question_asked <<-PROMPT.strip_heredoc.chomp
+            Would you like to exclude tables in the dump? (Y/N): y
+            Enter the tables to exclude: |metrics_* vim_performance_states event_streams|
+          PROMPT
+        end
+
+        it "adds `:exclude-table-data => ['metrics_*', 'vms']` to @task_params" do
+          expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
+          expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).once.and_call_original
+          say ["y", "metrics_* vms"]
+
+          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vms"]}])
+        end
+
+        it "defaults to 'metrics_* vim_performance_states event_streams'" do
+          say ["y", ""]
+
+          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
         end
       end
     end
