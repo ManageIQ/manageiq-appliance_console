@@ -64,12 +64,6 @@ MiqPassword.key_root = ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs").to_s
 include ManageIQ::ApplianceConsole::Prompts
 CANCEL = "Cancel".freeze
 
-# Restore database choices
-RESTORE_LOCAL   = "Local file".freeze
-RESTORE_NFS     = "Network File System (NFS)".freeze
-RESTORE_SMB     = "Samba (SMB)".freeze
-RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, CANCEL].freeze
-
 # Restart choices
 RE_RESTART  = "Restart".freeze
 RE_DELLOGS  = "Restart and Clean Logs".freeze
