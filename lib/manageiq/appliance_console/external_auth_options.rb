@@ -7,9 +7,10 @@ module ApplianceConsole
     AUTH_PATH = "/authentication".freeze
 
     EXT_AUTH_OPTIONS = {
-      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On", :logic => true},
-      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",           :logic => true},
-      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic => false}
+      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On", :logic  => true},
+      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",           :logic  => true},
+      "#{AUTH_PATH}/oidc_enabled"         => {:label => "OIDC",           :logic  => true},
+      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic  => false}
     }.freeze
 
     include ManageIQ::ApplianceConsole::Logging
@@ -79,9 +80,34 @@ module ApplianceConsole
       if update_hash.present?
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
+        params = never_enable_saml_and_oidc(params)
         result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
         raise parse_errors(result).join(', ') if result.failure?
       end
+    end
+
+    def never_enable_saml_and_oidc(params)
+      if (params.include? "/authentication/oidc_enabled=true") && (params.include? "/authentication/saml_enabled=true")
+        say("\nWARNING: Both SAML and OIDC can not be enable. SAML will be enabled ...")
+      end
+
+      if params.include? "/authentication/saml_enabled=true"
+        params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
+        params << "/authentication/oidc_enabled=false"
+        params << "/authentication/provider_type=saml"
+      elsif params.include? "/authentication/oidc_enabled=true"
+        params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
+        params << "/authentication/saml_enabled=false"
+        params << "/authentication/provider_type=oidc"
+      elsif (params.include? "/authentication/oidc_enabled=false") || (params.include? "/authentication/saml_enabled=false")
+        params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
+        params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
+        params << "/authentication/oidc_enabled=false"
+        params << "/authentication/saml_enabled=false"
+        params << "/authentication/provider_type=none"
+      end
+
+      params
     end
 
     # extauth_opts option parser: syntax is key=value,key=value
