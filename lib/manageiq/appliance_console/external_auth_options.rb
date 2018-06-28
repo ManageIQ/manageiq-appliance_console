@@ -43,6 +43,7 @@ module ApplianceConsole
         end
       end
       @updates = {} if selection == skip
+      @updates = {} unless validate_provider_type
       true
     end
 
@@ -80,44 +81,39 @@ module ApplianceConsole
       if update_hash.present?
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
-        params = never_enable_saml_and_oidc(params)
+        params = enable_provider_type(params)
         result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
         raise parse_errors(result).join(', ') if result.failure?
       end
     end
 
-    def never_enable_saml_and_oidc(params)
-      if params.include?("/authentication/oidc_enabled=true") && params.include?("/authentication/saml_enabled=true")
-        say("\nWARNING: Both SAML and OIDC can not be enable. SAML will be enabled ...")
-      end
+    def validate_provider_type
+      return true unless @updates["/authentication/oidc_enabled"] == true && @updates["/authentication/saml_enabled"] == true
+      say("\Error: Both SAML and OIDC can not be enable ...")
+      false
+    end
 
+    def enable_provider_type(params)
       if params.include?("/authentication/saml_enabled=true")
-        remove_oidc(params)
+        provider_type_saml(params)
       elsif params.include?("/authentication/oidc_enabled=true")
-        remove_saml(params)
+        provider_type_oidc(params)
       elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
         provider_type_none(params)
       end
     end
 
-    def remove_oidc(params)
-      params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
-      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
+    def provider_type_saml(params)
       params << "/authentication/oidc_enabled=false"
       params << "/authentication/provider_type=saml"
     end
 
-    def remove_saml(params)
-      params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
-      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
+    def provider_type_oidc(params)
       params << "/authentication/saml_enabled=false"
       params << "/authentication/provider_type=oidc"
     end
 
     def provider_type_none(params)
-      params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
-      params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
-      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
       params << "/authentication/oidc_enabled=false"
       params << "/authentication/saml_enabled=false"
       params << "/authentication/provider_type=none"
