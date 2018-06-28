@@ -87,27 +87,40 @@ module ApplianceConsole
     end
 
     def never_enable_saml_and_oidc(params)
-      if (params.include? "/authentication/oidc_enabled=true") && (params.include? "/authentication/saml_enabled=true")
+      if params.include?("/authentication/oidc_enabled=true") && params.include?("/authentication/saml_enabled=true")
         say("\nWARNING: Both SAML and OIDC can not be enable. SAML will be enabled ...")
       end
 
-      if params.include? "/authentication/saml_enabled=true"
-        params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
-        params << "/authentication/oidc_enabled=false"
-        params << "/authentication/provider_type=saml"
-      elsif params.include? "/authentication/oidc_enabled=true"
-        params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
-        params << "/authentication/saml_enabled=false"
-        params << "/authentication/provider_type=oidc"
-      elsif (params.include? "/authentication/oidc_enabled=false") || (params.include? "/authentication/saml_enabled=false")
-        params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
-        params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
-        params << "/authentication/oidc_enabled=false"
-        params << "/authentication/saml_enabled=false"
-        params << "/authentication/provider_type=none"
+      if params.include?("/authentication/saml_enabled=true")
+        params = remove_oidc(params)
+      elsif params.include?("/authentication/oidc_enabled=true")
+        params = remove_saml(params)
+      elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
+        params = provider_type_none(params)
       end
+    end
 
-      params
+    def remove_oidc(params)
+      params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
+      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
+      params << "/authentication/oidc_enabled=false"
+      params << "/authentication/provider_type=saml"
+    end
+
+    def remove_saml(params)
+      params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
+      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
+      params << "/authentication/saml_enabled=false"
+      params << "/authentication/provider_type=oidc"
+    end
+
+    def provider_type_none(params)
+      params.grep(/.*oidc.*\z/).each { |p| params.delete(p) }
+      params.grep(/.*saml.*\z/).each { |p| params.delete(p) }
+      params.grep(/.*provider_type.*\z/).each { |p| params.delete(p) }
+      params << "/authentication/oidc_enabled=false"
+      params << "/authentication/saml_enabled=false"
+      params << "/authentication/provider_type=none"
     end
 
     # extauth_opts option parser: syntax is key=value,key=value
