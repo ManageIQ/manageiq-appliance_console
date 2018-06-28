@@ -92,11 +92,11 @@ module ApplianceConsole
       end
 
       if params.include?("/authentication/saml_enabled=true")
-        params = remove_oidc(params)
+        remove_oidc(params)
       elsif params.include?("/authentication/oidc_enabled=true")
-        params = remove_saml(params)
+        remove_saml(params)
       elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
-        params = provider_type_none(params)
+        provider_type_none(params)
       end
     end
 
