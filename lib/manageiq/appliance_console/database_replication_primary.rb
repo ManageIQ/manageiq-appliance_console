@@ -6,7 +6,6 @@ module ApplianceConsole
     REGISTER_CMD = 'repmgr master register'.freeze
 
     def initialize
-      self.cluster_name      = nil
       self.node_number       = nil
       self.database_name     = "vmdb_production"
       self.database_user     = "root"
@@ -30,8 +29,7 @@ module ApplianceConsole
 
     def activate
       say("Configuring Primary Replication Server...")
-      generate_cluster_name &&
-        create_config_file(primary_host) &&
+      create_config_file(primary_host) &&
         initialize_primary_server &&
         write_pgpass_file
     end
@@ -42,7 +40,7 @@ module ApplianceConsole
     end
 
     def add_repmgr_schema_to_search_path
-      schema_name = "repmgr_#{cluster_name}"
+      schema_name = "repmgr"
       begin
         pg_conn = PG::Connection.new(primary_connection_hash)
         new_path = pg_conn.exec("SHOW search_path").first["search_path"].split(",") << schema_name

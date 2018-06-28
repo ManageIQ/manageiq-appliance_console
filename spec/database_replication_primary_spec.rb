@@ -55,7 +55,6 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
 
   context "#activate" do
     it "returns true when configure succeed" do
-      expect(subject).to receive(:generate_cluster_name).and_return(true)
       expect(subject).to receive(:create_config_file).and_return(true)
       expect(subject).to receive(:initialize_primary_server).and_return(true)
       expect(subject).to receive(:write_pgpass_file).and_return(true)
@@ -89,12 +88,10 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
   end
 
   describe "#add_repmgr_schema_to_search_path" do
-    let(:cluster_name) { "test_cluster" }
     let(:db_user)      { "test_db_user" }
     let(:schema_name)  { "repmgr_#{cluster_name}" }
 
     before do
-      subject.cluster_name = cluster_name
       subject.database_user = db_user
     end
 

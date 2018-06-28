@@ -13,7 +13,6 @@ module ApplianceConsole
     attr_accessor :disk, :standby_host, :run_repmgrd_configuration, :resync_data, :force_register
 
     def initialize
-      self.cluster_name      = nil
       self.node_number       = nil
       self.database_name     = "vmdb_production"
       self.database_user     = "root"
@@ -64,8 +63,7 @@ module ApplianceConsole
       initialize_postgresql_disk if disk
       PostgresAdmin.prep_data_directory if disk || resync_data
       save_database_yml
-      generate_cluster_name &&
-        create_config_file(standby_host) &&
+      create_config_file(standby_host) &&
         clone_standby_server &&
         start_postgres &&
         register_standby_server &&
