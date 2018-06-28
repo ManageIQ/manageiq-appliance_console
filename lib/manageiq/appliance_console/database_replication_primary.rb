@@ -3,7 +3,7 @@ module ApplianceConsole
   class DatabaseReplicationPrimary < DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
 
-    REGISTER_CMD = 'repmgr master register'.freeze
+    REGISTER_CMD = 'repmgr primary register'.freeze
 
     def initialize
       self.node_number       = nil
