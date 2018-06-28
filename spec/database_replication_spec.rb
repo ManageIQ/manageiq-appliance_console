@@ -61,16 +61,31 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
   context "#config_file_contents" do
     let(:expected_config_file) do
       <<-EOS.strip_heredoc
-        node=nodenumber
+        node_id=nodenumber
         node_name=host
         conninfo='host=host user=user dbname=databasename'
         use_replication_slots=1
         pg_basebackup_options='--xlog-method=stream'
         failover=automatic
-        promote_command='repmgr standby promote'
-        follow_command='repmgr standby follow'
-        logfile=/var/log/repmgr/repmgrd.log
+        promote_command='repmgr standby promote -f /etc/repmgr.conf --log-to-file'
+        follow_command='repmgr standby follow -f /etc/repmgr.conf --log-to-file --upstream-node-id=%n'
+        log_file=/var/log/repmgr/repmgrd.log
+        service_start_command='sudo systemctl start postgresql-9.5'
+        service_stop_command='sudo systemctl stop postgresql-9.5'
+        service_restart_command='sudo systemctl restart postgresql-9.5'
+        service_reload_command='sudo systemctl reload postgresql-9.5'
+        data_directory='/var/lib/pgsql'
       EOS
+    end
+
+    before do
+      ENV["APPLIANCE_PG_DATA"] = "/var/lib/pgsql"
+      ENV["APPLIANCE_PG_SERVICE"] = "postgresql-9.5"
+    end
+
+    after do
+      ENV.delete("APPLIANCE_PG_DATA")
+      ENV.delete("APPLIANCE_PG_SERVICE")
     end
 
     it "returns the correct contents" do

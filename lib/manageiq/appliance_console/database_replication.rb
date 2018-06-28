@@ -1,5 +1,6 @@
 require 'pg'
 require 'English'
+require 'util/postgres_admin'
 
 module ManageIQ
 module ApplianceConsole
@@ -52,16 +53,22 @@ Replication Server Configuration
     end
 
     def config_file_contents(host)
+      service_name = PostgresAdmin.service_name
       <<-EOS.strip_heredoc
-        node=#{node_number}
+        node_id=#{node_number}
         node_name=#{host}
         conninfo='host=#{host} user=#{database_user} dbname=#{database_name}'
         use_replication_slots=1
         pg_basebackup_options='--xlog-method=stream'
         failover=automatic
-        promote_command='repmgr standby promote'
-        follow_command='repmgr standby follow'
-        logfile=#{REPMGR_LOG}
+        promote_command='repmgr standby promote -f #{REPMGR_CONFIG} --log-to-file'
+        follow_command='repmgr standby follow -f #{REPMGR_CONFIG} --log-to-file --upstream-node-id=%n'
+        log_file=#{REPMGR_LOG}
+        service_start_command='sudo systemctl start #{service_name}'
+        service_stop_command='sudo systemctl stop #{service_name}'
+        service_restart_command='sudo systemctl restart #{service_name}'
+        service_reload_command='sudo systemctl reload #{service_name}'
+        data_directory='#{PostgresAdmin.data_directory}'
       EOS
     end
 
