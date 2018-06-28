@@ -89,7 +89,7 @@ module ApplianceConsole
 
     def validate_provider_type
       return true unless @updates["/authentication/oidc_enabled"] == true && @updates["/authentication/saml_enabled"] == true
-      say("\Error: Both SAML and OIDC can not be enable ...")
+      say("\Error: Both SAML and OIDC can not be enabled ...")
       false
     end
 
