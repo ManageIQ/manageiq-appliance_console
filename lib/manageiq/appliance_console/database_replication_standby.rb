@@ -150,7 +150,7 @@ module ApplianceConsole
       c = PG::Connection.new(primary_connection_hash)
       c.exec_params(<<-SQL, [node_number]).map_types!(PG::BasicTypeMapForResults.new(c)).first
         SELECT type, name, active
-        FROM repl_nodes where id = $1
+        FROM repmgr.nodes where id = $1
       SQL
     end
 
