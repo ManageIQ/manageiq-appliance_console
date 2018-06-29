@@ -186,7 +186,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
         run_args = [
           "repmgr standby register",
           {
-            :params => {:force => nil},
+            :params => {:force => nil, :wait_sync= => 60},
             :env    => {"PGPASSWORD" => "secret"}
           }
         ]

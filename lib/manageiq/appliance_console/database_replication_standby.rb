@@ -106,7 +106,7 @@ module ApplianceConsole
     end
 
     def register_standby_server
-      run_repmgr_command(REGISTER_CMD, :force => nil)
+      run_repmgr_command(REGISTER_CMD, :force => nil, :wait_sync= => 60)
     end
 
     def start_repmgrd
