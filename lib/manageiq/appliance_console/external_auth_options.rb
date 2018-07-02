@@ -81,7 +81,7 @@ module ApplianceConsole
       if update_hash.present?
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
-        params = enable_provider_type!(params)
+        params = configure_provider_type!(params)
         result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
         raise parse_errors(result).join(', ') if result.failure?
       end
@@ -93,27 +93,27 @@ module ApplianceConsole
       false
     end
 
-    def enable_provider_type!(params)
+    def configure_provider_type!(params)
       if params.include?("/authentication/saml_enabled=true")
-        provider_type_saml(params)
+        configure_saml!(params)
       elsif params.include?("/authentication/oidc_enabled=true")
-        provider_type_oidc(params)
+        configure_oidc!(params)
       elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
-        provider_type_none(params)
+        configure_none!(params)
       end
     end
 
-    def provider_type_saml(params)
+    def configure_saml!(params)
       params << "/authentication/oidc_enabled=false"
       params << "/authentication/provider_type=saml"
     end
 
-    def provider_type_oidc(params)
+    def configure_oidc!(params)
       params << "/authentication/saml_enabled=false"
       params << "/authentication/provider_type=oidc"
     end
 
-    def provider_type_none(params)
+    def configure_none!(params)
       params << "/authentication/oidc_enabled=false"
       params << "/authentication/saml_enabled=false"
       params << "/authentication/provider_type=none"
