@@ -130,7 +130,7 @@ module ApplianceConsole
       return true if rec.nil?
       node_state = rec["active"] ? "active" : "inactive"
 
-      say("An #{node_state} #{rec["type"]} node (#{rec["name"]}) with the node number #{node_number} already exists")
+      say("An #{node_state} #{rec["type"]} node (#{rec["node_name"]}) with the node number #{node_number} already exists")
       ask_yn?("Would you like to continue configuration by overwriting the existing node", "N")
 
     rescue PG::Error => e
@@ -149,8 +149,8 @@ module ApplianceConsole
     def record_for_node_number
       c = PG::Connection.new(primary_connection_hash)
       c.exec_params(<<-SQL, [node_number]).map_types!(PG::BasicTypeMapForResults.new(c)).first
-        SELECT type, name, active
-        FROM repmgr.nodes where id = $1
+        SELECT type, node_name, active
+        FROM repmgr.nodes where node_id = $1
       SQL
     end
 
