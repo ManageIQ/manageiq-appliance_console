@@ -64,10 +64,10 @@ module ApplianceConsole
       PostgresAdmin.prep_data_directory if disk || resync_data
       save_database_yml
       create_config_file(standby_host) &&
+        write_pgpass_file &&
         clone_standby_server &&
         start_postgres &&
         register_standby_server &&
-        write_pgpass_file &&
         (run_repmgrd_configuration ? start_repmgrd : true)
     end
 
