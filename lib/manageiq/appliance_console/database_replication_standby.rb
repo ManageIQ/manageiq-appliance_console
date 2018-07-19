@@ -13,7 +13,6 @@ module ApplianceConsole
     attr_accessor :disk, :standby_host, :run_repmgrd_configuration, :resync_data, :force_register
 
     def initialize
-      self.cluster_name      = nil
       self.node_number       = nil
       self.database_name     = "vmdb_production"
       self.database_user     = "root"
@@ -64,12 +63,11 @@ module ApplianceConsole
       initialize_postgresql_disk if disk
       PostgresAdmin.prep_data_directory if disk || resync_data
       save_database_yml
-      generate_cluster_name &&
-        create_config_file(standby_host) &&
+      create_config_file(standby_host) &&
+        write_pgpass_file &&
         clone_standby_server &&
         start_postgres &&
         register_standby_server &&
-        write_pgpass_file &&
         (run_repmgrd_configuration ? start_repmgrd : true)
     end
 
@@ -108,7 +106,7 @@ module ApplianceConsole
     end
 
     def register_standby_server
-      run_repmgr_command(REGISTER_CMD, :force => nil)
+      run_repmgr_command(REGISTER_CMD, :force => nil, :wait_sync= => 60)
     end
 
     def start_repmgrd
@@ -132,7 +130,7 @@ module ApplianceConsole
       return true if rec.nil?
       node_state = rec["active"] ? "active" : "inactive"
 
-      say("An #{node_state} #{rec["type"]} node (#{rec["name"]}) with the node number #{node_number} already exists")
+      say("An #{node_state} #{rec["type"]} node (#{rec["node_name"]}) with the node number #{node_number} already exists")
       ask_yn?("Would you like to continue configuration by overwriting the existing node", "N")
 
     rescue PG::Error => e
@@ -151,8 +149,8 @@ module ApplianceConsole
     def record_for_node_number
       c = PG::Connection.new(primary_connection_hash)
       c.exec_params(<<-SQL, [node_number]).map_types!(PG::BasicTypeMapForResults.new(c)).first
-        SELECT type, name, active
-        FROM repl_nodes where id = $1
+        SELECT type, node_name, active
+        FROM repmgr.nodes where node_id = $1
       SQL
     end
 

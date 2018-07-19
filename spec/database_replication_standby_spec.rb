@@ -112,7 +112,6 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
       expect(subject).to receive(:stop_postgres)
       expect(subject).to receive(:stop_repmgrd)
       expect(subject).to receive(:save_database_yml)
-      expect(subject).to receive(:generate_cluster_name).and_return(true)
       expect(subject).to receive(:create_config_file).and_return(true)
       expect(subject).to receive(:clone_standby_server).and_return(true)
       expect(subject).to receive(:start_postgres).and_return(true)
@@ -187,7 +186,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
         run_args = [
           "repmgr standby register",
           {
-            :params => {:force => nil},
+            :params => {:force => nil, :wait_sync= => 60},
             :env    => {"PGPASSWORD" => "secret"}
           }
         ]

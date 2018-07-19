@@ -3,10 +3,9 @@ module ApplianceConsole
   class DatabaseReplicationPrimary < DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
 
-    REGISTER_CMD = 'repmgr master register'.freeze
+    REGISTER_CMD = 'repmgr primary register'.freeze
 
     def initialize
-      self.cluster_name      = nil
       self.node_number       = nil
       self.database_name     = "vmdb_production"
       self.database_user     = "root"
@@ -30,29 +29,9 @@ module ApplianceConsole
 
     def activate
       say("Configuring Primary Replication Server...")
-      generate_cluster_name &&
-        create_config_file(primary_host) &&
-        initialize_primary_server &&
+      create_config_file(primary_host) &&
+        run_repmgr_command(REGISTER_CMD) &&
         write_pgpass_file
-    end
-
-    def initialize_primary_server
-      run_repmgr_command(REGISTER_CMD) &&
-        add_repmgr_schema_to_search_path
-    end
-
-    def add_repmgr_schema_to_search_path
-      schema_name = "repmgr_#{cluster_name}"
-      begin
-        pg_conn = PG::Connection.new(primary_connection_hash)
-        new_path = pg_conn.exec("SHOW search_path").first["search_path"].split(",") << schema_name
-        pg_conn.exec("ALTER ROLE #{database_user} SET search_path = #{new_path.join(",")}")
-      rescue PG::ConnectionBad => e
-        say("Failed to add #{schema_name} to search path for #{database_user} #{e.message}")
-        logger.error("Failed to add #{schema_name} to search path for #{database_user} #{e.message}")
-        return false
-      end
-      true
     end
   end # class DatabaseReplicationPrimary < DatabaseReplication
 end # module ApplianceConsole
