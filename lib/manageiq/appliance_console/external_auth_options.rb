@@ -7,9 +7,10 @@ module ApplianceConsole
     AUTH_PATH = "/authentication".freeze
 
     EXT_AUTH_OPTIONS = {
-      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On", :logic => true},
-      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",           :logic => true},
-      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic => false}
+      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On", :logic  => true},
+      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",           :logic  => true},
+      "#{AUTH_PATH}/oidc_enabled"         => {:label => "OIDC",           :logic  => true},
+      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic  => false}
     }.freeze
 
     include ManageIQ::ApplianceConsole::Logging
@@ -42,6 +43,7 @@ module ApplianceConsole
         end
       end
       @updates = {} if selection == skip
+      @updates = {} unless validate_provider_type
       true
     end
 
@@ -79,9 +81,42 @@ module ApplianceConsole
       if update_hash.present?
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
+        params = configure_provider_type!(params)
         result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
         raise parse_errors(result).join(', ') if result.failure?
       end
+    end
+
+    def validate_provider_type
+      return true unless @updates["/authentication/oidc_enabled"] == true && @updates["/authentication/saml_enabled"] == true
+      say("\Error: Both SAML and OIDC can not be enabled ...")
+      false
+    end
+
+    def configure_provider_type!(params)
+      if params.include?("/authentication/saml_enabled=true")
+        configure_saml!(params)
+      elsif params.include?("/authentication/oidc_enabled=true")
+        configure_oidc!(params)
+      elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
+        configure_none!(params)
+      end
+    end
+
+    def configure_saml!(params)
+      params << "/authentication/oidc_enabled=false"
+      params << "/authentication/provider_type=saml"
+    end
+
+    def configure_oidc!(params)
+      params << "/authentication/saml_enabled=false"
+      params << "/authentication/provider_type=oidc"
+    end
+
+    def configure_none!(params)
+      params << "/authentication/oidc_enabled=false"
+      params << "/authentication/saml_enabled=false"
+      params << "/authentication/provider_type=none"
     end
 
     # extauth_opts option parser: syntax is key=value,key=value
