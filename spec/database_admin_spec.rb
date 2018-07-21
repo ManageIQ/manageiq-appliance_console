@@ -27,6 +27,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -613,6 +614,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Create Database Backup\n\n")
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -1172,6 +1174,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with(pg_dump_warning)
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -1179,6 +1182,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "has proper formatting for the pg_dump warning" do
         allow(subject).to receive(:ask_file_location)
         allow(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        allow(subject).to receive(:ask_to_split_up_output)
         subject.ask_questions
 
         expect_output <<-PROMPT.strip_heredoc

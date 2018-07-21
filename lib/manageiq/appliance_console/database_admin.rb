@@ -42,6 +42,7 @@ module ManageIQ
         say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
         ask_for_tables_to_exclude_in_dump
+        ask_to_split_up_output
       end
 
       def activate
