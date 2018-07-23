@@ -538,17 +538,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_local_file_options" do
-      let(:file)      { Tempfile.new("foo.backup").tap(&:close) }
+      let(:filepath)  { "/file/that/most/certainly/does/not/exist.dump" }
       let(:prmpt)     { "location to save the backup file to" }
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
         before do
-          # stub validator for default answer, since it probably doesn't exist on
-          # the machine running these tests.
-          stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
-
           say ""
           subject.ask_local_file_options
         end
@@ -560,12 +556,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with a valid filename given" do
         before do
-          say file.path.to_s
+          say filepath.to_s
           subject.ask_local_file_options
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(file.path)
+          expect(subject.uri).to eq(filepath)
         end
 
         it "sets @task to point to 'evm:db:backup:local'" do
@@ -573,25 +569,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
-        end
-      end
-
-      context "with an invalid filename given" do
-        let(:bad_filename) { "#{file.path}.bad_mmkay" }
-
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
-        it "reprompts the user and then properly sets the options" do
-          error = "Please provide #{errmsg}"
-          expect_heard ["Enter the #{prmpt}: ", error, prompt]
-
-          expect(subject.uri).to         eq(file.path)
-          expect(subject.task).to        eq("evm:db:backup:local")
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
         end
       end
     end
@@ -962,17 +940,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_local_file_options" do
-      let(:file)      { Tempfile.new("foo.dump").tap(&:close) }
+      let(:filepath)  { "/file/that/most/certainly/does/not/exist.dump" }
       let(:prmpt)     { "location to save the dump file to" }
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
         before do
-          # stub validator for default answer, since it probably doesn't exist on
-          # the machine running these tests.
-          stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
-
           say ""
           subject.ask_local_file_options
         end
@@ -984,12 +958,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with a valid filename given" do
         before do
-          say file.path.to_s
+          say filepath
           subject.ask_local_file_options
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(file.path)
+          expect(subject.uri).to eq(filepath)
         end
 
         it "sets @task to point to 'evm:db:dump:local'" do
@@ -997,25 +971,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
-        end
-      end
-
-      context "with an invalid filename given" do
-        let(:bad_filename) { "#{file.path}.bad_mmkay" }
-
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
-        it "reprompts the user and then properly sets the options" do
-          error = "Please provide #{errmsg}"
-          expect_heard ["Enter the #{prmpt}: ", error, prompt]
-
-          expect(subject.uri).to         eq(file.path)
-          expect(subject.task).to        eq("evm:db:dump:local")
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
         end
       end
     end

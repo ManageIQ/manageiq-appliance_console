@@ -60,8 +60,10 @@ module ManageIQ
       end
 
       def ask_local_file_options
+        validator = LOCAL_FILE_VALIDATOR if action == :restore
+
         @uri = just_ask(local_file_prompt,
-                        DB_RESTORE_FILE, LOCAL_FILE_VALIDATOR,
+                        DB_RESTORE_FILE, validator,
                         "file that exists")
 
         @task        = "evm:db:#{action}:local"
