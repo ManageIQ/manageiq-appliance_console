@@ -11,6 +11,7 @@ module ManageIQ
       FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, CANCEL].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
+      DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
 
       USER_PROMPT = <<-PROMPT.strip_heredoc.chomp
@@ -61,10 +62,9 @@ module ManageIQ
 
       def ask_local_file_options
         validator = LOCAL_FILE_VALIDATOR if action == :restore
+        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
 
-        @uri = just_ask(local_file_prompt,
-                        DB_RESTORE_FILE, validator,
-                        "file that exists")
+        @uri = just_ask(local_file_prompt, default, validator, "file that exists")
 
         @task        = "evm:db:#{action}:local"
         @task_params = ["--", {:local_file => uri}]

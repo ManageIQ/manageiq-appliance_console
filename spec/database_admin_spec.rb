@@ -942,7 +942,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     describe "#ask_local_file_options" do
       let(:filepath)  { "/file/that/most/certainly/does/not/exist.dump" }
       let(:prmpt)     { "location to save the dump file to" }
-      let(:default)   { described_class::DB_RESTORE_FILE }
+      let(:default)   { described_class::DB_DEFAULT_DUMP_FILE }
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
