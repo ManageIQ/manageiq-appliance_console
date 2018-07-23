@@ -116,7 +116,7 @@ module ManageIQ
                                         Float::INFINITY)
 
           @task_params.last[:"exclude-table-data"] = table_excludes
-        end
+        end || true
       end
 
       def confirm_and_execute

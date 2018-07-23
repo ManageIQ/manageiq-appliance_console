@@ -107,7 +107,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
 
           say ""
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to the default filename" do
@@ -118,7 +118,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid filename given" do
         before do
           say file.path.to_s
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
@@ -137,12 +137,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with an invalid filename given" do
         let(:bad_filename) { "#{file.path}.bad_mmkay" }
 
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
         it "reprompts the user and then properly sets the options" do
+          say [bad_filename, file.path.to_s]
+          expect(subject.ask_local_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
@@ -161,7 +159,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri given" do
         before do
           say example_uri
-          subject.ask_nfs_file_options
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
         it "sets @uri to point to the nfs file" do
@@ -180,12 +178,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with an invalid uri given" do
         let(:bad_uri) { "file://host.mydomain.com/path/to/file" }
 
-        before do
-          say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
-        end
-
         it "reprompts the user and then properly sets the options" do
+          say [bad_uri, example_uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
@@ -219,7 +215,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri, username, and password given" do
         before do
           say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "sets @uri to point to the smb file" do
@@ -240,7 +236,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
@@ -318,11 +314,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "no-ops" do
         expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
         expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
       it "does not modify the @task_params" do
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
         expect(subject.task_params).to eq(["--", {:uri => uri}])
       end
     end
@@ -544,12 +540,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
-        before do
-          say ""
-          subject.ask_local_file_options
-        end
-
         it "sets @uri to the default filename" do
+          say ""
+          expect(subject.ask_local_file_options).to be_truthy
           expect(subject.uri).to eq(default)
         end
       end
@@ -557,7 +550,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid filename given" do
         before do
           say filepath.to_s
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
@@ -582,7 +575,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri given" do
         before do
           say example_uri
-          subject.ask_nfs_file_options
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
         it "sets @uri to point to the nfs file" do
@@ -603,7 +596,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
@@ -640,7 +633,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri, username, and password given" do
         before do
           say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "sets @uri to point to the smb file" do
@@ -661,7 +654,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
@@ -723,11 +716,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "no-ops" do
         expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
         expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
       it "does not modify the @task_params" do
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
         expect(subject.task_params).to eq(["--", {:uri => uri}])
       end
     end
@@ -946,12 +939,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
-        before do
-          say ""
-          subject.ask_local_file_options
-        end
-
         it "sets @uri to the default filename" do
+          say ""
+          expect(subject.ask_local_file_options).to be_truthy
           expect(subject.uri).to eq(default)
         end
       end
@@ -959,7 +949,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid filename given" do
         before do
           say filepath
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
@@ -984,7 +974,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri given" do
         before do
           say example_uri
-          subject.ask_nfs_file_options
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
         it "sets @uri to point to the nfs file" do
@@ -1003,12 +993,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with an invalid uri given" do
         let(:bad_uri) { "file://host.mydomain.com/path/to/file" }
 
-        before do
-          say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
-        end
-
         it "reprompts the user and then properly sets the options" do
+          say [bad_uri, example_uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
@@ -1042,7 +1030,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid uri, username, and password given" do
         before do
           say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "sets @uri to point to the smb file" do
@@ -1063,7 +1051,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
@@ -1128,7 +1116,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
 
           say "n"
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
 
           expect(subject.task_params).to eq(["--", {:uri => uri}])
         end
@@ -1137,7 +1125,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "when excluding tables" do
         it "asks to input tables, providing an example and sensible defaults" do
           say ["y", "metrics_*"]
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect_output <<-EXAMPLE.strip_heredoc
 
             To exclude tables from the dump, enter them in a space separated
@@ -1157,14 +1145,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).once.and_call_original
           say ["y", "metrics_* vms"]
 
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vms"]}])
         end
 
         it "defaults to 'metrics_* vim_performance_states event_streams'" do
           say ["y", ""]
 
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
         end
       end
