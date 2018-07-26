@@ -61,11 +61,7 @@ module ManageIQ
       end
 
       def ask_local_file_options
-        validator = LOCAL_FILE_VALIDATOR if action == :restore
-        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-
-        @uri = just_ask(local_file_prompt, default, validator, "file that exists")
-
+        @uri         = just_ask(*filename_prompt_args)
         @task        = "evm:db:#{action}:local"
         @task_params = ["--", {:local_file => uri}]
       end
@@ -152,6 +148,12 @@ module ManageIQ
         ask_yn?("Would you like to exclude tables in the dump") do |q|
           q.readline = true
         end
+      end
+
+      def filename_prompt_args
+        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
+        validator = LOCAL_FILE_VALIDATOR if action == :restore
+        [local_file_prompt, default, validator, "file that exists"]
       end
 
       def local_file_prompt
