@@ -202,7 +202,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location of the remote backup file\nExample: #{example_uri}" }
@@ -214,7 +216,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
+            :uri          => uri,
             :uri_username => user,
             :uri_password => pass
           }
@@ -223,12 +225,16 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
+          say [uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
         end
 
         it "sets @task to point to 'evm:db:restore:local'" do
@@ -244,7 +250,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
+          say [bad_uri, uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
@@ -260,7 +266,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
           expect(subject.task).to        eq("evm:db:restore:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
@@ -627,9 +634,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
+      let(:file_prompt) { "location to save the backup file to" }
       let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
       let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
       let(:pass_prompt) { "Enter the password for #{user}" }
@@ -639,21 +649,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
-            :uri_username => user,
-            :uri_password => pass
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
           }
         ]
       end
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
+          say [filename, uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:backup:local'" do
@@ -666,16 +681,17 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "with a invalid uri given" do
-        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
+          say [filename, bad_uri, uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
           error = "Please provide #{errmsg}"
 
+          expect_readline_question_asked file_prompt
           expect_readline_question_asked uri_prompt
           expect_readline_question_asked user_prompt
           expect_heard [
@@ -685,7 +701,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:backup:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
@@ -1031,9 +1048,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
+      let(:file_prompt) { "location to save the dump file to" }
       let(:uri_prompt)  { "Enter the location to save the remote dump file to\nExample: #{example_uri}" }
       let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
       let(:pass_prompt) { "Enter the password for #{user}" }
@@ -1043,21 +1063,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
-            :uri_username => user,
-            :uri_password => pass
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
           }
         ]
       end
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
+          say [filename, uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:dump:local'" do
@@ -1073,13 +1098,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
+          say [filename, bad_uri, uri, user, pass]
           expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
           error = "Please provide #{errmsg}"
 
+          expect_readline_question_asked file_prompt
           expect_readline_question_asked uri_prompt
           expect_readline_question_asked user_prompt
           expect_heard [
@@ -1089,7 +1115,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:dump:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end

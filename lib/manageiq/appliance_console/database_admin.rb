@@ -78,19 +78,20 @@ module ManageIQ
       end
 
       def ask_smb_file_options
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
         @uri         = ask_for_uri(*remote_file_prompt_args_for("smb"))
         user         = just_ask(USER_PROMPT)
         pass         = ask_for_password("password for #{user}")
 
+        params = {
+          :uri          => uri,
+          :uri_username => user,
+          :uri_password => pass
+        }
+        params[:remote_file_name] = filename if filename
+
         @task        = "evm:db:#{action}:remote"
-        @task_params = [
-          "--",
-          {
-            :uri          => uri,
-            :uri_username => user,
-            :uri_password => pass
-          }
-        ]
+        @task_params = ["--", params]
       end
 
       def ask_to_delete_backup_after_restore
