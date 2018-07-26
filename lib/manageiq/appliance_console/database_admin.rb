@@ -27,7 +27,7 @@ module ManageIQ
 
       WARN
 
-      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri
+      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
         super(input, output)
@@ -67,9 +67,14 @@ module ManageIQ
       end
 
       def ask_nfs_file_options
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
         @uri         = ask_for_uri(*remote_file_prompt_args_for("nfs"))
         @task        = "evm:db:#{action}:remote"
-        @task_params = ["--", {:uri => uri}]
+
+        params = {:uri => uri}
+        params[:remote_file_name] = filename if filename
+
+        @task_params = ["--", params]
       end
 
       def ask_smb_file_options
@@ -152,7 +157,7 @@ module ManageIQ
 
       def filename_prompt_args
         default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore
+        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
         [local_file_prompt, default, validator, "file that exists"]
       end
 
