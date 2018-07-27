@@ -11,6 +11,7 @@ module ManageIQ
       FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, CANCEL].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
+      DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
 
       USER_PROMPT = <<-PROMPT.strip_heredoc.chomp
@@ -26,7 +27,7 @@ module ManageIQ
 
       WARN
 
-      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri
+      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
         super(input, output)
@@ -60,34 +61,37 @@ module ManageIQ
       end
 
       def ask_local_file_options
-        @uri = just_ask(local_file_prompt,
-                        DB_RESTORE_FILE, LOCAL_FILE_VALIDATOR,
-                        "file that exists")
-
+        @uri         = just_ask(*filename_prompt_args)
         @task        = "evm:db:#{action}:local"
         @task_params = ["--", {:local_file => uri}]
       end
 
       def ask_nfs_file_options
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
         @uri         = ask_for_uri(*remote_file_prompt_args_for("nfs"))
         @task        = "evm:db:#{action}:remote"
-        @task_params = ["--", {:uri => uri}]
+
+        params = {:uri => uri}
+        params[:remote_file_name] = filename if filename
+
+        @task_params = ["--", params]
       end
 
       def ask_smb_file_options
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
         @uri         = ask_for_uri(*remote_file_prompt_args_for("smb"))
         user         = just_ask(USER_PROMPT)
         pass         = ask_for_password("password for #{user}")
 
+        params = {
+          :uri          => uri,
+          :uri_username => user,
+          :uri_password => pass
+        }
+        params[:remote_file_name] = filename if filename
+
         @task        = "evm:db:#{action}:remote"
-        @task_params = [
-          "--",
-          {
-            :uri          => uri,
-            :uri_username => user,
-            :uri_password => pass
-          }
-        ]
+        @task_params = ["--", params]
       end
 
       def ask_to_delete_backup_after_restore
@@ -114,7 +118,7 @@ module ManageIQ
                                         Float::INFINITY)
 
           @task_params.last[:"exclude-table-data"] = table_excludes
-        end
+        end || true
       end
 
       def confirm_and_execute
@@ -150,6 +154,12 @@ module ManageIQ
         ask_yn?("Would you like to exclude tables in the dump") do |q|
           q.readline = true
         end
+      end
+
+      def filename_prompt_args
+        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
+        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
+        [local_file_prompt, default, validator, "file that exists"]
       end
 
       def local_file_prompt

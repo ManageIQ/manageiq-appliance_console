@@ -100,6 +100,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
+      before { subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE) }
+
       context "with no filename given" do
         before do
           # stub validator for default answer, since it probably doesn't exist on
@@ -107,7 +109,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
 
           say ""
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to the default filename" do
@@ -118,7 +120,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with a valid filename given" do
         before do
           say file.path.to_s
-          subject.ask_local_file_options
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
@@ -137,12 +139,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with an invalid filename given" do
         let(:bad_filename) { "#{file.path}.bad_mmkay" }
 
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
         it "reprompts the user and then properly sets the options" do
+          say [bad_filename, file.path.to_s]
+          expect(subject.ask_local_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
@@ -154,18 +154,24 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_nfs_file_options" do
-      let(:example_uri) { subject.sample_url('nfs') }
+      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
+      let(:filename)    { File.basename(subject.sample_url('nfs')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:prmpt)       { "location of the remote backup file\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
       context "with a valid uri given" do
         before do
-          say example_uri
-          subject.ask_nfs_file_options
+          say uri
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the nfs file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the nfs share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
         end
 
         it "sets @task to point to 'evm:db:restore:remote'" do
@@ -173,31 +179,32 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the nfs file" do
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri}])
         end
       end
 
       context "with an invalid uri given" do
-        let(:bad_uri) { "file://host.mydomain.com/path/to/file" }
-
-        before do
-          say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
-        end
+        let(:bad_uri) { "file://host.mydomain.com/path/to" }
 
         it "reprompts the user and then properly sets the options" do
+          say [bad_uri, uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
           expect(subject.task).to        eq("evm:db:restore:remote")
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri}])
         end
       end
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location of the remote backup file\nExample: #{example_uri}" }
@@ -209,7 +216,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
+            :uri          => uri,
             :uri_username => user,
             :uri_password => pass
           }
@@ -218,12 +225,16 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
         end
 
         it "sets @task to point to 'evm:db:restore:local'" do
@@ -239,8 +250,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [bad_uri, uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
@@ -255,7 +266,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
           expect(subject.task).to        eq("evm:db:restore:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
@@ -318,11 +330,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "no-ops" do
         expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
         expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
       it "does not modify the @task_params" do
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
         expect(subject.task_params).to eq(["--", {:uri => uri}])
       end
     end
@@ -538,34 +550,27 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_local_file_options" do
-      let(:file)      { Tempfile.new("foo.backup").tap(&:close) }
+      let(:filepath)  { "/file/that/most/certainly/does/not/exist.dump" }
       let(:prmpt)     { "location to save the backup file to" }
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
-        before do
-          # stub validator for default answer, since it probably doesn't exist on
-          # the machine running these tests.
-          stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
-
-          say ""
-          subject.ask_local_file_options
-        end
-
         it "sets @uri to the default filename" do
+          say ""
+          expect(subject.ask_local_file_options).to be_truthy
           expect(subject.uri).to eq(default)
         end
       end
 
       context "with a valid filename given" do
         before do
-          say file.path.to_s
-          subject.ask_local_file_options
+          say filepath.to_s
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(file.path)
+          expect(subject.uri).to eq(filepath)
         end
 
         it "sets @task to point to 'evm:db:backup:local'" do
@@ -573,42 +578,30 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
-        end
-      end
-
-      context "with an invalid filename given" do
-        let(:bad_filename) { "#{file.path}.bad_mmkay" }
-
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
-        it "reprompts the user and then properly sets the options" do
-          error = "Please provide #{errmsg}"
-          expect_heard ["Enter the #{prmpt}: ", error, prompt]
-
-          expect(subject.uri).to         eq(file.path)
-          expect(subject.task).to        eq("evm:db:backup:local")
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
         end
       end
     end
 
     describe "#ask_nfs_file_options" do
-      let(:example_uri) { subject.sample_url('nfs') }
+      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
+      let(:filename)    { File.basename(subject.sample_url('nfs')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:prmpt)       { "location to save the remote backup file to\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
       context "with a valid uri given" do
         before do
-          say example_uri
-          subject.ask_nfs_file_options
+          say [filename, uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the nfs file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the nfs share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:backup:remote'" do
@@ -616,33 +609,37 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the nfs file" do
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri, :remote_file_name => filename}])
         end
       end
 
       context "with an invalid uri given" do
-        let(:bad_uri) { "file://host.mydomain.com/path/to/file" }
+        let(:bad_uri) { "file://host.mydomain.com/path/to" }
 
         before do
-          say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
+          say ["file", bad_uri, uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq("file")
           expect(subject.task).to        eq("evm:db:backup:remote")
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri, :remote_file_name => "file"}])
         end
       end
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
+      let(:file_prompt) { "location to save the backup file to" }
       let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
       let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
       let(:pass_prompt) { "Enter the password for #{user}" }
@@ -652,21 +649,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
-            :uri_username => user,
-            :uri_password => pass
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
           }
         ]
       end
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [filename, uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:backup:local'" do
@@ -679,16 +681,17 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "with a invalid uri given" do
-        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [filename, bad_uri, uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
           error = "Please provide #{errmsg}"
 
+          expect_readline_question_asked file_prompt
           expect_readline_question_asked uri_prompt
           expect_readline_question_asked user_prompt
           expect_heard [
@@ -698,7 +701,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:backup:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
@@ -745,11 +749,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "no-ops" do
         expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").never
         expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
       it "does not modify the @task_params" do
-        subject.ask_for_tables_to_exclude_in_dump
+        expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
         expect(subject.task_params).to eq(["--", {:uri => uri}])
       end
     end
@@ -962,34 +966,27 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_local_file_options" do
-      let(:file)      { Tempfile.new("foo.dump").tap(&:close) }
+      let(:filepath)  { "/file/that/most/certainly/does/not/exist.dump" }
       let(:prmpt)     { "location to save the dump file to" }
-      let(:default)   { described_class::DB_RESTORE_FILE }
+      let(:default)   { described_class::DB_DEFAULT_DUMP_FILE }
       let(:errmsg)    { "file that exists" }
 
       context "with no filename given" do
-        before do
-          # stub validator for default answer, since it probably doesn't exist on
-          # the machine running these tests.
-          stub_const("#{described_class.name}::LOCAL_FILE_VALIDATOR", ->(_) { true })
-
-          say ""
-          subject.ask_local_file_options
-        end
-
         it "sets @uri to the default filename" do
+          say ""
+          expect(subject.ask_local_file_options).to be_truthy
           expect(subject.uri).to eq(default)
         end
       end
 
       context "with a valid filename given" do
         before do
-          say file.path.to_s
-          subject.ask_local_file_options
+          say filepath
+          expect(subject.ask_local_file_options).to be_truthy
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(file.path)
+          expect(subject.uri).to eq(filepath)
         end
 
         it "sets @task to point to 'evm:db:dump:local'" do
@@ -997,42 +994,30 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
-        end
-      end
-
-      context "with an invalid filename given" do
-        let(:bad_filename) { "#{file.path}.bad_mmkay" }
-
-        before do
-          say [bad_filename, file.path.to_s]
-          subject.ask_local_file_options
-        end
-
-        it "reprompts the user and then properly sets the options" do
-          error = "Please provide #{errmsg}"
-          expect_heard ["Enter the #{prmpt}: ", error, prompt]
-
-          expect(subject.uri).to         eq(file.path)
-          expect(subject.task).to        eq("evm:db:dump:local")
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
         end
       end
     end
 
     describe "#ask_nfs_file_options" do
-      let(:example_uri) { subject.sample_url('nfs') }
+      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
+      let(:filename)    { File.basename(subject.sample_url('nfs')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:prmpt)       { "location to save the remote dump file to\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
       context "with a valid uri given" do
         before do
-          say example_uri
-          subject.ask_nfs_file_options
+          say [filename, uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the nfs file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the nfs share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:dump:remote'" do
@@ -1040,33 +1025,35 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @task_params to point to the nfs file" do
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri, :remote_file_name => filename}])
         end
       end
 
       context "with an invalid uri given" do
-        let(:bad_uri) { "file://host.mydomain.com/path/to/file" }
-
-        before do
-          say [bad_uri, example_uri]
-          subject.ask_nfs_file_options
-        end
+        let(:bad_uri) { "file://host.mydomain.com/path/to" }
 
         it "reprompts the user and then properly sets the options" do
+          say ["file", bad_uri, uri]
+          expect(subject.ask_nfs_file_options).to be_truthy
+
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq("file")
           expect(subject.task).to        eq("evm:db:dump:remote")
-          expect(subject.task_params).to eq(["--", {:uri => example_uri}])
+          expect(subject.task_params).to eq(["--", {:uri => uri, :remote_file_name => "file"}])
         end
       end
     end
 
     describe "#ask_smb_file_options" do
-      let(:example_uri) { subject.sample_url('smb') }
+      let(:uri)         { File.dirname(subject.sample_url('smb')) }
+      let(:filename)    { File.basename(subject.sample_url('smb')) }
+      let(:example_uri) { File.join(uri, filename) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
+      let(:file_prompt) { "location to save the dump file to" }
       let(:uri_prompt)  { "Enter the location to save the remote dump file to\nExample: #{example_uri}" }
       let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
       let(:pass_prompt) { "Enter the password for #{user}" }
@@ -1076,21 +1063,26 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => example_uri,
-            :uri_username => user,
-            :uri_password => pass
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
           }
         ]
       end
 
       context "with a valid uri, username, and password given" do
         before do
-          say [example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [filename, uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
-        it "sets @uri to point to the smb file" do
-          expect(subject.uri).to eq(example_uri)
+        it "sets @uri to point to the smb share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file on the share" do
+          expect(subject.filename).to eq(filename)
         end
 
         it "sets @task to point to 'evm:db:dump:local'" do
@@ -1106,13 +1098,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 
         before do
-          say [bad_uri, example_uri, user, pass]
-          subject.ask_smb_file_options
+          say [filename, bad_uri, uri, user, pass]
+          expect(subject.ask_smb_file_options).to be_truthy
         end
 
         it "reprompts the user and then properly sets the options" do
           error = "Please provide #{errmsg}"
 
+          expect_readline_question_asked file_prompt
           expect_readline_question_asked uri_prompt
           expect_readline_question_asked user_prompt
           expect_heard [
@@ -1122,7 +1115,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             "#{pass_prompt}: ***********\n"
           ]
 
-          expect(subject.uri).to         eq(example_uri)
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:dump:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
@@ -1172,7 +1166,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
 
           say "n"
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
 
           expect(subject.task_params).to eq(["--", {:uri => uri}])
         end
@@ -1181,7 +1175,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "when excluding tables" do
         it "asks to input tables, providing an example and sensible defaults" do
           say ["y", "metrics_*"]
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect_output <<-EXAMPLE.strip_heredoc
 
             To exclude tables from the dump, enter them in a space separated
@@ -1201,14 +1195,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).once.and_call_original
           say ["y", "metrics_* vms"]
 
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vms"]}])
         end
 
         it "defaults to 'metrics_* vim_performance_states event_streams'" do
           say ["y", ""]
 
-          subject.ask_for_tables_to_exclude_in_dump
+          expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
         end
       end
