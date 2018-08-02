@@ -47,7 +47,7 @@ def ensure_key_configured
   end
 end
 
-[:INT, :TERM, :ABRT, :TSTP].each { |s| trap(s) { raise MiqSignalError } }
+[:INT, :TERM, :ABRT, :TSTP].each { |s| trap(s) { raise ManageIQ::ApplianceConsole::MiqSignalError } }
 
 VERSION_FILE  = ManageIQ::ApplianceConsole::RAILS_ROOT.join("VERSION")
 LOGFILE       = ManageIQ::ApplianceConsole::RAILS_ROOT.join("log", "appliance_console.log")
