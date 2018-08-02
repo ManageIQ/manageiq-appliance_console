@@ -1,4 +1,5 @@
 require 'resolv'
+require 'io/console'
 
 module ManageIQ
 module ApplianceConsole
@@ -41,12 +42,7 @@ module ApplianceConsole
 
     def press_any_key
       say("\nPress any key to continue.")
-      begin
-        system("stty raw -echo")
-        STDIN.getc
-      ensure
-        system("stty -raw echo")
-      end
+      STDIN.noecho(&:getc)
     end
 
     def clear_screen
