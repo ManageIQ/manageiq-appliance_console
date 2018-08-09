@@ -18,6 +18,7 @@ module ApplianceConsole
     SAMPLE_URLS = {
       'nfs' => 'nfs://host.mydomain.com/exported/my_exported_folder/db.backup',
       'smb' => 'smb://host.mydomain.com/my_share/daily_backup/db.backup',
+      's3'  => 's3://mybucket/my_subdirectory/daily_backup/db.backup',
     }
 
     def sample_url(scheme)
@@ -135,6 +136,10 @@ module ApplianceConsole
         yield q if block_given?
       end
       pass == "********" ? (default || "") : pass
+    end
+
+    def ask_for_region(prompt, default = "us-east-1")
+      just_ask(prompt, default)
     end
 
     def ask_for_string(prompt, default = nil)

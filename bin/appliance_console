@@ -67,7 +67,8 @@ include ManageIQ::ApplianceConsole::Prompts
 RESTORE_LOCAL   = "Local file".freeze
 RESTORE_NFS     = "Network File System (NFS)".freeze
 RESTORE_SMB     = "Samba (SMB)".freeze
-RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, ManageIQ::ApplianceConsole::CANCEL].freeze
+RESTORE_S3      = "AWS S3 (S3)".freeze
+RESTORE_OPTIONS = [RESTORE_LOCAL, RESTORE_NFS, RESTORE_SMB, RESTORE_S3, ManageIQ::ApplianceConsole::CANCEL].freeze
 
 # Restart choices
 RE_RESTART  = "Restart".freeze
