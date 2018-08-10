@@ -20,11 +20,6 @@ module ManageIQ
         Example: 'mydomain.com/user'
       PROMPT
 
-      ACCESS_KEY_PROMPT = <<-PROMPT.strip_heredoc.chomp
-        Access Key ID with access to this file.
-        Example: 'amazon_aws_user'
-      PROMPT
-
       DB_DUMP_WARNING = <<-WARN.strip_heredoc
         WARNING:  This is not the recommended and supported way of running a
         database backup, and is strictly meant for exporting a database for
@@ -102,8 +97,13 @@ module ManageIQ
       end
 
       def ask_s3_file_options
+        access_key_prompt = <<-PROMPT.strip_heredoc.chomp
+          Access Key ID with access to this file.
+          Example: 'amazon_aws_user'
+        PROMPT
+
         @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
-        user         = just_ask(ACCESS_KEY_PROMPT)
+        user         = just_ask(access_key_prompt)
         pass         = ask_for_password("Secret Access Key for #{user}")
         region       = ask_for_region("Amazon Region for database file")
 
