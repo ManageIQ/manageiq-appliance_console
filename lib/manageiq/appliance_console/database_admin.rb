@@ -8,7 +8,8 @@ module ManageIQ
       LOCAL_FILE     = "Local file".freeze
       NFS_FILE       = "Network File System (NFS)".freeze
       SMB_FILE       = "Samba (SMB)".freeze
-      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, CANCEL].freeze
+      S3_FILE        = "Amazon S3 (S3)".freeze
+      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, S3_FILE, CANCEL].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
@@ -56,6 +57,7 @@ module ManageIQ
         when LOCAL_FILE then ask_local_file_options
         when NFS_FILE   then ask_nfs_file_options
         when SMB_FILE   then ask_smb_file_options
+        when S3_FILE    then ask_s3_file_options
         when CANCEL     then raise MiqSignalError
         end
       end
@@ -92,6 +94,29 @@ module ManageIQ
 
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]
+      end
+
+      def ask_s3_file_options
+        access_key_prompt = <<-PROMPT.strip_heredoc.chomp
+          Access Key ID with access to this file.
+          Example: 'amazon_aws_user'
+        PROMPT
+
+        @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
+        user         = just_ask(access_key_prompt)
+        pass         = ask_for_password("Secret Access Key for #{user}")
+        region       = just_ask("Amazon Region for database file", "us-east-1")
+
+        @task        = "evm:db:#{action}:remote"
+        @task_params = [
+          "--",
+          {
+            :uri          => uri,
+            :uri_username => user,
+            :uri_password => pass,
+            :aws_region   => region
+          }
+        ]
       end
 
       def ask_to_delete_backup_after_restore
