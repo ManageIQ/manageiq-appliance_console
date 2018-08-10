@@ -54,7 +54,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           1) Local file
           2) Network File System (NFS)
           3) Samba (SMB)
-          4) Cancel
+          4) Amazon S3 (S3)
+          5) Cancel
 
           Choose the restore database file: |1|
         PROMPT
@@ -88,8 +89,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq(described_class::SMB_FILE)
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_s3_file_options when choosen" do
+        expect(subject).to receive(:ask_s3_file_options).once
         say "4"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::S3_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "5"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
@@ -509,7 +517,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           1) Local file
           2) Network File System (NFS)
           3) Samba (SMB)
-          4) Cancel
+          4) Amazon S3 (S3)
+          5) Cancel
 
           Choose the backup output file name: |1|
         PROMPT
@@ -543,8 +552,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq(described_class::SMB_FILE)
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_s3_file_options when choosen" do
+        expect(subject).to receive(:ask_s3_file_options).once
         say "4"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::S3_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "5"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
@@ -925,7 +941,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           1) Local file
           2) Network File System (NFS)
           3) Samba (SMB)
-          4) Cancel
+          4) Amazon S3 (S3)
+          5) Cancel
 
           Choose the dump output file name: |1|
         PROMPT
@@ -960,7 +977,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       it "cancels when CANCEL option is choosen" do
-        say "4"
+        say "5"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
