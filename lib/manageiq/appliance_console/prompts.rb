@@ -138,10 +138,6 @@ module ApplianceConsole
       pass == "********" ? (default || "") : pass
     end
 
-    def ask_for_region(prompt, default = "us-east-1")
-      just_ask(prompt, default)
-    end
-
     def ask_for_string(prompt, default = nil)
       just_ask(prompt, default)
     end

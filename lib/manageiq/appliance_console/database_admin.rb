@@ -105,7 +105,7 @@ module ManageIQ
         @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
         user         = just_ask(access_key_prompt)
         pass         = ask_for_password("Secret Access Key for #{user}")
-        region       = ask_for_region("Amazon Region for database file")
+        region       = just_ask("Amazon Region for database file", "us-east-1")
 
         @task        = "evm:db:#{action}:remote"
         @task_params = [
@@ -114,7 +114,7 @@ module ManageIQ
             :uri          => uri,
             :uri_username => user,
             :uri_password => pass,
-            :uri_region   => region
+            :aws_region   => region
           }
         ]
       end
