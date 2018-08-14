@@ -42,7 +42,7 @@ def ensure_key_configured
     else
       say("\nEncryption key not configured.")
       press_any_key
-      raise MiqSignalError
+      raise ManageIQ::ApplianceConsole::MiqSignalError
     end
   end
 end
