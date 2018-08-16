@@ -103,9 +103,9 @@ module ManageIQ
         PROMPT
 
         @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
+        region       = just_ask("Amazon Region for database file", "us-east-1")
         user         = just_ask(access_key_prompt)
         pass         = ask_for_password("Secret Access Key for #{user}")
-        region       = just_ask("Amazon Region for database file", "us-east-1")
 
         @task        = "evm:db:#{action}:remote"
         @task_params = [

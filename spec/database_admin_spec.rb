@@ -282,6 +282,108 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_s3_file_options" do
+      let(:uri)               { File.dirname(subject.sample_url('s3')) }
+      let(:filename)          { File.basename(subject.sample_url('s3')) }
+      let(:example_uri)       { File.join(uri, filename) }
+      let(:access_key_id)     { 'foobar' }
+      let(:secret_access_key) { 'supersecret' }
+      let(:region)            { 'us-east-2' }
+      let(:uri_prompt)        { "Enter the location of the remote backup file\nExample: #{example_uri}" }
+      let(:access_key_prompt) { "Access Key ID with access to this file.\nExample: 'amazon_aws_user'" }
+      let(:secret_key_prompt) { "Enter the Secret Access Key for #{access_key_id}" }
+      let(:region_prompt)     { "Amazon Region for database file" }
+      let(:errmsg)            { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri          => uri,
+            :uri_username => access_key_id,
+            :uri_password => secret_access_key,
+            :aws_region   => region
+          }
+        ]
+      end
+
+      context "with a valid uri, access_key_id, secret_access_key, and region given" do
+        before do
+          say [uri, region, access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the s3 share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
+        end
+
+        it "sets @task to point to 'evm:db:restore:remote'" do
+          expect(subject.task).to eq("evm:db:restore:remote")
+        end
+
+        it "sets @task_params to point to the s3 file, access_key_id, and secret_access_key" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "using the default region" do
+        let(:region) { "us-east-1" }
+
+        before do
+          say [uri, "", access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the s3 share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
+        end
+
+        it "sets @task to point to 'evm:db:restore:remote'" do
+          expect(subject.task).to eq("evm:db:restore:remote")
+        end
+
+        it "sets @task_params to point to the s3 file, access_key_id, and secret_access_key" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          say [bad_uri, uri, region, access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked access_key_prompt
+          expect_readline_question_asked region_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{secret_key_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
+          expect(subject.task).to        eq("evm:db:restore:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
     describe "#ask_to_delete_backup_after_restore" do
       context "when @backup_type is LOCAL_FILE" do
         let(:uri) { described_class::DB_RESTORE_FILE }
@@ -719,6 +821,110 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
           expect(subject.uri).to         eq(uri)
           expect(subject.filename).to    eq(filename)
+          expect(subject.task).to        eq("evm:db:backup:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
+    describe "#ask_s3_file_options" do
+      let(:uri)               { File.dirname(subject.sample_url('s3')) }
+      let(:filename)          { File.basename(subject.sample_url('s3')) }
+      let(:example_uri)       { File.join(uri, filename) }
+      let(:access_key_id)     { 'foobar' }
+      let(:secret_access_key) { 'supersecret' }
+      let(:region)            { 'us-east-2' }
+      let(:uri_prompt)        { "location to save the remote backup file to\nExample: #{example_uri}" }
+      let(:access_key_prompt) { "Access Key ID with access to this file.\nExample: 'amazon_aws_user'" }
+      let(:secret_key_prompt) { "Enter the Secret Access Key for #{access_key_id}" }
+      let(:region_prompt)     { "Amazon Region for database file" }
+      let(:errmsg)            { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri          => uri,
+            :uri_username => access_key_id,
+            :uri_password => secret_access_key,
+            :aws_region   => region
+          }
+        ]
+      end
+
+      context "with a valid uri, access_key_id, secret_access_key, and region given" do
+        before do
+          say [uri, region, access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the s3 share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file in s3" do
+          pending "will fix in next commit"
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:backup:remote'" do
+          expect(subject.task).to eq("evm:db:backup:remote")
+        end
+
+        it "sets @task_params to point to the s3 file, access_key_id, and secret_access_key" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "using the default region" do
+        let(:region) { "us-east-1" }
+
+        before do
+          say [uri, "", access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the s3 share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file in s3" do
+          pending "will fix in next commit"
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:backup:remote'" do
+          expect(subject.task).to eq("evm:db:backup:remote")
+        end
+
+        it "sets @task_params to point to the s3 file, access_key_id, and secret_access_key" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          say [bad_uri, uri, region, access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked access_key_prompt
+          expect_readline_question_asked region_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{secret_key_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          # expect(subject.filename).to    eq(filename)  (pending)
           expect(subject.task).to        eq("evm:db:backup:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
