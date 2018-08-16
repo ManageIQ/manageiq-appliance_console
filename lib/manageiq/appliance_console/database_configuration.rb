@@ -269,6 +269,7 @@ FRIENDLY
 
     def validate_encryption_key!
       raise "Encryption key invalid" unless ManageIQ::ApplianceConsole::Utilities.rake("evm:validate_encryption_key", {})
+      true
     end
 
     def do_save(settings)
