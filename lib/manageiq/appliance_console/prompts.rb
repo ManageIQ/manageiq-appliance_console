@@ -43,7 +43,7 @@ module ApplianceConsole
 
     def press_any_key
       say("\nPress any key to continue.")
-      STDIN.noecho(&:getc)
+      STDIN.noecho(&:getch)
     end
 
     def clear_screen
