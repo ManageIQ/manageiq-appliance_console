@@ -901,6 +901,33 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
       end
 
+      context "with an empty path URI" do
+        let(:uri)         { 's3://mybucket' }
+        let(:filename)    { 'database_backup.tar.gz' }
+        let(:example_uri) { subject.sample_url('s3') }
+
+        before do
+          say [filename, uri, region, access_key_id, secret_access_key]
+          expect(subject.ask_s3_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the s3 share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename the name of the file in s3" do
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:backup:remote'" do
+          expect(subject.task).to eq("evm:db:backup:remote")
+        end
+
+        it "sets @task_params to point to the s3 file, access_key_id, and secret_access_key" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
       context "with a invalid uri given" do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 

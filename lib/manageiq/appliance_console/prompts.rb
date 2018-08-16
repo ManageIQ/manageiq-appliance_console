@@ -25,7 +25,7 @@ module ApplianceConsole
       SAMPLE_URLS[scheme]
     end
 
-    def ask_for_uri(prompt, expected_scheme)
+    def ask_for_uri(prompt, expected_scheme, opts = {})
       require 'uri'
       just_ask(prompt, nil, nil, 'a valid URI') do |q|
         q.validate = lambda do |a|
@@ -36,7 +36,7 @@ module ApplianceConsole
           # validate it has a hostname/ip and a share
           u.scheme == expected_scheme &&
             (u.host =~ HOSTNAME_REGEXP || u.hostname =~ IP_REGEXP) &&
-            !u.path.empty?
+            (opts[:optional_path] || !u.path.empty?)
         end
       end
     end
