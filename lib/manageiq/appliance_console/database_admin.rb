@@ -102,21 +102,22 @@ module ManageIQ
           Example: 'amazon_aws_user'
         PROMPT
 
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
         @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
         region       = just_ask("Amazon Region for database file", "us-east-1")
         user         = just_ask(access_key_prompt)
         pass         = ask_for_password("Secret Access Key for #{user}")
 
+        params = {
+          :uri          => uri,
+          :uri_username => user,
+          :uri_password => pass,
+          :aws_region   => region
+        }
+        params[:remote_file_name] = filename if filename
+
         @task        = "evm:db:#{action}:remote"
-        @task_params = [
-          "--",
-          {
-            :uri          => uri,
-            :uri_username => user,
-            :uri_password => pass,
-            :aws_region   => region
-          }
-        ]
+        @task_params = ["--", params]
       end
 
       def ask_to_delete_backup_after_restore

@@ -844,17 +844,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         [
           "--",
           {
-            :uri          => uri,
-            :uri_username => access_key_id,
-            :uri_password => secret_access_key,
-            :aws_region   => region
+            :uri              => uri,
+            :uri_username     => access_key_id,
+            :uri_password     => secret_access_key,
+            :aws_region       => region,
+            :remote_file_name => filename
           }
         ]
       end
 
       context "with a valid uri, access_key_id, secret_access_key, and region given" do
         before do
-          say [uri, region, access_key_id, secret_access_key]
+          say [filename, uri, region, access_key_id, secret_access_key]
           expect(subject.ask_s3_file_options).to be_truthy
         end
 
@@ -863,7 +864,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @filename the name of the file in s3" do
-          pending "will fix in next commit"
           expect(subject.filename).to eq(filename)
         end
 
@@ -880,7 +880,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:region) { "us-east-1" }
 
         before do
-          say [uri, "", access_key_id, secret_access_key]
+          say [filename, uri, "", access_key_id, secret_access_key]
           expect(subject.ask_s3_file_options).to be_truthy
         end
 
@@ -889,7 +889,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @filename the name of the file in s3" do
-          pending "will fix in next commit"
           expect(subject.filename).to eq(filename)
         end
 
@@ -906,7 +905,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
 
         before do
-          say [bad_uri, uri, region, access_key_id, secret_access_key]
+          say [filename, bad_uri, uri, region, access_key_id, secret_access_key]
           expect(subject.ask_s3_file_options).to be_truthy
         end
 
@@ -924,7 +923,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           ]
 
           expect(subject.uri).to         eq(uri)
-          # expect(subject.filename).to    eq(filename)  (pending)
+          expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:backup:remote")
           expect(subject.task_params).to eq(expected_task_params)
         end
