@@ -221,10 +221,10 @@ module ApplianceConsole
 
     def self.config_status
       fetch_ipa_configuration("ipa_server") ||
-      fetch_sssd_domain ||
-      fetch_oidc_configured? ||
-      fetch_saml_configured? ||
-      "not configured"
+        fetch_sssd_domain                   ||
+        fetch_oidc_configured?              ||
+        fetch_saml_configured?              ||
+        "not configured"
     end
 
     def self.ipa_client_configured?
