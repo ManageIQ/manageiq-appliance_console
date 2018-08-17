@@ -222,8 +222,8 @@ module ApplianceConsole
     def self.config_status
       fetch_ipa_configuration("ipa_server") ||
         fetch_sssd_domain                   ||
-        fetch_oidc_configured?              ||
-        fetch_saml_configured?              ||
+        oidc_status                         ||
+        saml_status                         ||
         "not configured"
     end
 
@@ -248,11 +248,11 @@ module ApplianceConsole
       config_file_read(SSSD_CONFIG)[/\[domain\/(.*)\]/, 1] if File.exist?(SSSD_CONFIG)
     end
 
-    def self.fetch_saml_configured?
+    def self.saml_status
       "External Auth SAML" if File.exist?(HTTP_REMOTE_USER)
     end
 
-    def self.fetch_oidc_configured?
+    def self.oidc_status
       "External Auth OpenID Connect" if File.exist?(HTTP_REMOTE_USER_OIDC)
     end
 
