@@ -7,10 +7,10 @@ module ApplianceConsole
     AUTH_PATH = "/authentication".freeze
 
     EXT_AUTH_OPTIONS = {
-      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On", :logic  => true},
-      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",           :logic  => true},
-      "#{AUTH_PATH}/oidc_enabled"         => {:label => "OIDC",           :logic  => true},
-      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login",    :logic  => false}
+      "#{AUTH_PATH}/sso_enabled"          => {:label => "Single Sign-On",               :logic  => true},
+      "#{AUTH_PATH}/saml_enabled"         => {:label => "SAML",                         :logic  => true},
+      "#{AUTH_PATH}/oidc_enabled"         => {:label => "OIDC",                         :logic  => true},
+      "#{AUTH_PATH}/local_login_disabled" => {:label => "Local Login for SAML or OIDC", :logic  => false}
     }.freeze
 
     include ManageIQ::ApplianceConsole::Logging
