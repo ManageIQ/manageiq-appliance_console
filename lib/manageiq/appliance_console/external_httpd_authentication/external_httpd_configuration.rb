@@ -8,28 +8,29 @@ module ApplianceConsole
       #
       # External Authentication Definitions
       #
-      IPA_COMMAND          = "/usr/bin/ipa".freeze
-      IPA_INSTALL_COMMAND  = "/usr/sbin/ipa-client-install".freeze
-      IPA_GETKEYTAB        = "/usr/sbin/ipa-getkeytab".freeze
+      IPA_COMMAND           = "/usr/bin/ipa".freeze
+      IPA_INSTALL_COMMAND   = "/usr/sbin/ipa-client-install".freeze
+      IPA_GETKEYTAB         = "/usr/sbin/ipa-getkeytab".freeze
 
-      KERBEROS_CONFIG_FILE = "/etc/krb5.conf".freeze
+      KERBEROS_CONFIG_FILE  = "/etc/krb5.conf".freeze
 
-      SSSD_CONFIG          = "/etc/sssd/sssd.conf".freeze
-      PAM_CONFIG           = "/etc/pam.d/httpd-auth".freeze
-      HTTP_KEYTAB          = "/etc/http.keytab".freeze
-      HTTP_REMOTE_USER     = "/etc/httpd/conf.d/manageiq-remote-user.conf".freeze
-      HTTP_EXTERNAL_AUTH   = "/etc/httpd/conf.d/manageiq-external-auth.conf".freeze
+      SSSD_CONFIG           = "/etc/sssd/sssd.conf".freeze
+      PAM_CONFIG            = "/etc/pam.d/httpd-auth".freeze
+      HTTP_KEYTAB           = "/etc/http.keytab".freeze
+      HTTP_REMOTE_USER      = "/etc/httpd/conf.d/manageiq-remote-user.conf".freeze
+      HTTP_REMOTE_USER_OIDC = "/etc/httpd/conf.d/manageiq-remote-user-openidc.conf".freeze
+      HTTP_EXTERNAL_AUTH    = "/etc/httpd/conf.d/manageiq-external-auth.conf".freeze
       HTTP_EXTERNAL_AUTH_TEMPLATE = "#{HTTP_EXTERNAL_AUTH}.erb".freeze
 
-      GETSEBOOL_COMMAND    = "/usr/sbin/getsebool".freeze
-      SETSEBOOL_COMMAND    = "/usr/sbin/setsebool".freeze
-      GETENFORCE_COMMAND   = "/usr/sbin/getenforce".freeze
+      GETSEBOOL_COMMAND     = "/usr/sbin/getsebool".freeze
+      SETSEBOOL_COMMAND     = "/usr/sbin/setsebool".freeze
+      GETENFORCE_COMMAND    = "/usr/sbin/getenforce".freeze
 
-      APACHE_USER          = "apache".freeze
+      APACHE_USER           = "apache".freeze
 
-      TIMESTAMP_FORMAT     = "%Y%m%d_%H%M%S".freeze
+      TIMESTAMP_FORMAT      = "%Y%m%d_%H%M%S".freeze
 
-      LDAP_ATTRS           = {
+      LDAP_ATTRS            = {
         "mail"        => "REMOTE_USER_EMAIL",
         "givenname"   => "REMOTE_USER_FIRSTNAME",
         "sn"          => "REMOTE_USER_LASTNAME",
@@ -219,7 +220,11 @@ module ApplianceConsole
     end
 
     def self.config_status
-      fetch_ipa_configuration("ipa_server") || fetch_sssd_domain || "not configured"
+      fetch_ipa_configuration("ipa_server") ||
+        fetch_sssd_domain                   ||
+        oidc_status                         ||
+        saml_status                         ||
+        "not configured"
     end
 
     def self.ipa_client_configured?
@@ -241,6 +246,14 @@ module ApplianceConsole
 
     def self.fetch_sssd_domain
       config_file_read(SSSD_CONFIG)[/\[domain\/(.*)\]/, 1] if File.exist?(SSSD_CONFIG)
+    end
+
+    def self.saml_status
+      "External Auth SAML" if File.exist?(HTTP_REMOTE_USER)
+    end
+
+    def self.oidc_status
+      "External Auth OpenID Connect" if File.exist?(HTTP_REMOTE_USER_OIDC)
     end
 
     delegate :ipa_client_configured?, :config_file_read, :fetch_ipa_configuration, :config_status, :to => self

@@ -1,6 +1,11 @@
 describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
   let(:host) { "this.server.com" }
+  let(:external_auth_config) { Tempfile.new(@spec_name.downcase) }
   subject { described_class.new(host) }
+
+  before do
+    @spec_name = File.basename(__FILE__).split(".rb").first.freeze
+  end
 
   context "#domain_from_host" do
     it "should be blank for blank" do
@@ -176,6 +181,22 @@ describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
                                                              :params     => ["admin"],
                                                              :stdin_data => "$my_password")
       subject.send(:configure_ipa_http_service)
+    end
+  end
+
+  context "#config_status" do
+    it "Returns not configured" do
+      expect(described_class.config_status).to eq("not configured")
+    end
+
+    it "Returns OpenID Connect configured" do
+      stub_const("ManageIQ::ApplianceConsole::ExternalHttpdAuthentication::ExternalHttpdConfiguration::HTTP_REMOTE_USER_OIDC", external_auth_config)
+      expect(described_class.config_status).to eq("External Auth OpenID Connect")
+    end
+
+    it "Returns SAML configured" do
+      stub_const("ManageIQ::ApplianceConsole::ExternalHttpdAuthentication::ExternalHttpdConfiguration::HTTP_REMOTE_USER", external_auth_config)
+      expect(described_class.config_status).to eq("External Auth SAML")
     end
   end
 end
