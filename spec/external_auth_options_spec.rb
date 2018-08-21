@@ -1,10 +1,9 @@
 describe ManageIQ::ApplianceConsole::ExternalAuthOptions do
   subject { described_class.new }
-  let(:result) { double(@spec_name, :failure? => false) }
+  let(:result) { double("RakeResult", :failure? => false) }
   let(:rake_set) { "evm:settings:set" }
 
   before do
-    @spec_name = File.basename(__FILE__).split(".rb").first.freeze
     allow(subject).to receive(:say)
   end
 
