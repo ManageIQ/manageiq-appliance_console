@@ -100,6 +100,8 @@ module ApplianceConsole
         configure_oidc!(params)
       elsif params.include?("/authentication/oidc_enabled=false") || params.include?("/authentication/saml_enabled=false")
         configure_none!(params)
+      else
+        params
       end
     end
 
