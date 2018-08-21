@@ -103,7 +103,7 @@ module ManageIQ
         PROMPT
 
         @filename    = just_ask(*filename_prompt_args) unless action == :restore
-        @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"))
+        @uri         = ask_for_uri(*remote_file_prompt_args_for("s3"), :optional_path => true)
         region       = just_ask("Amazon Region for database file", "us-east-1")
         user         = just_ask(access_key_prompt)
         pass         = ask_for_password("Secret Access Key for #{user}")
