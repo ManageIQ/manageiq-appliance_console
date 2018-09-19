@@ -9,7 +9,8 @@ module ManageIQ
       NFS_FILE       = "Network File System (NFS)".freeze
       SMB_FILE       = "Samba (SMB)".freeze
       S3_FILE        = "Amazon S3 (S3)".freeze
-      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, S3_FILE, CANCEL].freeze
+      FTP_FILE       = "File Transfer Protocol (FTP)".freeze
+      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, S3_FILE, FTP_FILE, CANCEL].freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
@@ -59,6 +60,7 @@ module ManageIQ
         when NFS_FILE   then ask_nfs_file_options
         when SMB_FILE   then ask_smb_file_options
         when S3_FILE    then ask_s3_file_options
+        when FTP_FILE   then ask_ftp_file_options
         when CANCEL     then raise MiqSignalError
         end
       end
@@ -115,6 +117,21 @@ module ManageIQ
           :uri_password => pass,
           :aws_region   => region
         }
+        params[:remote_file_name] = filename if filename
+
+        @task        = "evm:db:#{action}:remote"
+        @task_params = ["--", params]
+      end
+
+      def ask_ftp_file_options
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
+        @uri         = ask_for_uri(*remote_file_prompt_args_for("ftp"), :optional_path => true)
+        user         = just_ask(USER_PROMPT)
+        pass         = ask_for_password("password for #{user}")
+
+        params = { :uri => uri }
+        params[:uri_username]     = user     if user.present?
+        params[:uri_password]     = pass     if pass.present?
         params[:remote_file_name] = filename if filename
 
         @task        = "evm:db:#{action}:remote"

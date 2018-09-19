@@ -56,7 +56,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           2) Network File System (NFS)
           3) Samba (SMB)
           4) Amazon S3 (S3)
-          5) Cancel
+          5) File Transfer Protocol (FTP)
+          6) Cancel
 
           Choose the restore database file: |1|
         PROMPT
@@ -97,8 +98,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq(described_class::S3_FILE)
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_ftp_file_options when choosen" do
+        expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
@@ -385,6 +393,96 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_ftp_file_options" do
+      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
+      let(:filename)    { File.basename(subject.sample_url('ftp')) }
+      let(:example_uri) { File.join(uri, filename) }
+      let(:user)        { 'admin' }
+      let(:pass)        { 'supersecret' }
+      let(:uri_prompt)  { "Enter the location of the remote backup file\nExample: #{example_uri}" }
+      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
+      let(:pass_prompt) { "Enter the password for #{user}" }
+      let(:errmsg)      { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri          => uri,
+            :uri_username => user,
+            :uri_password => pass
+          }
+        ]
+      end
+
+      context "with a valid uri, username, and password given" do
+        before do
+          say [uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
+        end
+
+        it "sets @task to point to 'evm:db:restore:local'" do
+          expect(subject.task).to eq("evm:db:restore:remote")
+        end
+
+        it "sets @task_params to point to the ftp file, username, and password" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          say [bad_uri, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked user_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{pass_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
+          expect(subject.task).to        eq("evm:db:restore:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with no username and password given" do
+        let(:user) { '' }
+        let(:pass) { '' }
+
+        before do
+          say [uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "does not pass parameters for --uri-username and --uri-password" do
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
+          expect(subject.task).to        eq("evm:db:restore:remote")
+          expect(subject.task_params).to eq(["--", { :uri => uri }])
+        end
+      end
+    end
+
     describe "#ask_to_delete_backup_after_restore" do
       context "when @backup_type is LOCAL_FILE" do
         let(:uri) { described_class::DB_RESTORE_FILE }
@@ -643,7 +741,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           2) Network File System (NFS)
           3) Samba (SMB)
           4) Amazon S3 (S3)
-          5) Cancel
+          5) File Transfer Protocol (FTP)
+          6) Cancel
 
           Choose the backup output file name: |1|
         PROMPT
@@ -684,8 +783,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq(described_class::S3_FILE)
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_ftp_file_options when choosen" do
+        expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
@@ -980,6 +1086,98 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_ftp_file_options" do
+      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
+      let(:filename)    { File.basename(subject.sample_url('ftp')) }
+      let(:example_uri) { File.join(uri, filename) }
+      let(:user)        { 'admin' }
+      let(:pass)        { 'supersecret' }
+      let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
+      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
+      let(:pass_prompt) { "Enter the password for #{user}" }
+      let(:errmsg)      { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
+          }
+        ]
+      end
+
+      context "with a valid uri, username, and password given" do
+        before do
+          say [filename, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:backup:local'" do
+          expect(subject.task).to eq("evm:db:backup:remote")
+        end
+
+        it "sets @task_params to point to the ftp file, username, and password" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          say [filename, bad_uri, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked user_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{pass_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
+          expect(subject.task).to        eq("evm:db:backup:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with no username and password given" do
+        let(:user) { '' }
+        let(:pass) { '' }
+
+        before do
+          say [filename, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "does not pass parameters for --uri-username and --uri-password" do
+          task_params_expected = ["--", { :uri => uri, :remote_file_name => filename }]
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
+          expect(subject.task).to        eq("evm:db:backup:remote")
+          expect(subject.task_params).to eq(task_params_expected)
+        end
+      end
+    end
+
     describe "#ask_to_delete_backup_after_restore" do
       context "when @backup_type is LOCAL_FILE" do
         let(:uri) { described_class::DB_RESTORE_FILE }
@@ -1220,7 +1418,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           2) Network File System (NFS)
           3) Samba (SMB)
           4) Amazon S3 (S3)
-          5) Cancel
+          5) File Transfer Protocol (FTP)
+          6) Cancel
 
           Choose the dump output file name: |1|
         PROMPT
@@ -1254,8 +1453,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq(described_class::SMB_FILE)
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_ftp_file_options when choosen" do
+        expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
     end
@@ -1414,6 +1620,98 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:dump:remote")
           expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
+    describe "#ask_ftp_file_options" do
+      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
+      let(:filename)    { File.basename(subject.sample_url('ftp')) }
+      let(:example_uri) { File.join(uri, filename) }
+      let(:user)        { 'admin' }
+      let(:pass)        { 'supersecret' }
+      let(:uri_prompt)  { "Enter the location to save the remote dump file to\nExample: #{example_uri}" }
+      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
+      let(:pass_prompt) { "Enter the password for #{user}" }
+      let(:errmsg)      { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri              => uri,
+            :uri_username     => user,
+            :uri_password     => pass,
+            :remote_file_name => filename
+          }
+        ]
+      end
+
+      context "with a valid uri, username, and password given" do
+        before do
+          say [filename, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:dump:local'" do
+          expect(subject.task).to eq("evm:db:dump:remote")
+        end
+
+        it "sets @task_params to point to the ftp file, username, and password" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          say [filename, bad_uri, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked user_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{pass_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
+          expect(subject.task).to        eq("evm:db:dump:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with no username and password given" do
+        let(:user) { '' }
+        let(:pass) { '' }
+
+        before do
+          say [filename, uri, user, pass]
+          expect(subject.ask_ftp_file_options).to be_truthy
+        end
+
+        it "does not pass parameters for --uri-username and --uri-password" do
+          task_params_expected = ["--", { :uri => uri, :remote_file_name => filename }]
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(filename)
+          expect(subject.task).to        eq("evm:db:dump:remote")
+          expect(subject.task_params).to eq(task_params_expected)
         end
       end
     end
