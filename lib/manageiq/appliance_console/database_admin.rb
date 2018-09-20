@@ -42,6 +42,7 @@ module ManageIQ
         say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
         ask_for_tables_to_exclude_in_dump
+        ask_to_split_up_output
       end
 
       def activate
@@ -147,6 +148,12 @@ module ManageIQ
         end || true
       end
 
+      def ask_to_split_up_output
+        if action == :dump && should_split_output?
+          @task_params.last[:byte_count] = ask_for_string("byte size to split by", "500M")
+        end || true
+      end
+
       def confirm_and_execute
         if allowed_to_execute?
           processing_message
@@ -178,6 +185,12 @@ module ManageIQ
 
       def should_exclude_tables?
         ask_yn?("Would you like to exclude tables in the dump") do |q|
+          q.readline = true
+        end
+      end
+
+      def should_split_output?
+        ask_yn?("Would you like to split the #{action} output into multiple parts") do |q|
           q.readline = true
         end
       end

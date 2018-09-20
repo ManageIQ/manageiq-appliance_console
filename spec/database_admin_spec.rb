@@ -27,6 +27,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -449,6 +450,27 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_to_split_up_output" do
+      let(:uri)               { "/tmp/my_db.dump" }
+      let(:yn_prompt)         { "Would you like to split the restore output into multiple parts" }
+      let(:byte_count_prompt) { "byte size to split by" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with(yn_prompt).never
+        expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
+        expect(subject.ask_to_split_up_output).to be_truthy
+      end
+
+      it "does not modify the @task_params" do
+        expect(subject.ask_to_split_up_output).to be_truthy
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
+      end
+    end
+
     describe "#confirm_and_execute" do
       let(:uri)             { "/tmp/my_db.backup" }
       let(:agree)           { "y" }
@@ -592,6 +614,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Create Database Backup\n\n")
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -1006,6 +1029,27 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_to_split_up_output" do
+      let(:uri)               { "/tmp/my_db.dump" }
+      let(:yn_prompt)         { "Would you like to split the restore output into multiple parts" }
+      let(:byte_count_prompt) { "byte size to split by" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      it "no-ops" do
+        expect(subject).to receive(:ask_yn?).with(yn_prompt).never
+        expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
+        expect(subject.ask_to_split_up_output).to be_truthy
+      end
+
+      it "does not modify the @task_params" do
+        expect(subject.ask_to_split_up_output).to be_truthy
+        expect(subject.task_params).to eq(["--", {:uri => uri}])
+      end
+    end
+
     describe "#confirm_and_execute" do
       let(:uri)             { "/tmp/my_db.backup" }
       let(:agree)           { "y" }
@@ -1130,6 +1174,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with(pg_dump_warning)
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -1137,6 +1182,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "has proper formatting for the pg_dump warning" do
         allow(subject).to receive(:ask_file_location)
         allow(subject).to receive(:ask_for_tables_to_exclude_in_dump)
+        allow(subject).to receive(:ask_to_split_up_output)
         subject.ask_questions
 
         expect_output <<-PROMPT.strip_heredoc
@@ -1453,6 +1499,55 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
+        end
+      end
+    end
+
+    describe "#ask_to_split_up_output" do
+      let(:uri)               { "/tmp/my_db.dump" }
+      let(:yn_prompt)         { "Would you like to split the dump output into multiple parts" }
+      let(:byte_count_prompt) { "byte size to split by" }
+
+      before do
+        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+      end
+
+      context "when not splitting output" do
+        it "does not add :byte_count to @task_params" do
+          expect(subject).to receive(:ask_yn?).with(yn_prompt).once.and_call_original
+          expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
+
+          say "n"
+          expect(subject.ask_to_split_up_output).to be_truthy
+
+          expect(subject.task_params).to eq(["--", {:uri => uri}])
+        end
+      end
+
+      context "when splitting output" do
+        it "prompts the user" do
+          say ["y", "750M"]
+          expect(subject.ask_to_split_up_output).to be_truthy
+          expect_readline_question_asked <<-PROMPT.strip_heredoc.chomp
+            Would you like to split the dump output into multiple parts? (Y/N): y
+            Enter the byte size to split by: |500M| 750M
+          PROMPT
+        end
+
+        it "adds `:byte_count => '250M'` to @task_params" do
+          expect(subject).to receive(:ask_yn?).with(yn_prompt).once.and_call_original
+          expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").once.and_call_original
+          say ["y", "250M"]
+
+          expect(subject.ask_to_split_up_output).to be_truthy
+          expect(subject.task_params).to eq(["--", {:uri => uri, :byte_count => "250M"}])
+        end
+
+        it "defaults to '500M'" do
+          say ["y", ""]
+
+          expect(subject.ask_to_split_up_output).to be_truthy
+          expect(subject.task_params).to eq(["--", {:uri => uri, :byte_count => "500M"}])
         end
       end
     end
