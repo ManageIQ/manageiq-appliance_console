@@ -19,6 +19,7 @@ module ApplianceConsole
       'nfs' => 'nfs://host.mydomain.com/exported/my_exported_folder/db.backup',
       'smb' => 'smb://host.mydomain.com/my_share/daily_backup/db.backup',
       's3'  => 's3://mybucket/my_subdirectory/daily_backup/db.backup',
+      'ftp' => 'ftp://host.mydomain.com/path/to/daily_backup/db.backup'
     }
 
     def sample_url(scheme)
