@@ -29,6 +29,13 @@ module ManageIQ
 
       WARN
 
+      SAMPLE_URLS = {
+        'nfs' => 'nfs://host.mydomain.com/exported/my_exported_folder/db.backup',
+        'smb' => 'smb://host.mydomain.com/my_share/daily_backup/db.backup',
+        's3'  => 's3://mybucket/my_subdirectory/daily_backup/db.backup',
+        'ftp' => 'ftp://host.mydomain.com/path/to/daily_backup/db.backup'
+      }
+
       attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
@@ -232,8 +239,12 @@ module ManageIQ
                   else
                     "location to save the remote #{action} file to"
                   end
-        prompt += "\nExample: #{SAMPLE_URLS[remote_type]}"
+        prompt += "\nExample: #{sample_url(remote_type)}"
         [prompt, remote_type]
+      end
+
+      def sample_url(scheme)
+        SAMPLE_URLS[scheme]
       end
 
       def processing_message
