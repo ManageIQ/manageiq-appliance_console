@@ -5,12 +5,11 @@ module ManageIQ
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
-      LOCAL_FILE     = "Local file".freeze
-      NFS_FILE       = "Network File System (NFS)".freeze
-      SMB_FILE       = "Samba (SMB)".freeze
-      S3_FILE        = "Amazon S3 (S3)".freeze
-      FTP_FILE       = "File Transfer Protocol (FTP)".freeze
-      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, S3_FILE, FTP_FILE, CANCEL].freeze
+      LOCAL_FILE = "local".freeze
+      NFS_FILE   = "nfs".freeze
+      SMB_FILE   = "smb".freeze
+      S3_FILE    = "s3".freeze
+      FTP_FILE   = "ftp".freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
@@ -28,13 +27,6 @@ module ManageIQ
 
 
       WARN
-
-      SAMPLE_URLS = {
-        'nfs' => 'nfs://host.mydomain.com/exported/my_exported_folder/db.backup',
-        'smb' => 'smb://host.mydomain.com/my_share/daily_backup/db.backup',
-        's3'  => 's3://mybucket/my_subdirectory/daily_backup/db.backup',
-        'ftp' => 'ftp://host.mydomain.com/path/to/daily_backup/db.backup'
-      }
 
       attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
 
@@ -62,14 +54,11 @@ module ManageIQ
       end
 
       def ask_file_location
-        case @backup_type = ask_with_menu(*file_menu_args)
-        when LOCAL_FILE then ask_local_file_options
-        when NFS_FILE   then ask_nfs_file_options
-        when SMB_FILE   then ask_smb_file_options
-        when S3_FILE    then ask_s3_file_options
-        when FTP_FILE   then ask_ftp_file_options
-        when CANCEL     then raise MiqSignalError
+        @backup_type = ask_with_menu(*file_menu_args) do |menu|
+          menu.choice(CANCEL) { |_| raise MiqSignalError }
         end
+        # calling methods like ask_ftp_file_options and ask_s3_file_options
+        send("ask_#{backup_type}_file_options")
       end
 
       def ask_local_file_options
@@ -192,10 +181,16 @@ module ManageIQ
         agree("Are you sure you would like to restore the database? (Y/N): ")
       end
 
+      def file_options
+        @file_options ||= I18n.t("database_admin.menu_order").each_with_object({}) do |file_option, h|
+          h[I18n.t("database_admin.#{file_option}")] = file_option
+        end
+      end
+
       def file_menu_args
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
-          FILE_OPTIONS,
+          file_options,
           LOCAL_FILE,
           nil
         ]
@@ -244,7 +239,7 @@ module ManageIQ
       end
 
       def sample_url(scheme)
-        SAMPLE_URLS[scheme]
+        I18n.t("database_admin.sample_url.#{scheme}")
       end
 
       def processing_message
