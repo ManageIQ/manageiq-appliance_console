@@ -57,7 +57,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           3) Samba (SMB)
           4) Amazon S3 (S3)
           5) File Transfer Protocol (FTP)
-          6) Cancel
+          6) OpenStack Swift (Swift)
+          7) Cancel
 
           Choose the restore database file: |1|
         PROMPT
@@ -105,8 +106,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq("ftp")
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_swift_file_options when choosen" do
+        expect(subject).to receive(:ask_swift_file_options).once
         say "6"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "7"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
@@ -930,7 +938,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           3) Samba (SMB)
           4) Amazon S3 (S3)
           5) File Transfer Protocol (FTP)
-          6) Cancel
+          6) OpenStack Swift (Swift)
+          7) Cancel
 
           Choose the backup output file name: |1|
         PROMPT
@@ -978,8 +987,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq("ftp")
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_swift_file_options when choosen" do
+        expect(subject).to receive(:ask_swift_file_options).once
         say "6"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+      end
+
+      it "cancels when CANCEL option is choosen" do
+        say "7"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
@@ -1763,7 +1779,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           3) Samba (SMB)
           4) Amazon S3 (S3)
           5) File Transfer Protocol (FTP)
-          6) Cancel
+          6) OpenStack Swift (Swift)
+          7) Cancel
 
           Choose the dump output file name: |1|
         PROMPT
@@ -1804,8 +1821,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.backup_type).to eq("ftp")
       end
 
-      it "cancels when CANCEL option is choosen" do
+      it "calls #ask_swift_file_options when choosen" do
+        expect(subject).to receive(:ask_swift_file_options).once
         say "6"
+        subject.ask_file_location
+        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+      end
+      it "cancels when CANCEL option is choosen" do
+        say "7"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 

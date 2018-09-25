@@ -6,6 +6,19 @@ module ManageIQ
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
+      V2_VERSION_PROMPT   = "Keystone v2".freeze
+      V2_VERSION          = "v2".freeze
+      V3_VERSION_PROMPT   = "Keystone v3".freeze
+      V3_VERSION          = "v3".freeze
+      API_VERSION_OPTIONS = [[V2_VERSION_PROMPT, V2_VERSION], [V3_VERSION_PROMPT, V3_VERSION], [CANCEL, nil]].freeze
+
+      SSL_WO_VALIDATION_PROMPT   = "SSL without validation".freeze
+      SSL_WO_VALIDATION          = "ssl".freeze
+      SSL_WITH_VALIDATION_PROMPT = "SSL".freeze
+      SSL_WITH_VALIDATION        = "ssl-with-validation".freeze
+      NON_SSL_PROMPT             = "Non-SSL".freeze
+      NON_SSL                    = "non-ssl".freeze
+      SECURITY_PROTOCOL_OPTIONS  = [[SSL_WO_VALIDATION_PROMPT, SSL_WO_VALIDATION], [SSL_WITH_VALIDATION_PROMPT, SSL_WITH_VALIDATION], [NON_SSL_PROMPT, NON_SSL], [CANCEL, nil]].freeze
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
@@ -152,6 +165,36 @@ module ManageIQ
         @task_params = ["--", params]
       end
 
+      def ask_swift_file_options
+        require 'uri'
+        @uri              = ask_for_uri(*remote_file_prompt_args_for("swift"))
+        user              = just_ask(USER_PROMPT)
+        pass              = ask_for_password("password for #{user}")
+        region            = just_ask("OpenStack Swift Region")
+        port              = just_ask("OpenStack Swift Port", "5000")
+        security_protocol = ask_with_menu(*security_protocol_menu_args)
+        api_version       = ask_with_menu(*api_version_menu_args)
+        domain_ident      = just_ask("OpenStack V3 Domain Identifier") if api_version == "v3"
+
+        @task          = "evm:db:#{action}:remote"
+        @uri           = URI.parse("#{URI(@uri).scheme}://#{URI(@uri).host}:#{port}#{URI(@uri).path}")
+        query_elements = []
+        query_elements << "region=#{region}"                       if region.present?
+        query_elements << "api_version=#{api_version}"             if api_version.present?
+        query_elements << "domain_id=#{domain_ident}"              if domain_ident.present?
+        query_elements << "security_protocol=#{security_protocol}" if security_protocol.present?
+        @uri.query = query_elements.join('&').presence
+
+        @task_params = [
+          "--",
+          {
+            :uri          => @uri,
+            :uri_username => user,
+            :uri_password => pass
+          }
+        ]
+      end
+
       def ask_to_delete_backup_after_restore
         if action == :restore && local_backup?
           say("The local database restore file is located at: '#{uri}'.\n")
@@ -212,11 +255,29 @@ module ManageIQ
         end
       end
 
+      def api_version_menu_args
+        [
+          "OpenStack API Version",
+          API_VERSION_OPTIONS,
+          ["Keystone v2".freeze, "v2".freeze],
+          nil
+        ]
+      end
+
       def file_menu_args
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
           file_options,
           "local",
+          nil
+        ]
+      end
+
+      def security_protocol_menu_args
+        [
+          "OpenStack Security Protocol",
+          SECURITY_PROTOCOL_OPTIONS,
+          ["Non-SSL".freeze, "non-ssl".freeze],
           nil
         ]
       end
