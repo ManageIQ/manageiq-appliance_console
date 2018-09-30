@@ -8,8 +8,8 @@ module ApplianceConsole
   class InternalDatabaseConfiguration < DatabaseConfiguration
     attr_accessor :disk, :run_as_evm_server
 
-    DEDICATED_DB_SHARED_BUFFERS = "'1GB'".freeze
-    SHARED_DB_SHARED_BUFFERS = "'128MB'".freeze
+    DEDICATED_DB_SHARED_BUFFERS = "'1536MB'".freeze
+    SHARED_DB_SHARED_BUFFERS = "'1024MB'".freeze
 
     def self.postgres_dir
       PostgresAdmin.data_directory.relative_path_from(Pathname.new("/"))
