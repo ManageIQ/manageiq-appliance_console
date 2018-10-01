@@ -171,9 +171,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_nfs_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
-      let(:filename)    { File.basename(subject.sample_url('nfs')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'nfs') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:prmpt)       { "location of the remote backup file\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
@@ -219,9 +219,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('smb')) }
-      let(:filename)    { File.basename(subject.sample_url('smb')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'smb') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location of the remote backup file\nExample: #{example_uri}" }
@@ -292,9 +292,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_s3_file_options" do
-      let(:uri)               { File.dirname(subject.sample_url('s3')) }
-      let(:filename)          { File.basename(subject.sample_url('s3')) }
-      let(:example_uri)       { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 's3') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:access_key_id)     { 'foobar' }
       let(:secret_access_key) { 'supersecret' }
       let(:region)            { 'us-east-2' }
@@ -394,9 +394,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_ftp_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
-      let(:filename)    { File.basename(subject.sample_url('ftp')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'ftp') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location of the remote backup file\nExample: #{example_uri}" }
@@ -831,9 +831,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_nfs_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
-      let(:filename)    { File.basename(subject.sample_url('nfs')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'nfs') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:prmpt)       { "location to save the remote backup file to\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
@@ -881,9 +881,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('smb')) }
-      let(:filename)    { File.basename(subject.sample_url('smb')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'smb') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
       let(:file_prompt) { "location to save the backup file to" }
@@ -957,9 +957,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_s3_file_options" do
-      let(:uri)               { File.dirname(subject.sample_url('s3')) }
-      let(:filename)          { File.basename(subject.sample_url('s3')) }
-      let(:example_uri)       { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 's3') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:access_key_id)     { 'foobar' }
       let(:secret_access_key) { 'supersecret' }
       let(:region)            { 'us-east-2' }
@@ -1033,7 +1033,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       context "with an empty path URI" do
         let(:uri)         { 's3://mybucket' }
         let(:filename)    { 'database_backup.tar.gz' }
-        let(:example_uri) { subject.sample_url('s3') }
+        let(:example_uri) { subject.send(:sample_url, 's3') }
 
         before do
           say [filename, uri, region, access_key_id, secret_access_key]
@@ -1087,9 +1087,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_ftp_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
-      let(:filename)    { File.basename(subject.sample_url('ftp')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'ftp') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
@@ -1464,6 +1464,25 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
       end
+
+      context "with localized file upload" do
+        it "displays anonymous ftp option" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Dump Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the dump output file name: |1|
+          PROMPT
+        end
+      end
     end
 
     describe "#ask_local_file_options" do
@@ -1501,9 +1520,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_nfs_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('nfs')) }
-      let(:filename)    { File.basename(subject.sample_url('nfs')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'nfs') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:prmpt)       { "location to save the remote dump file to\nExample: #{example_uri}" }
       let(:errmsg)      { "a valid URI" }
 
@@ -1549,9 +1568,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_smb_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('smb')) }
-      let(:filename)    { File.basename(subject.sample_url('smb')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'smb') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'example.com/admin' }
       let(:pass)        { 'supersecret' }
       let(:file_prompt) { "location to save the dump file to" }
@@ -1625,9 +1644,9 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_ftp_file_options" do
-      let(:uri)         { File.dirname(subject.sample_url('ftp')) }
-      let(:filename)    { File.basename(subject.sample_url('ftp')) }
-      let(:example_uri) { File.join(uri, filename) }
+      let(:example_uri) { subject.send(:sample_url, 'ftp') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
       let(:user)        { 'admin' }
       let(:pass)        { 'supersecret' }
       let(:uri_prompt)  { "Enter the location to save the remote dump file to\nExample: #{example_uri}" }
@@ -1712,6 +1731,88 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject.filename).to    eq(filename)
           expect(subject.task).to        eq("evm:db:dump:remote")
           expect(subject.task_params).to eq(task_params_expected)
+        end
+      end
+    end
+
+    describe "#ask_custom_file_options" do
+      let(:example_uri) { "ftp://example.com/inbox/sample.txt" }
+      let(:uri)         { "ftp://example.com/inbox/sample.txt".gsub("sample.txt", target) }
+      let(:host)        { URI(example_uri).host }
+      let(:filename)    { "/tmp/localfile.txt" }
+      let(:target)      { "123456-filename.txt" }
+      let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
+      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
+      let(:pass_prompt) { "Enter the password for #{user}" }
+      let(:errmsg)      { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri              => uri,
+            :remote_file_name => filename
+          }
+        ]
+      end
+
+      context "with a valid target" do
+        before do
+          say [filename, target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(filename)
+        end
+
+        it "sets @task to point to 'evm:db:dump:remote'" do
+          expect(subject.task).to eq("evm:db:dump:remote")
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with invalid target (then valid)" do
+        before do
+          say [filename, "", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with custom prompts" do
+        before do
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => nil).and_return(
+            host.to_sym => {
+              :filename_text      => "Target please",
+              :filename_validator => "^[0-9]+-.+$"
+            }
+          )
+
+          # if it doesn't ask again, it won't get the right task_params
+          say [filename, "", "bad-2", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+          expect_readline_question_asked "Enter the location to save the dump file to: |/tmp/evm_db.dump|"
+          expect_readline_question_asked "Target please: "
+          expect_output [
+            "Please provide in the specified format",
+            "?  Please provide in the specified format",
+            "?  ",
+          ].join("\n")
+        end
+
+        it "uses custom validation" do
+          expect(subject.task_params).to eq(expected_task_params)
         end
       end
     end
@@ -1952,6 +2053,17 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           end
         end
       end
+    end
+  end
+
+  # private, but moved out of prompt and keeping tests around
+  describe "#sample_url" do
+    it "should show an example for nfs" do
+      expect(subject.send(:sample_url, 'nfs')).to match(%r{nfs://})
+    end
+
+    it "should show an example for smb" do
+      expect(subject.send(:sample_url, 'smb')).to match(%r{smb://})
     end
   end
 end

@@ -5,16 +5,6 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
     Class.new(HighLine) { include ManageIQ::ApplianceConsole::Prompts }.new(input, output)
   end
 
-  context "#sample_url" do
-    it "should show an example for nfs" do
-      expect(subject.sample_url('nfs')).to match(%r{nfs://})
-    end
-
-    it "should show an example for smb" do
-      expect(subject.sample_url('smb')).to match(%r{smb://})
-    end
-  end
-
   context "#ask_for_remote_backup_uri" do
     it "should ask for smb uri" do
       response = "smb://host.com/path/file.txt"

@@ -1,16 +1,16 @@
 require 'manageiq/appliance_console/errors'
+require 'uri'
 
 module ManageIQ
   module ApplianceConsole
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
-      LOCAL_FILE     = "Local file".freeze
-      NFS_FILE       = "Network File System (NFS)".freeze
-      SMB_FILE       = "Samba (SMB)".freeze
-      S3_FILE        = "Amazon S3 (S3)".freeze
-      FTP_FILE       = "File Transfer Protocol (FTP)".freeze
-      FILE_OPTIONS   = [LOCAL_FILE, NFS_FILE, SMB_FILE, S3_FILE, FTP_FILE, CANCEL].freeze
+      LOCAL_FILE = "local".freeze
+      NFS_FILE   = "nfs".freeze
+      SMB_FILE   = "smb".freeze
+      S3_FILE    = "s3".freeze
+      FTP_FILE   = "ftp".freeze
 
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
@@ -55,13 +55,14 @@ module ManageIQ
       end
 
       def ask_file_location
-        case @backup_type = ask_with_menu(*file_menu_args)
-        when LOCAL_FILE then ask_local_file_options
-        when NFS_FILE   then ask_nfs_file_options
-        when SMB_FILE   then ask_smb_file_options
-        when S3_FILE    then ask_s3_file_options
-        when FTP_FILE   then ask_ftp_file_options
-        when CANCEL     then raise MiqSignalError
+        @backup_type = ask_with_menu(*file_menu_args) do |menu|
+          menu.choice(CANCEL) { |_| raise MiqSignalError }
+        end
+        if URI(backup_type).scheme
+          ask_custom_file_options(backup_type)
+        else
+          # calling methods like ask_ftp_file_options and ask_s3_file_options
+          send("ask_#{backup_type}_file_options")
         end
       end
 
@@ -138,6 +139,20 @@ module ManageIQ
         @task_params = ["--", params]
       end
 
+      def ask_custom_file_options(server_uri)
+        @filename    = just_ask(*filename_prompt_args) unless action == :restore
+        sample_case  = server_uri.split("/").last
+        hostname     = URI(server_uri).host
+        uri_filename = ask_custom_prompt(hostname, 'filename', "Target filename (e.g.: #{sample_case})")
+        @uri         = server_uri.gsub(sample_case, uri_filename)
+
+        params = { :uri => uri }
+        params[:remote_file_name] = filename if filename
+
+        @task        = "evm:db:#{action}:remote"
+        @task_params = ["--", params]
+      end
+
       def ask_to_delete_backup_after_restore
         if action == :restore && backup_type == LOCAL_FILE
           say("The local database restore file is located at: '#{uri}'.\n")
@@ -181,14 +196,27 @@ module ManageIQ
 
       def allowed_to_execute?
         return true unless action == :restore
+
         say("\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n")
         agree("Are you sure you would like to restore the database? (Y/N): ")
+      end
+
+      def file_options
+        @file_options ||= I18n.t("database_admin.menu_order").each_with_object({}) do |file_option, h|
+          # special anonymous ftp sites are defined by uri
+          uri = URI(file_option)
+          if uri.scheme
+            h["#{uri.scheme} to #{uri.host}"] = file_option
+          else
+            h[I18n.t("database_admin.#{file_option}")] = file_option
+          end
+        end
       end
 
       def file_menu_args
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
-          FILE_OPTIONS,
+          file_options,
           LOCAL_FILE,
           nil
         ]
@@ -199,6 +227,15 @@ module ManageIQ
       end
 
       private
+
+      def ask_custom_prompt(type, prompt_name, default_prompt)
+        # type (domain name) has a period in it, so we need to look it up by [] instead of the traditional i18n method
+        prompts = I18n.t("database_admin.prompts", :default => nil).try(:[], type.to_sym)
+        prompt_text  = prompts && prompts["#{prompt_name}_text".to_sym] || default_prompt
+        prompt_regex = prompts && prompts["#{prompt_name}_validator".to_sym]
+        validator    = prompt_regex ? ->(x) { x.to_s =~ /#{prompt_regex}/ } : ->(x) { x.to_s.present? }
+        just_ask(prompt_text, nil, validator)
+      end
 
       def should_exclude_tables?
         ask_yn?("Would you like to exclude tables in the dump") do |q|
@@ -232,8 +269,12 @@ module ManageIQ
                   else
                     "location to save the remote #{action} file to"
                   end
-        prompt += "\nExample: #{SAMPLE_URLS[remote_type]}"
+        prompt += "\nExample: #{sample_url(remote_type)}"
         [prompt, remote_type]
+      end
+
+      def sample_url(scheme)
+        I18n.t("database_admin.sample_url.#{scheme}")
       end
 
       def processing_message

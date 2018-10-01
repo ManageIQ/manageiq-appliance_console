@@ -15,17 +15,6 @@ module ApplianceConsole
     NONE_REGEXP   = /^('?NONE'?)?$/i.freeze
     HOSTNAME_REGEXP = /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/
 
-    SAMPLE_URLS = {
-      'nfs' => 'nfs://host.mydomain.com/exported/my_exported_folder/db.backup',
-      'smb' => 'smb://host.mydomain.com/my_share/daily_backup/db.backup',
-      's3'  => 's3://mybucket/my_subdirectory/daily_backup/db.backup',
-      'ftp' => 'ftp://host.mydomain.com/path/to/daily_backup/db.backup'
-    }
-
-    def sample_url(scheme)
-      SAMPLE_URLS[scheme]
-    end
-
     def ask_for_uri(prompt, expected_scheme, opts = {})
       require 'uri'
       just_ask(prompt, nil, nil, 'a valid URI') do |q|
