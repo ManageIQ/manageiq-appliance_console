@@ -167,17 +167,16 @@ module ManageIQ
 
       def ask_swift_file_options
         require 'uri'
-        @uri              = ask_for_uri(*remote_file_prompt_args_for("swift"))
+        @uri              = URI(ask_for_uri(*remote_file_prompt_args_for("swift")))
         user              = just_ask(USER_PROMPT)
         pass              = ask_for_password("password for #{user}")
         region            = just_ask("OpenStack Swift Region")
-        port              = just_ask("OpenStack Swift Port", "5000")
+        @uri.port         = just_ask("OpenStack Swift Port", "5000")
         security_protocol = ask_with_menu(*security_protocol_menu_args)
         api_version       = ask_with_menu(*api_version_menu_args)
         domain_ident      = just_ask("OpenStack V3 Domain Identifier") if api_version == "v3"
 
         @task          = "evm:db:#{action}:remote"
-        @uri           = URI.parse("#{URI(@uri).scheme}://#{URI(@uri).host}:#{port}#{URI(@uri).path}")
         query_elements = []
         query_elements << "region=#{region}"                       if region.present?
         query_elements << "api_version=#{api_version}"             if api_version.present?
