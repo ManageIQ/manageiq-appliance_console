@@ -258,7 +258,7 @@ module ManageIQ
       def api_version_menu_args
         [
           "OpenStack API Version",
-          API_VERSION_OPTIONS,
+          [["Keystone v2".freeze, "v2".freeze], ["Keystone v3".freeze, "v3".freeze], [CANCEL, nil]].freeze,
           ["Keystone v2".freeze, "v2".freeze],
           nil
         ]
@@ -276,7 +276,7 @@ module ManageIQ
       def security_protocol_menu_args
         [
           "OpenStack Security Protocol",
-          SECURITY_PROTOCOL_OPTIONS,
+          [["SSL without validation".freeze, "ssl".freeze], ["SSL".freeze, "ssl-with-validation".freeze], ["Non-SSL".freeze, "non-ssl".freeze], [CANCEL, nil]].freeze,
           ["Non-SSL".freeze, "non-ssl".freeze],
           nil
         ]
