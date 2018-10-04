@@ -1466,7 +1466,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "with localized file upload" do
-        it "displays anonymous ftp option" do
+        it "displays custom ftp option" do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
           expect(subject).to receive(:ask_local_file_options).once
@@ -1736,38 +1736,33 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_custom_file_options" do
-      let(:example_uri) { "ftp://example.com/inbox/sample.txt" }
-      let(:uri)         { "ftp://example.com/inbox/sample.txt".gsub("sample.txt", target) }
+      let(:example_uri) { "ftp://example.com/inbox/" }
       let(:host)        { URI(example_uri).host }
-      let(:filename)    { "/tmp/localfile.txt" }
       let(:target)      { "123456-filename.txt" }
-      let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
-      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
-      let(:pass_prompt) { "Enter the password for #{user}" }
-      let(:errmsg)      { "a valid URI" }
 
       let(:expected_task_params) do
         [
           "--",
           {
-            :uri              => uri,
-            :remote_file_name => filename
+            :uri              => example_uri,
+            :remote_file_name => target,
+            :skip_directory   => true
           }
         ]
       end
 
       context "with a valid target" do
         before do
-          say [filename, target]
+          say [target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
         end
 
         it "sets @uri to point to the ftp share url" do
-          expect(subject.uri).to eq(uri)
+          expect(subject.uri).to eq(example_uri)
         end
 
         it "sets @filename to nil" do
-          expect(subject.filename).to eq(filename)
+          expect(subject.filename).to eq(target)
         end
 
         it "sets @task to point to 'evm:db:dump:remote'" do
@@ -1781,7 +1776,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with invalid target (then valid)" do
         before do
-          say [filename, "", target]
+          say ["", target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
         end
 
@@ -1792,7 +1787,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => nil).and_return(
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(
             host.to_sym => {
               :filename_text      => "Target please",
               :filename_validator => "^[0-9]+-.+$"
@@ -1800,9 +1795,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           )
 
           # if it doesn't ask again, it won't get the right task_params
-          say [filename, "", "bad-2", target]
+          say ["", "bad-2", target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
-          expect_readline_question_asked "Enter the location to save the dump file to: |/tmp/evm_db.dump|"
           expect_readline_question_asked "Target please: "
           expect_output [
             "Please provide in the specified format",

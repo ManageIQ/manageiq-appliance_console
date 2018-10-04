@@ -140,14 +140,15 @@ module ManageIQ
       end
 
       def ask_custom_file_options(server_uri)
-        @filename    = just_ask(*filename_prompt_args) unless action == :restore
-        sample_case  = server_uri.split("/").last
-        hostname     = URI(server_uri).host
-        uri_filename = ask_custom_prompt(hostname, 'filename', "Target filename (e.g.: #{sample_case})")
-        @uri         = server_uri.gsub(sample_case, uri_filename)
+        hostname  = URI(server_uri).host
+        @filename = ask_custom_prompt(hostname, 'filename', "Target filename for backup")
+        @uri      = server_uri
 
-        params = { :uri => uri }
-        params[:remote_file_name] = filename if filename
+        params = {
+          :uri              => uri,
+          :skip_directory   => true,
+          :remote_file_name => filename
+        }
 
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]
@@ -230,7 +231,7 @@ module ManageIQ
 
       def ask_custom_prompt(type, prompt_name, default_prompt)
         # type (domain name) has a period in it, so we need to look it up by [] instead of the traditional i18n method
-        prompts = I18n.t("database_admin.prompts", :default => nil).try(:[], type.to_sym)
+        prompts = I18n.t("database_admin.prompts", :default => {})[type.to_sym]
         prompt_text  = prompts && prompts["#{prompt_name}_text".to_sym] || default_prompt
         prompt_regex = prompts && prompts["#{prompt_name}_validator".to_sym]
         validator    = prompt_regex ? ->(x) { x.to_s =~ /#{prompt_regex}/ } : ->(x) { x.to_s.present? }
