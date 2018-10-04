@@ -6,12 +6,6 @@ module ManageIQ
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
-      LOCAL_FILE = "local".freeze
-      NFS_FILE   = "nfs".freeze
-      SMB_FILE   = "smb".freeze
-      S3_FILE    = "s3".freeze
-      FTP_FILE   = "ftp".freeze
-
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
@@ -36,6 +30,10 @@ module ManageIQ
 
         @action      = action
         @task_params = []
+      end
+
+      def local_backup?
+        backup_type == "local".freeze
       end
 
       def ask_questions
@@ -155,7 +153,7 @@ module ManageIQ
       end
 
       def ask_to_delete_backup_after_restore
-        if action == :restore && backup_type == LOCAL_FILE
+        if action == :restore && local_backup?
           say("The local database restore file is located at: '#{uri}'.\n")
           @delete_agree = agree("Should this file be deleted after completing the restore? (Y/N): ")
         end
@@ -218,7 +216,7 @@ module ManageIQ
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
           file_options,
-          LOCAL_FILE,
+          "local",
           nil
         ]
       end
@@ -252,7 +250,7 @@ module ManageIQ
 
       def filename_prompt_args
         default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
+        validator = LOCAL_FILE_VALIDATOR if action == :restore && local_backup?
         [local_file_prompt, default, validator, "file that exists"]
       end
 

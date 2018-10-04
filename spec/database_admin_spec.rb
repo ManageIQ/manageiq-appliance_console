@@ -67,42 +67,42 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_s3_file_options when choosen" do
         expect(subject).to receive(:ask_s3_file_options).once
         say "4"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::S3_FILE)
+        expect(subject.backup_type).to eq("s3")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -136,7 +136,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
-      before { subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE) }
+      before { subject.instance_variable_set(:@backup_type, "local") }
 
       context "with no filename given" do
         before do
@@ -584,7 +584,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "sets @delete_agree if the user agrees" do
@@ -614,7 +614,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -847,42 +847,42 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_s3_file_options when choosen" do
         expect(subject).to receive(:ask_s3_file_options).once
         say "4"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::S3_FILE)
+        expect(subject.backup_type).to eq("s3")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -1374,7 +1374,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "no-ops" do
@@ -1388,7 +1388,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -1619,35 +1619,35 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -2007,7 +2007,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "no-ops" do
@@ -2021,7 +2021,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -2250,5 +2250,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       expect(subject.send(:sample_url, 'smb')).to match(%r{smb://})
     end
   end
+  # rubocop:enable Layout/TrailingWhitespace
+
+  describe "#local_backup?" do
+    it "detects true" do
+      subject.instance_variable_set(:@backup_type, "local")
+      expect(subject).to be_local_backup
+    end
+
+    it "detects false" do
+      expect(subject).not_to be_local_backup
+      subject.instance_variable_set(:@backup_type, "ftp")
+      expect(subject).not_to be_local_backup
+    end
+  end
 end
-# rubocop:enable Layout/TrailingWhitespace
