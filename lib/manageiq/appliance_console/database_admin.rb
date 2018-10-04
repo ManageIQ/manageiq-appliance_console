@@ -141,7 +141,7 @@ module ManageIQ
 
       def ask_custom_file_options(server_uri)
         hostname  = URI(server_uri).host
-        @filename = ask_custom_prompt(hostname, 'filename', "Target filename for backup")
+        @filename = ask_custom_file_prompt(hostname)
         @uri      = server_uri
 
         params = {
@@ -229,11 +229,11 @@ module ManageIQ
 
       private
 
-      def ask_custom_prompt(type, prompt_name, default_prompt)
-        # type (domain name) has a period in it, so we need to look it up by [] instead of the traditional i18n method
-        prompts = I18n.t("database_admin.prompts", :default => {})[type.to_sym]
-        prompt_text  = prompts && prompts["#{prompt_name}_text".to_sym] || default_prompt
-        prompt_regex = prompts && prompts["#{prompt_name}_validator".to_sym]
+      def ask_custom_file_prompt(hostname)
+        # hostname has a period in it, so we need to look it up by [] instead of the traditional i18n method
+        prompts = I18n.t("database_admin.prompts", :default => {})[hostname.to_sym]
+        prompt_text  = prompts && prompts[:filename_text] || "Target filename for backup".freeze
+        prompt_regex = prompts && prompts[:filename_validator]
         validator    = prompt_regex ? ->(x) { x.to_s =~ /#{prompt_regex}/ } : ->(x) { x.to_s.present? }
         just_ask(prompt_text, nil, validator)
       end
