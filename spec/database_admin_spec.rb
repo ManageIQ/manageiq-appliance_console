@@ -110,10 +110,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
+      # this is the complete implementation. the other 2 are paired down version of this
       context "with localized file upload" do
-        it "displays custom ftp option" do
+        it "displays custom ftp option with no prompts" do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -123,6 +125,112 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             1) The Local file
             2) ftp to example.com
             3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with other prompts" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :filename_text => "" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled blank" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled string" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "restore" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(restore backup) })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other string prompts" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "backup" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other array prompts" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(backup dump) })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) Cancel
 
             Choose the restore database file: |1|
           PROMPT
@@ -891,9 +999,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "with localized file upload" do
-        it "displays custom ftp option" do
+        it "displays custom ftp option with blank prompts" do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -903,6 +1012,41 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             1) The Local file
             2) ftp to example.com
             3) Cancel
+
+            Choose the backup output file name: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(restore backup) })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Backup Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the backup output file name: |1|
+          PROMPT
+        end
+
+        it "hids custom ftp option with disabled string" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "dump" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Backup Output File Name
+
+            1) The Local file
+            2) Cancel
 
             Choose the backup output file name: |1|
           PROMPT
@@ -1656,9 +1800,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "with localized file upload" do
-        it "displays custom ftp option" do
+        it "displays custom ftp option with blank prompts" do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -1668,6 +1813,41 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             1) The Local file
             2) ftp to example.com
             3) Cancel
+
+            Choose the dump output file name: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(dump backup) })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Dump Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the dump output file name: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other string prompts" do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "backup" })
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Dump Output File Name
+
+            1) The Local file
+            2) Cancel
 
             Choose the dump output file name: |1|
           PROMPT

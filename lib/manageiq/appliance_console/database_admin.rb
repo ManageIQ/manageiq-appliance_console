@@ -205,7 +205,7 @@ module ManageIQ
           # special anonymous ftp sites are defined by uri
           uri = URI(file_option)
           if uri.scheme
-            h["#{uri.scheme} to #{uri.host}"] = file_option
+            h["#{uri.scheme} to #{uri.host}"] = file_option unless skip_file_location?(uri.host)
           else
             h[I18n.t("database_admin.#{file_option}")] = file_option
           end
@@ -228,12 +228,22 @@ module ManageIQ
       private
 
       def ask_custom_file_prompt(hostname)
-        # hostname has a period in it, so we need to look it up by [] instead of the traditional i18n method
-        prompts = I18n.t("database_admin.prompts", :default => {})[hostname.to_sym]
+        prompts = custom_endpoint_config_for(hostname)
         prompt_text  = prompts && prompts[:filename_text] || "Target filename for backup".freeze
         prompt_regex = prompts && prompts[:filename_validator]
         validator    = prompt_regex ? ->(x) { x.to_s =~ /#{prompt_regex}/ } : ->(x) { x.to_s.present? }
         just_ask(prompt_text, nil, validator)
+      end
+
+      def skip_file_location?(hostname)
+        config = custom_endpoint_config_for(hostname)
+        return false unless config && config[:enabled_for].present?
+        !Array(config[:enabled_for]).include?(action.to_s)
+      end
+
+      def custom_endpoint_config_for(hostname)
+        # hostname has a period in it, so we need to look it up by [] instead of the traditional i18n method
+        I18n.t("database_admin.prompts", :default => {})[hostname.to_sym]
       end
 
       def should_exclude_tables?
