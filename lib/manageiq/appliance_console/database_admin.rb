@@ -167,8 +167,14 @@ module ManageIQ
 
       def ask_swift_file_options
         require 'uri'
+        swift_user_prompt = <<-PROMPT.strip_heredoc.chomp
+          User Name with access to this file.
+          Example: 'openstack_user'
+        PROMPT
+
+        @filename         = just_ask(*filename_prompt_args) unless action == :restore
         @uri              = URI(ask_for_uri(*remote_file_prompt_args_for("swift")))
-        user              = just_ask(USER_PROMPT)
+        user              = just_ask(swift_user_prompt)
         pass              = ask_for_password("password for #{user}")
         region            = just_ask("OpenStack Swift Region")
         @uri.port         = just_ask("OpenStack Swift Port", "5000")
@@ -184,14 +190,17 @@ module ManageIQ
         query_elements << "security_protocol=#{security_protocol}" if security_protocol.present?
         @uri.query = query_elements.join('&').presence
 
-        @task_params = [
+        params = [
           "--",
           {
-            :uri          => @uri,
+            :uri          => @uri.to_s,
             :uri_username => user,
             :uri_password => pass
           }
         ]
+
+        @task        = "evm:db:#{action}:remote"
+        @task_params = ["--", params]
       end
 
       def ask_to_delete_backup_after_restore
@@ -257,7 +266,7 @@ module ManageIQ
       def api_version_menu_args
         [
           "OpenStack API Version",
-          [["Keystone v2".freeze, "v2".freeze], ["Keystone v3".freeze, "v3".freeze], [CANCEL, nil]].freeze,
+          [["Keystone v2".freeze, "v2".freeze], ["Keystone v3".freeze, "v3".freeze], ["None".freeze, nil]].freeze,
           ["Keystone v2".freeze, "v2".freeze],
           nil
         ]
@@ -275,7 +284,7 @@ module ManageIQ
       def security_protocol_menu_args
         [
           "OpenStack Security Protocol",
-          [["SSL without validation".freeze, "ssl".freeze], ["SSL".freeze, "ssl-with-validation".freeze], ["Non-SSL".freeze, "non-ssl".freeze], [CANCEL, nil]].freeze,
+          [["SSL without validation".freeze, "ssl".freeze], ["SSL".freeze, "ssl-with-validation".freeze], ["Non-SSL".freeze, "non-ssl".freeze], ["None".freeze, nil]].freeze,
           ["Non-SSL".freeze, "non-ssl".freeze],
           nil
         ]

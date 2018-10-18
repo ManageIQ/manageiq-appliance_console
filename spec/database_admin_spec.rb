@@ -519,6 +519,95 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_swift_file_options" do
+      let(:example_uri) { subject.send(:sample_url, 'swift') }
+      let(:uri)         { File.dirname(example_uri) }
+      let(:filename)    { File.basename(example_uri) }
+      let(:user)              { 'foobar' }
+      let(:pass)              { 'supersecret' }
+      let(:region)            { 'anyregion' }
+      let(:port)              { '5000' }
+      let(:security_protocol) { 'non-ssl' }
+      let(:api_version)       { 'v2' }
+      let(:domain_ident)      { 'default' }
+      let(:uri_prompt)        { "Enter the location of the remote backup file\nExample: #{example_uri}" }
+      let(:user_prompt)       { "Enter the User Name with access to this file.\nExample: 'openstack_user'" }
+      let(:pass_prompt)       { "Enter the password for #{user}" }
+      let(:region_prompt)     { "Enter the OpenStack Swift Region" }
+      let(:port_prompt)       { "Enter the OpenStack Swift Port" }
+      let(:domain_prompt)     { "OpenStack V3 Domain Identifier" }
+      let(:security_protocol_prompt) { "OpenStack Security Protocol\n\n1) SSL without validation\n2) SSL\n3) Non-SSL\n4)Cancel\n\nChoose the openstack security protocol: |3|" }
+      let(:api_version_prompt)       { "OpenStack API Version\n\n1) Keystone v2\n2) Keystone v3\n3) Cancel\n\nChoose the openstack api version: |1|" }
+      let(:errmsg)                   { "a valid URI" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri          => uri,
+            :uri_username => user,
+            :uri_password => pass,
+          }
+        ]
+      end
+
+      context "with a valid uri, user, password, and region given" do
+        before do
+          say [uri, user, region, port, security_protocol, api_version, pass]
+          expect(subject.ask_swift_file_options).to be_truthy
+        end
+
+        it "sets @uri to point to the swift share url" do
+          expect(subject.uri).to eq(uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(nil)
+        end
+
+        it "sets @task to point to 'evm:db:restore:remote'" do
+          expect(subject.task).to eq("evm:db:restore:remote")
+        end
+
+        it "sets @task_params to point to the swift file, user, and pass" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with a invalid uri given" do
+        let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+        before do
+          # say [bad_uri, uri, user, pass, region, port, security_protocol, api_version]
+          say [bad_uri, uri, user, region, port, security_protocol, api_version]
+          expect(subject.ask_swift_file_options).to be_truthy
+        end
+
+        it "reprompts the user and then properly sets the options" do
+          error = "Please provide #{errmsg}"
+
+          expect_readline_question_asked uri_prompt
+          expect_readline_question_asked user_prompt
+          expect_readline_question_asked pass_prompt
+          expect_readline_question_asked region_prompt
+          expect_readline_question_asked port_prompt
+          expect_readline_question_asked security_protocol_prompt
+          expect_readline_question_asked api_version_prompt
+          expect_heard [
+            uri_prompt,
+            error,
+            prompt,
+            "#{pass_prompt}: ***********\n"
+          ]
+
+          expect(subject.uri).to         eq(uri)
+          expect(subject.filename).to    eq(nil)
+          expect(subject.task).to        eq("evm:db:restore:remote")
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
     describe "#ask_ftp_file_options" do
       let(:example_uri) { subject.send(:sample_url, 'ftp') }
       let(:uri)         { File.dirname(example_uri) }
