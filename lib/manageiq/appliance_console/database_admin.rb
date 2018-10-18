@@ -142,11 +142,11 @@ module ManageIQ
         @filename = ask_custom_file_prompt(hostname)
         @uri      = server_uri
 
-        params = {
-          :uri              => uri,
-          :skip_directory   => true,
-          :remote_file_name => filename
-        }
+        params = {:uri => uri, :remote_file_name => filename}
+
+        if (custom_params = custom_endpoint_config_for(hostname))
+          params.merge!(custom_params[:rake_options]) if custom_params[:rake_options]
+        end
 
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]

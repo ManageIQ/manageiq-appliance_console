@@ -621,7 +621,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           {
             :uri              => example_uri,
             :remote_file_name => target,
-            :skip_directory   => true
           }
         ]
       end
@@ -662,7 +661,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
             host.to_sym => {
               :filename_text      => "Target please",
               :filename_validator => "^[0-9]+-.+$"
@@ -1447,7 +1446,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           {
             :uri              => example_uri,
             :remote_file_name => target,
-            :skip_directory   => true
           }
         ]
       end
@@ -1488,7 +1486,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
             host.to_sym => {
               :filename_text      => "Target please",
               :filename_validator => "^[0-9]+-.+$"
@@ -1507,6 +1505,41 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "uses custom validation" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+      context "with custom prompts and rake_options" do
+        let(:expected_task_params) do
+          [
+            "--",
+            {
+              :uri              => example_uri,
+              :remote_file_name => target,
+              :skip_directory   => true,
+            }
+          ]
+        end
+        before do
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).at_least(:once).and_return(
+            host.to_sym => {
+              :filename_text      => "Target please",
+              :filename_validator => "^[0-9]+-.+$",
+              :rake_options       => { :skip_directory => true },
+            }
+          )
+
+          # if it doesn't ask again, it won't get the right task_params
+          say ["", "bad-2", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+          expect_readline_question_asked "Target please: "
+          expect_output [
+            "Please provide in the specified format",
+            "?  Please provide in the specified format",
+            "?  ",
+          ].join("\n")
+        end
+
+        it "produces expected parameters" do
           expect(subject.task_params).to eq(expected_task_params)
         end
       end
@@ -2116,7 +2149,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           {
             :uri              => example_uri,
             :remote_file_name => target,
-            :skip_directory   => true
           }
         ]
       end
@@ -2157,7 +2189,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
             host.to_sym => {
               :filename_text      => "Target please",
               :filename_validator => "^[0-9]+-.+$"
