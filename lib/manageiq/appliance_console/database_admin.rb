@@ -36,7 +36,8 @@ module ManageIQ
 
       WARN
 
-      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
+      attr_accessor :uri
+      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
         super(input, output)
@@ -172,35 +173,33 @@ module ManageIQ
           Example: 'openstack_user'
         PROMPT
 
-        @filename         = just_ask(*filename_prompt_args) unless action == :restore
-        @uri              = URI(ask_for_uri(*remote_file_prompt_args_for("swift")))
-        user              = just_ask(swift_user_prompt)
-        pass              = ask_for_password("password for #{user}")
-        region            = just_ask("OpenStack Swift Region")
-        @uri.port         = just_ask("OpenStack Swift Port", "5000")
-        security_protocol = ask_with_menu(*security_protocol_menu_args)
-        api_version       = ask_with_menu(*api_version_menu_args)
-        domain_ident      = just_ask("OpenStack V3 Domain Identifier") if api_version == "v3"
+        @filename  = just_ask(*filename_prompt_args) { |q| q.readline = false } unless action == :restore
+        @uri       = URI(ask_for_uri(*remote_file_prompt_args_for("swift")) { |q| q.readline = false })
+        @task      = "evm:db:#{action}:remote"
+        user       = just_ask(swift_user_prompt) { |q| q.readline = false }
+        pass       = ask_for_password("password for #{user}") { |q| q.readline = false }
+        @uri.query = swift_query_elements.join('&').presence
 
-        @task          = "evm:db:#{action}:remote"
-        query_elements = []
-        query_elements << "region=#{region}"                       if region.present?
-        query_elements << "api_version=#{api_version}"             if api_version.present?
-        query_elements << "domain_id=#{domain_ident}"              if domain_ident.present?
-        query_elements << "security_protocol=#{security_protocol}" if security_protocol.present?
-        @uri.query = query_elements.join('&').presence
-
-        params = [
-          "--",
-          {
-            :uri          => @uri.to_s,
-            :uri_username => user,
-            :uri_password => pass
-          }
-        ]
-
+        params = {
+          :uri          => @uri.to_s,
+          :uri_username => user,
+          :uri_password => pass
+        }
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]
+      end
+
+      def swift_query_elements
+        region            = just_ask("OpenStack Swift Region") { |q| q.readline = false }
+        @uri.port         = just_ask("OpenStack Swift Port", "5000") { |q| q.readline = false }
+        security_protocol = ask_with_menu(*security_protocol_menu_args)
+        api_version       = ask_with_menu(*api_version_menu_args) { |q| q.readline = false }
+        domain_ident      = just_ask("OpenStack V3 Domain Identifier") { |q| q.readline = false } if api_version == "v3"
+        query_elements    = []
+        query_elements    << "region=#{region}"                       if region.present?
+        query_elements    << "api_version=#{api_version}"             if api_version.present?
+        query_elements    << "domain_id=#{domain_ident}"              if domain_ident.present?
+        query_elements    << "security_protocol=#{security_protocol}" if security_protocol.present?
       end
 
       def ask_to_delete_backup_after_restore

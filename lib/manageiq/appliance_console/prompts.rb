@@ -28,6 +28,7 @@ module ApplianceConsole
             (u.host =~ HOSTNAME_REGEXP || u.hostname =~ IP_REGEXP) &&
             (opts[:optional_path] || !u.path.empty?)
         end
+        yield q if block_given?
       end
     end
 
