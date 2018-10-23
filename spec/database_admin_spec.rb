@@ -67,47 +67,165 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_s3_file_options when choosen" do
         expect(subject).to receive(:ask_s3_file_options).once
         say "4"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::S3_FILE)
+        expect(subject.backup_type).to eq("s3")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
         say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
+      end
+
+      # this is the complete implementation. the other 2 are paired down version of this
+      context "with custom menu config" do
+        before do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with no prompts" do
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with other prompts" do
+          expect_custom_prompts("example.com", :filename_text => "")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled blank" do
+          expect_custom_prompts("example.com", :enabled_for => "")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled string" do
+          expect_custom_prompts("example.com", :enabled_for => "restore")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect_custom_prompts("example.com", :enabled_for => %w(restore backup))
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other string prompts" do
+          expect_custom_prompts("example.com", :enabled_for => "backup")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other array prompts" do
+          expect_custom_prompts("example.com", :enabled_for => %w(backup dump))
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Restore Database File
+
+            1) The Local file
+            2) Cancel
+
+            Choose the restore database file: |1|
+          PROMPT
+        end
       end
     end
 
@@ -117,7 +235,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:default)   { described_class::DB_RESTORE_FILE }
       let(:errmsg)    { "file that exists" }
 
-      before { subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE) }
+      before { subject.instance_variable_set(:@backup_type, "local") }
 
       context "with no filename given" do
         before do
@@ -483,13 +601,83 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_custom_file_options" do
+      let(:example_uri) { "ftp://example.com/inbox/" }
+      let(:host)        { URI(example_uri).host }
+      let(:target)      { "123456-filename.txt" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri              => example_uri,
+            :remote_file_name => target,
+          }
+        ]
+      end
+
+      context "with a valid target" do
+        before do
+          say [target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(example_uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(target)
+        end
+
+        it "sets @task to point to 'evm:db:restore:remote'" do
+          expect(subject.task).to eq("evm:db:restore:remote")
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with invalid target (then valid)" do
+        before do
+          say ["", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with custom prompts" do
+        before do
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
+
+          # if it doesn't ask again, it won't get the right task_params
+          say ["", "bad-2", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+          expect_readline_question_asked "Target please: "
+          expect_output [
+            "Please provide in the specified format",
+            "?  Please provide in the specified format",
+            "?  ",
+          ].join("\n")
+        end
+
+        it "uses custom validation" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
     describe "#ask_to_delete_backup_after_restore" do
       context "when @backup_type is LOCAL_FILE" do
         let(:uri) { described_class::DB_RESTORE_FILE }
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "sets @delete_agree if the user agrees" do
@@ -519,7 +707,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -752,47 +940,101 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_s3_file_options when choosen" do
         expect(subject).to receive(:ask_s3_file_options).once
         say "4"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::S3_FILE)
+        expect(subject.backup_type).to eq("s3")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
         say "6"
         expect { subject.ask_file_location }.to raise_error signal_error
+      end
+
+      context "with custom menu config" do
+        before do
+          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
+          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with blank prompts" do
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Backup Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the backup output file name: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect_custom_prompts("example.com", :enabled_for => %w(restore backup))
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Backup Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the backup output file name: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with disabled string" do
+          expect_custom_prompts("example.com", :enabled_for => "dump")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Backup Output File Name
+
+            1) The Local file
+            2) Cancel
+
+            Choose the backup output file name: |1|
+          PROMPT
+        end
       end
     end
 
@@ -1178,13 +1420,115 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    describe "#ask_custom_file_options" do
+      let(:example_uri) { "ftp://example.com/inbox/" }
+      let(:host)        { URI(example_uri).host }
+      let(:target)      { "123456-filename.txt" }
+
+      let(:expected_task_params) do
+        [
+          "--",
+          {
+            :uri              => example_uri,
+            :remote_file_name => target,
+          }
+        ]
+      end
+
+      context "with a valid target" do
+        before do
+          say [target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @uri to point to the ftp share url" do
+          expect(subject.uri).to eq(example_uri)
+        end
+
+        it "sets @filename to nil" do
+          expect(subject.filename).to eq(target)
+        end
+
+        it "sets @task to point to 'evm:db:backup:remote'" do
+          expect(subject.task).to eq("evm:db:backup:remote")
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with invalid target (then valid)" do
+        before do
+          say ["", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+        end
+
+        it "sets @task_params to point to the ftp file" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+
+      context "with custom prompts" do
+        before do
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
+
+          # if it doesn't ask again, it won't get the right task_params
+          say ["", "bad-2", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+          expect_readline_question_asked "Target please: "
+          expect_output [
+            "Please provide in the specified format",
+            "?  Please provide in the specified format",
+            "?  ",
+          ].join("\n")
+        end
+
+        it "uses custom validation" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+      context "with custom prompts and rake_options" do
+        let(:expected_task_params) do
+          [
+            "--",
+            {
+              :uri              => example_uri,
+              :remote_file_name => target,
+              :skip_directory   => true,
+            }
+          ]
+        end
+        before do
+          expect_custom_prompts(host, 
+                                :filename_text      => "Target please",
+                                :filename_validator => "^[0-9]+-.+$",
+                                :rake_options       => { :skip_directory => true }).twice
+
+          # if it doesn't ask again, it won't get the right task_params
+          say ["", "bad-2", target]
+          expect(subject.ask_custom_file_options(example_uri)).to be_truthy
+          expect_readline_question_asked "Target please: "
+          expect_output [
+            "Please provide in the specified format",
+            "?  Please provide in the specified format",
+            "?  ",
+          ].join("\n")
+        end
+
+        it "produces expected parameters" do
+          expect(subject.task_params).to eq(expected_task_params)
+        end
+      end
+    end
+
     describe "#ask_to_delete_backup_after_restore" do
       context "when @backup_type is LOCAL_FILE" do
         let(:uri) { described_class::DB_RESTORE_FILE }
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "no-ops" do
@@ -1198,7 +1542,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -1429,35 +1773,35 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_local_file_options).once
         say ""
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_local_file_options when choosen" do
         expect(subject).to receive(:ask_local_file_options).once
         say "1"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::LOCAL_FILE)
+        expect(subject.backup_type).to eq("local")
       end
 
       it "calls #ask_nfs_file_options when choosen" do
         expect(subject).to receive(:ask_nfs_file_options).once
         say "2"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::NFS_FILE)
+        expect(subject.backup_type).to eq("nfs")
       end
 
       it "calls #ask_smb_file_options when choosen" do
         expect(subject).to receive(:ask_smb_file_options).once
         say "3"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SMB_FILE)
+        expect(subject.backup_type).to eq("smb")
       end
 
       it "calls #ask_ftp_file_options when choosen" do
         expect(subject).to receive(:ask_ftp_file_options).once
         say "5"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::FTP_FILE)
+        expect(subject.backup_type).to eq("ftp")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -1465,10 +1809,14 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
-      context "with localized file upload" do
-        it "displays anonymous ftp option" do
+      context "with custom menu config" do
+        before do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with blank prompts" do
+          expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -1478,6 +1826,37 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
             1) The Local file
             2) ftp to example.com
             3) Cancel
+
+            Choose the dump output file name: |1|
+          PROMPT
+        end
+
+        it "displays custom ftp option with enabled array" do
+          expect_custom_prompts("example.com", :enabled_for => %w(dump backup))
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Dump Output File Name
+
+            1) The Local file
+            2) ftp to example.com
+            3) Cancel
+
+            Choose the dump output file name: |1|
+          PROMPT
+        end
+
+        it "hides custom ftp option with other string prompts" do
+          expect_custom_prompts("example.com", :enabled_for => "backup")
+          expect(subject).to receive(:ask_local_file_options).once
+          say ""
+          subject.ask_file_location
+          expect_output <<-PROMPT.strip_heredoc.chomp + " "
+            Dump Output File Name
+
+            1) The Local file
+            2) Cancel
 
             Choose the dump output file name: |1|
           PROMPT
@@ -1736,38 +2115,32 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     end
 
     describe "#ask_custom_file_options" do
-      let(:example_uri) { "ftp://example.com/inbox/sample.txt" }
-      let(:uri)         { "ftp://example.com/inbox/sample.txt".gsub("sample.txt", target) }
+      let(:example_uri) { "ftp://example.com/inbox/" }
       let(:host)        { URI(example_uri).host }
-      let(:filename)    { "/tmp/localfile.txt" }
       let(:target)      { "123456-filename.txt" }
-      let(:uri_prompt)  { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
-      let(:user_prompt) { "Enter the username with access to this file.\nExample: 'mydomain.com/user'" }
-      let(:pass_prompt) { "Enter the password for #{user}" }
-      let(:errmsg)      { "a valid URI" }
 
       let(:expected_task_params) do
         [
           "--",
           {
-            :uri              => uri,
-            :remote_file_name => filename
+            :uri              => example_uri,
+            :remote_file_name => target,
           }
         ]
       end
 
       context "with a valid target" do
         before do
-          say [filename, target]
+          say [target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
         end
 
         it "sets @uri to point to the ftp share url" do
-          expect(subject.uri).to eq(uri)
+          expect(subject.uri).to eq(example_uri)
         end
 
         it "sets @filename to nil" do
-          expect(subject.filename).to eq(filename)
+          expect(subject.filename).to eq(target)
         end
 
         it "sets @task to point to 'evm:db:dump:remote'" do
@@ -1781,7 +2154,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with invalid target (then valid)" do
         before do
-          say [filename, "", target]
+          say ["", target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
         end
 
@@ -1792,17 +2165,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => nil).and_return(
-            host.to_sym => {
-              :filename_text      => "Target please",
-              :filename_validator => "^[0-9]+-.+$"
-            }
-          )
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
 
           # if it doesn't ask again, it won't get the right task_params
-          say [filename, "", "bad-2", target]
+          say ["", "bad-2", target]
           expect(subject.ask_custom_file_options(example_uri)).to be_truthy
-          expect_readline_question_asked "Enter the location to save the dump file to: |/tmp/evm_db.dump|"
           expect_readline_question_asked "Target please: "
           expect_output [
             "Please provide in the specified format",
@@ -1823,7 +2190,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::LOCAL_FILE)
+          subject.instance_variable_set(:@backup_type, "local")
         end
 
         it "no-ops" do
@@ -1837,7 +2204,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         before do
           subject.instance_variable_set(:@uri, uri)
-          subject.instance_variable_set(:@backup_type, described_class::NFS_FILE)
+          subject.instance_variable_set(:@backup_type, "nfs")
         end
 
         it "no-ops" do
@@ -2066,5 +2433,23 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       expect(subject.send(:sample_url, 'smb')).to match(%r{smb://})
     end
   end
+  # rubocop:enable Layout/TrailingWhitespace
+
+  describe "#local_backup?" do
+    it "detects true" do
+      subject.instance_variable_set(:@backup_type, "local")
+      expect(subject).to be_local_backup
+    end
+
+    it "detects false" do
+      expect(subject).not_to be_local_backup
+      subject.instance_variable_set(:@backup_type, "ftp")
+      expect(subject).not_to be_local_backup
+    end
+  end
+
+  def expect_custom_prompts(hostname, values)
+    expect(I18n).to receive(:t).with("database_admin.prompts", :default => {})
+                               .and_return(hostname.to_sym => values)
+  end
 end
-# rubocop:enable Layout/TrailingWhitespace

@@ -6,12 +6,6 @@ module ManageIQ
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
-      LOCAL_FILE = "local".freeze
-      NFS_FILE   = "nfs".freeze
-      SMB_FILE   = "smb".freeze
-      S3_FILE    = "s3".freeze
-      FTP_FILE   = "ftp".freeze
-
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
@@ -36,6 +30,10 @@ module ManageIQ
 
         @action      = action
         @task_params = []
+      end
+
+      def local_backup?
+        backup_type == "local".freeze
       end
 
       def ask_questions
@@ -140,21 +138,22 @@ module ManageIQ
       end
 
       def ask_custom_file_options(server_uri)
-        @filename    = just_ask(*filename_prompt_args) unless action == :restore
-        sample_case  = server_uri.split("/").last
-        hostname     = URI(server_uri).host
-        uri_filename = ask_custom_prompt(hostname, 'filename', "Target filename (e.g.: #{sample_case})")
-        @uri         = server_uri.gsub(sample_case, uri_filename)
+        hostname  = URI(server_uri).host
+        @filename = ask_custom_file_prompt(hostname)
+        @uri      = server_uri
 
-        params = { :uri => uri }
-        params[:remote_file_name] = filename if filename
+        params = {:uri => uri, :remote_file_name => filename}
+
+        if (custom_params = custom_endpoint_config_for(hostname))
+          params.merge!(custom_params[:rake_options]) if custom_params[:rake_options]
+        end
 
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]
       end
 
       def ask_to_delete_backup_after_restore
-        if action == :restore && backup_type == LOCAL_FILE
+        if action == :restore && local_backup?
           say("The local database restore file is located at: '#{uri}'.\n")
           @delete_agree = agree("Should this file be deleted after completing the restore? (Y/N): ")
         end
@@ -206,7 +205,7 @@ module ManageIQ
           # special anonymous ftp sites are defined by uri
           uri = URI(file_option)
           if uri.scheme
-            h["#{uri.scheme} to #{uri.host}"] = file_option
+            h["#{uri.scheme} to #{uri.host}"] = file_option unless skip_file_location?(uri.host)
           else
             h[I18n.t("database_admin.#{file_option}")] = file_option
           end
@@ -217,7 +216,7 @@ module ManageIQ
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
           file_options,
-          LOCAL_FILE,
+          "local",
           nil
         ]
       end
@@ -228,13 +227,23 @@ module ManageIQ
 
       private
 
-      def ask_custom_prompt(type, prompt_name, default_prompt)
-        # type (domain name) has a period in it, so we need to look it up by [] instead of the traditional i18n method
-        prompts = I18n.t("database_admin.prompts", :default => nil).try(:[], type.to_sym)
-        prompt_text  = prompts && prompts["#{prompt_name}_text".to_sym] || default_prompt
-        prompt_regex = prompts && prompts["#{prompt_name}_validator".to_sym]
+      def ask_custom_file_prompt(hostname)
+        prompts = custom_endpoint_config_for(hostname)
+        prompt_text  = prompts && prompts[:filename_text] || "Target filename for backup".freeze
+        prompt_regex = prompts && prompts[:filename_validator]
         validator    = prompt_regex ? ->(x) { x.to_s =~ /#{prompt_regex}/ } : ->(x) { x.to_s.present? }
         just_ask(prompt_text, nil, validator)
+      end
+
+      def skip_file_location?(hostname)
+        config = custom_endpoint_config_for(hostname)
+        return false unless config && config[:enabled_for].present?
+        !Array(config[:enabled_for]).include?(action.to_s)
+      end
+
+      def custom_endpoint_config_for(hostname)
+        # hostname has a period in it, so we need to look it up by [] instead of the traditional i18n method
+        I18n.t("database_admin.prompts", :default => {})[hostname.to_sym]
       end
 
       def should_exclude_tables?
@@ -251,7 +260,7 @@ module ManageIQ
 
       def filename_prompt_args
         default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
+        validator = LOCAL_FILE_VALIDATOR if action == :restore && local_backup?
         [local_file_prompt, default, validator, "file that exists"]
       end
 
