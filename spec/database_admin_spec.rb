@@ -111,10 +111,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       # this is the complete implementation. the other 2 are paired down version of this
-      context "with localized file upload" do
-        it "displays custom ftp option with no prompts" do
+      context "with custom menu config" do
+        before do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with no prompts" do
           expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
@@ -131,9 +134,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with other prompts" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :filename_text => "" })
+          expect_custom_prompts("example.com", :filename_text => "")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -149,9 +150,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with enabled blank" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "" })
+          expect_custom_prompts("example.com", :enabled_for => "")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -167,9 +166,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with enabled string" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "restore" })
+          expect_custom_prompts("example.com", :enabled_for => "restore")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -185,9 +182,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with enabled array" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(restore backup) })
+          expect_custom_prompts("example.com", :enabled_for => %w(restore backup))
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -203,9 +198,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "hides custom ftp option with other string prompts" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "backup" })
+          expect_custom_prompts("example.com", :enabled_for => "backup")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -220,9 +213,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "hides custom ftp option with other array prompts" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(backup dump) })
+          expect_custom_prompts("example.com", :enabled_for => %w(backup dump))
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -661,12 +652,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
-            host.to_sym => {
-              :filename_text      => "Target please",
-              :filename_validator => "^[0-9]+-.+$"
-            }
-          )
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
 
           # if it doesn't ask again, it won't get the right task_params
           say ["", "bad-2", target]
@@ -997,10 +983,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
-      context "with localized file upload" do
-        it "displays custom ftp option with blank prompts" do
+      context "with custom menu config" do
+        before do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with blank prompts" do
           expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
@@ -1017,9 +1006,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with enabled array" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(restore backup) })
+          expect_custom_prompts("example.com", :enabled_for => %w(restore backup))
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -1034,10 +1021,8 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           PROMPT
         end
 
-        it "hids custom ftp option with disabled string" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "dump" })
+        it "hides custom ftp option with disabled string" do
+          expect_custom_prompts("example.com", :enabled_for => "dump")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -1486,12 +1471,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
-            host.to_sym => {
-              :filename_text      => "Target please",
-              :filename_validator => "^[0-9]+-.+$"
-            }
-          )
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
 
           # if it doesn't ask again, it won't get the right task_params
           say ["", "bad-2", target]
@@ -1520,13 +1500,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           ]
         end
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).at_least(:once).and_return(
-            host.to_sym => {
-              :filename_text      => "Target please",
-              :filename_validator => "^[0-9]+-.+$",
-              :rake_options       => { :skip_directory => true },
-            }
-          )
+          expect_custom_prompts(host, 
+                                :filename_text      => "Target please",
+                                :filename_validator => "^[0-9]+-.+$",
+                                :rake_options       => { :skip_directory => true }).twice
 
           # if it doesn't ask again, it won't get the right task_params
           say ["", "bad-2", target]
@@ -1832,10 +1809,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect { subject.ask_file_location }.to raise_error signal_error
       end
 
-      context "with localized file upload" do
-        it "displays custom ftp option with blank prompts" do
+      context "with custom menu config" do
+        before do
           expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
           expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
+        end
+
+        it "displays custom ftp option with blank prompts" do
           expect(I18n).to receive(:t).with("database_admin.prompts", :default=>{}).and_return({})
           expect(subject).to receive(:ask_local_file_options).once
           say ""
@@ -1852,9 +1832,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "displays custom ftp option with enabled array" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => %w(dump backup) })
+          expect_custom_prompts("example.com", :enabled_for => %w(dump backup))
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -1870,9 +1848,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "hides custom ftp option with other string prompts" do
-          expect(I18n).to receive(:t).with("database_admin.menu_order").and_return(%w(local ftp://example.com/inbox/filename.txt))
-          expect(I18n).to receive(:t).with("database_admin.local").and_return("The Local file")
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).and_return(:"example.com" => { :enabled_for => "backup" })
+          expect_custom_prompts("example.com", :enabled_for => "backup")
           expect(subject).to receive(:ask_local_file_options).once
           say ""
           subject.ask_file_location
@@ -2189,12 +2165,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "with custom prompts" do
         before do
-          expect(I18n).to receive(:t).with("database_admin.prompts", :default => {}).twice.and_return(
-            host.to_sym => {
-              :filename_text      => "Target please",
-              :filename_validator => "^[0-9]+-.+$"
-            }
-          )
+          expect_custom_prompts(host, :filename_text => "Target please", :filename_validator => "^[0-9]+-.+$").twice
 
           # if it doesn't ask again, it won't get the right task_params
           say ["", "bad-2", target]
@@ -2475,5 +2446,10 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       subject.instance_variable_set(:@backup_type, "ftp")
       expect(subject).not_to be_local_backup
     end
+  end
+
+  def expect_custom_prompts(hostname, values)
+    expect(I18n).to receive(:t).with("database_admin.prompts", :default => {})
+                               .and_return(hostname.to_sym => values)
   end
 end
