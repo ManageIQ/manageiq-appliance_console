@@ -185,6 +185,7 @@ module ManageIQ
           :uri_username => user,
           :uri_password => pass
         }
+        params[:remote_file_name] = filename if filename
         @task        = "evm:db:#{action}:remote"
         @task_params = ["--", params]
       end
@@ -328,16 +329,23 @@ module ManageIQ
 
       def filename_prompt_args
         default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore && local_backup?
-        [local_file_prompt, default, validator, "file that exists"]
+        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
+        prompt = "location of the local restore file" if action == :restore
+        if backup_type == S3_FILE || backup_type == SWIFT_FILE
+          prompt ||= object_store_file_prompt
+          default = File.basename(default)
+        else
+          prompt ||= local_file_prompt
+        end
+        [prompt, default, validator, "file that exists"]
       end
 
       def local_file_prompt
-        if action == :restore
-          "location of the local restore file"
-        else
-          "location to save the #{action} file to"
-        end
+        "location to save the #{action} file to"
+      end
+
+      def object_store_file_prompt
+        "name for the remote #{action} file"
       end
 
       def remote_file_prompt_args_for(remote_type)

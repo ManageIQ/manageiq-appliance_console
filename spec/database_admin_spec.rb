@@ -1512,6 +1512,143 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
     end
 
+    context "for Swift DB Backup" do
+      let(:example_uri)          { subject.send(:sample_url, 'swift') }
+      let(:uri)                  { URI(File.dirname(example_uri)) }
+      let(:filename)             { File.basename(example_uri) }
+      let(:user)                 { 'foobar' }
+      let(:pass)                 { 'supersecret' }
+      let(:file_prompt)          { "Enter the name to save the remote backup file as\nExample: #{filename}" }
+      let(:uri_prompt)           { "Enter the location to save the remote backup file to\nExample: #{example_uri}" }
+      let(:user_prompt)          { "\n?  Enter the User Name with access to this file.\nExample: 'openstack_user': " }
+      let(:pass_prompt)          { "Enter the password for #{user}" }
+      let(:region_prompt)        { "Enter the OpenStack Swift Region: " }
+      let(:port_prompt)          { "Enter the OpenStack Swift Port: |5000| " }
+      let(:domain_prompt)        { "OpenStack V3 Domain Identifier" }
+      let(:security_protocol_prompt) { "OpenStack Security Protocol\n\n1) SSL without validation\n2) SSL\n3) Non-SSL\n4) None\n\nChoose the openstack security protocol: |3| " }
+      let(:api_version_prompt)       { "OpenStack API Version\n\n1) Keystone v2\n2) Keystone v3\n3) None\n\nChoose the openstack api version: |1| " }
+      let(:errmsg)               { "a valid URI" }
+      let(:port)                 { 5000 }
+      let(:nondefaultport)       { 6789 }
+      let(:region)               { 'anyregion' }
+      let(:security_protocol)    { 'non-ssl' }
+      let(:v2_api_version)       { 'v2' }
+      let(:v3_api_version)       { 'v3' }
+      let(:domain_ident)         { 'default' }
+      let(:v2_query_string) { "region=#{region}&api_version=#{v2_api_version}&security_protocol=#{security_protocol}" }
+      let(:v2_query_elements) do
+        [
+          "region=#{region}",
+          "api_version=#{v2_api_version}",
+          "security_protocol=#{security_protocol}"
+        ]
+      end
+      let(:v3_query_string) { "region=#{region}&api_version=#{v3_api_version}&domain_id=#{domain_ident}&security_protocol=#{security_protocol}" }
+      let(:v3_query_elements) do
+        [
+          "region=#{region}",
+          "api_version=#{v3_api_version}",
+          "domain_id=#{domain_ident}",
+          "security_protocol=#{security_protocol}"
+        ]
+      end
+
+      describe "#ask_swift_file_options" do
+        let(:expected_task_params) do
+          [
+            "--",
+            {
+              :remote_file_name => "db.backup",
+              :uri              => uri.to_s,
+              :uri_username     => user,
+              :uri_password     => pass,
+            }
+          ]
+        end
+
+        context "with a valid uri, user, password, and default port, api, protocol given" do
+          before do
+            say [filename, uri, user, pass, region, "", "", ""]
+            expect(subject.ask_swift_file_options).to be_truthy
+          end
+
+          it "sets @uri to point to the swift share url" do
+            uri.port  = port
+            uri.query = v2_query_string
+            expect(subject.uri).to eq(uri)
+          end
+
+          it "sets @filename the name of the file in swift" do
+            expect(subject.filename).to eq(filename)
+          end
+
+          it "sets @task to point to 'evm:db:backup:remote'" do
+            expect(subject.task).to eq("evm:db:backup:remote")
+          end
+
+          it "sets @task_params to point to the swift file, user, and pass" do
+            uri.port = port
+            uri.query = v2_query_string
+            expect(subject.task_params).to eq(expected_task_params)
+          end
+        end
+
+        context "with a valid uri, user, password, and non-default port, api, protocol given" do
+          before do
+            say [filename, uri, user, pass, region, nondefaultport, 3, 1]
+            expect(subject.ask_swift_file_options).to be_truthy
+          end
+
+          it "sets @uri to point to the swift share url" do
+            uri.port  = nondefaultport
+            uri.query = v2_query_string
+            expect(subject.uri).to eq(uri)
+          end
+
+          it "sets @filename the name of the file in swift" do
+            expect(subject.filename).to eq(filename)
+          end
+
+          it "sets @task to point to 'evm:db:backup:remote'" do
+            expect(subject.task).to eq("evm:db:backup:remote")
+          end
+
+          it "sets @task_params to point to the swift file, user, and pass" do
+            uri.port = nondefaultport
+            uri.query = v2_query_string
+            expect(subject.task_params).to eq(expected_task_params)
+          end
+        end
+
+        context "with an invalid uri given" do
+          let(:bad_uri) { "nfs://host.mydomain.com/path/to/file" }
+
+          before do
+            say [filename, bad_uri, uri, user, pass, region, "", "", ""]
+            expect(subject.ask_swift_file_options).to be_truthy
+          end
+
+          it "reprompts the user and then properly sets the options" do
+            expect_readline_question_asked file_prompt
+            expect_readline_question_asked uri_prompt
+            expect_readline_question_asked user_prompt
+            expect_readline_question_asked pass_prompt
+            expect_readline_question_asked region_prompt
+            expect_readline_question_asked port_prompt
+            expect_readline_question_asked security_protocol_prompt
+            expect_readline_question_asked api_version_prompt
+
+            uri.port = port
+            uri.query = v2_query_string
+            expect(subject.uri).to         eq(uri)
+            expect(subject.filename).to    eq(filename)
+            expect(subject.task).to        eq("evm:db:backup:remote")
+            expect(subject.task_params).to eq(expected_task_params)
+          end
+        end
+      end
+    end
+
     describe "#ask_ftp_file_options" do
       let(:example_uri) { subject.send(:sample_url, 'ftp') }
       let(:uri)         { File.dirname(example_uri) }
