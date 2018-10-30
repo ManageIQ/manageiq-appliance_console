@@ -110,7 +110,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_swift_file_options).once
         say "6"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+        expect(subject.backup_type).to eq("swift")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -1159,7 +1159,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_swift_file_options).once
         say "6"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+        expect(subject.backup_type).to eq("swift")
       end
 
       it "cancels when CANCEL option is choosen" do
@@ -2130,7 +2130,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:ask_swift_file_options).once
         say "6"
         subject.ask_file_location
-        expect(subject.backup_type).to eq(described_class::SWIFT_FILE)
+        expect(subject.backup_type).to eq("swift")
       end
       it "cancels when CANCEL option is choosen" do
         say "7"

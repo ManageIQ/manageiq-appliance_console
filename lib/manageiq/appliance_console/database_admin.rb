@@ -50,6 +50,10 @@ module ManageIQ
         backup_type == "local".freeze
       end
 
+      def object_store_backup?
+        backup_type == "s3".freeze || backup_type == "swift".freeze
+      end
+
       def ask_questions
         setting_header
         say(DB_DUMP_WARNING) if action == :dump
@@ -328,24 +332,21 @@ module ManageIQ
       end
 
       def filename_prompt_args
-        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore && backup_type == LOCAL_FILE
-        prompt = "location of the local restore file" if action == :restore
-        if backup_type == S3_FILE || backup_type == SWIFT_FILE
-          prompt ||= object_store_file_prompt
+        return restore_prompt_args if action == :restore
+        default = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
+        prompt  = "location to save the #{action} file to"
+        if object_store_backup?
+          prompt  = "name for the remote #{action} file"
           default = File.basename(default)
-        else
-          prompt ||= local_file_prompt
         end
+        [prompt, default, nil, "file that exists"]
+      end
+
+      def restore_prompt_args
+        default   = DB_RESTORE_FILE
+        validator = LOCAL_FILE_VALIDATOR if local_backup?
+        prompt    = "location of the local restore file"
         [prompt, default, validator, "file that exists"]
-      end
-
-      def local_file_prompt
-        "location to save the #{action} file to"
-      end
-
-      def object_store_file_prompt
-        "name for the remote #{action} file"
       end
 
       def remote_file_prompt_args_for(remote_type)
