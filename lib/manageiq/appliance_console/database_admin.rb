@@ -6,19 +6,6 @@ module ManageIQ
     class DatabaseAdmin < HighLine
       include ManageIQ::ApplianceConsole::Prompts
 
-      V2_VERSION_PROMPT   = "Keystone v2".freeze
-      V2_VERSION          = "v2".freeze
-      V3_VERSION_PROMPT   = "Keystone v3".freeze
-      V3_VERSION          = "v3".freeze
-      API_VERSION_OPTIONS = [[V2_VERSION_PROMPT, V2_VERSION], [V3_VERSION_PROMPT, V3_VERSION], [CANCEL, nil]].freeze
-
-      SSL_WO_VALIDATION_PROMPT   = "SSL without validation".freeze
-      SSL_WO_VALIDATION          = "ssl".freeze
-      SSL_WITH_VALIDATION_PROMPT = "SSL".freeze
-      SSL_WITH_VALIDATION        = "ssl-with-validation".freeze
-      NON_SSL_PROMPT             = "Non-SSL".freeze
-      NON_SSL                    = "non-ssl".freeze
-      SECURITY_PROTOCOL_OPTIONS  = [[SSL_WO_VALIDATION_PROMPT, SSL_WO_VALIDATION], [SSL_WITH_VALIDATION_PROMPT, SSL_WITH_VALIDATION], [NON_SSL_PROMPT, NON_SSL], [CANCEL, nil]].freeze
       DB_RESTORE_FILE      = "/tmp/evm_db.backup".freeze
       DB_DEFAULT_DUMP_FILE = "/tmp/evm_db.dump".freeze
       LOCAL_FILE_VALIDATOR = ->(a) { File.exist?(a) }.freeze
