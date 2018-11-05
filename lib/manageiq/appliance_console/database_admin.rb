@@ -23,7 +23,8 @@ module ManageIQ
 
       WARN
 
-      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :uri, :filename
+      attr_accessor :uri
+      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
         super(input, output)
@@ -34,6 +35,10 @@ module ManageIQ
 
       def local_backup?
         backup_type == "local".freeze
+      end
+
+      def object_store_backup?
+        backup_type == "s3".freeze || backup_type == "swift".freeze
       end
 
       def ask_questions
@@ -152,6 +157,43 @@ module ManageIQ
         @task_params = ["--", params]
       end
 
+      def ask_swift_file_options
+        require 'uri'
+        swift_user_prompt = <<-PROMPT.strip_heredoc.chomp
+          User Name with access to this file.
+          Example: 'openstack_user'
+        PROMPT
+
+        @filename  = just_ask(*filename_prompt_args) { |q| q.readline = false } unless action == :restore
+        @uri       = URI(ask_for_uri(*remote_file_prompt_args_for("swift")) { |q| q.readline = false })
+        @task      = "evm:db:#{action}:remote"
+        user       = just_ask(swift_user_prompt) { |q| q.readline = false }
+        pass       = ask_for_password("password for #{user}") { |q| q.readline = false }
+        @uri.query = swift_query_elements.join('&').presence
+
+        params = {
+          :uri          => @uri.to_s,
+          :uri_username => user,
+          :uri_password => pass
+        }
+        params[:remote_file_name] = filename if filename
+        @task        = "evm:db:#{action}:remote"
+        @task_params = ["--", params]
+      end
+
+      def swift_query_elements
+        region            = just_ask("OpenStack Swift Region") { |q| q.readline = false }
+        @uri.port         = just_ask("OpenStack Swift Port", "5000") { |q| q.readline = false }
+        security_protocol = ask_with_menu(*security_protocol_menu_args)
+        api_version       = ask_with_menu(*api_version_menu_args) { |q| q.readline = false }
+        domain_ident      = just_ask("OpenStack V3 Domain Identifier") { |q| q.readline = false } if api_version == "v3"
+        query_elements    = []
+        query_elements    << "region=#{region}"                       if region.present?
+        query_elements    << "api_version=#{api_version}"             if api_version.present?
+        query_elements    << "domain_id=#{domain_ident}"              if domain_ident.present?
+        query_elements    << "security_protocol=#{security_protocol}" if security_protocol.present?
+      end
+
       def ask_to_delete_backup_after_restore
         if action == :restore && local_backup?
           say("The local database restore file is located at: '#{uri}'.\n")
@@ -212,11 +254,29 @@ module ManageIQ
         end
       end
 
+      def api_version_menu_args
+        [
+          "OpenStack API Version",
+          [["Keystone v2".freeze, "v2".freeze], ["Keystone v3".freeze, "v3".freeze], ["None".freeze, nil]].freeze,
+          ["Keystone v2".freeze, "v2".freeze],
+          nil
+        ]
+      end
+
       def file_menu_args
         [
           action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
           file_options,
           "local",
+          nil
+        ]
+      end
+
+      def security_protocol_menu_args
+        [
+          "OpenStack Security Protocol",
+          [["SSL without validation".freeze, "ssl".freeze], ["SSL".freeze, "ssl-with-validation".freeze], ["Non-SSL".freeze, "non-ssl".freeze], ["None".freeze, nil]].freeze,
+          ["Non-SSL".freeze, "non-ssl".freeze],
           nil
         ]
       end
@@ -259,17 +319,21 @@ module ManageIQ
       end
 
       def filename_prompt_args
-        default   = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
-        validator = LOCAL_FILE_VALIDATOR if action == :restore && local_backup?
-        [local_file_prompt, default, validator, "file that exists"]
+        return restore_prompt_args if action == :restore
+        default = action == :dump ? DB_DEFAULT_DUMP_FILE : DB_RESTORE_FILE
+        prompt  = "location to save the #{action} file to"
+        if object_store_backup?
+          prompt  = "name for the remote #{action} file"
+          default = File.basename(default)
+        end
+        [prompt, default, nil, "file that exists"]
       end
 
-      def local_file_prompt
-        if action == :restore
-          "location of the local restore file"
-        else
-          "location to save the #{action} file to"
-        end
+      def restore_prompt_args
+        default   = DB_RESTORE_FILE
+        validator = LOCAL_FILE_VALIDATOR if local_backup?
+        prompt    = "location of the local restore file"
+        [prompt, default, validator, "file that exists"]
       end
 
       def remote_file_prompt_args_for(remote_type)
