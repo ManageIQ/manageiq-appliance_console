@@ -50,7 +50,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         say ""
         subject.ask_file_location
         expect_output <<-PROMPT.strip_heredoc.chomp + " "
-          Restore Database File
+          Restore Database File Source
 
           1) Local file
           2) Network File System (NFS)
@@ -60,7 +60,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           6) OpenStack Swift (Swift)
           7) Cancel
 
-          Choose the restore database file: |1|
+          Choose the restore database file source: |1|
         PROMPT
       end
 
@@ -131,13 +131,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -147,13 +147,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -163,13 +163,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -179,13 +179,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -195,13 +195,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -211,12 +211,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
 
@@ -226,12 +226,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Restore Database File
+            Restore Database File Source
 
             1) The Local file
             2) Cancel
 
-            Choose the restore database file: |1|
+            Choose the restore database file source: |1|
           PROMPT
         end
       end
@@ -1099,7 +1099,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         say ""
         subject.ask_file_location
         expect_output <<-PROMPT.strip_heredoc.chomp + " "
-          Backup Output File Name
+          Backup Output File Destination
 
           1) Local file
           2) Network File System (NFS)
@@ -1109,7 +1109,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           6) OpenStack Swift (Swift)
           7) Cancel
 
-          Choose the backup output file name: |1|
+          Choose the backup output file destination: |1|
         PROMPT
       end
 
@@ -1179,13 +1179,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Backup Output File Name
+            Backup Output File Destination
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the backup output file name: |1|
+            Choose the backup output file destination: |1|
           PROMPT
         end
 
@@ -1195,13 +1195,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Backup Output File Name
+            Backup Output File Destination
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the backup output file name: |1|
+            Choose the backup output file destination: |1|
           PROMPT
         end
 
@@ -1211,12 +1211,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Backup Output File Name
+            Backup Output File Destination
 
             1) The Local file
             2) Cancel
 
-            Choose the backup output file name: |1|
+            Choose the backup output file destination: |1|
           PROMPT
         end
       end
@@ -2077,7 +2077,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         say ""
         subject.ask_file_location
         expect_output <<-PROMPT.strip_heredoc.chomp + " "
-          Dump Output File Name
+          Dump Output File Destination
 
           1) Local file
           2) Network File System (NFS)
@@ -2087,7 +2087,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           6) OpenStack Swift (Swift)
           7) Cancel
 
-          Choose the dump output file name: |1|
+          Choose the dump output file destination: |1|
         PROMPT
       end
 
@@ -2149,13 +2149,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Dump Output File Name
+            Dump Output File Destination
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the dump output file name: |1|
+            Choose the dump output file destination: |1|
           PROMPT
         end
 
@@ -2165,13 +2165,13 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Dump Output File Name
+            Dump Output File Destination
 
             1) The Local file
             2) ftp to example.com
             3) Cancel
 
-            Choose the dump output file name: |1|
+            Choose the dump output file destination: |1|
           PROMPT
         end
 
@@ -2181,12 +2181,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           say ""
           subject.ask_file_location
           expect_output <<-PROMPT.strip_heredoc.chomp + " "
-            Dump Output File Name
+            Dump Output File Destination
 
             1) The Local file
             2) Cancel
 
-            Choose the dump output file name: |1|
+            Choose the dump output file destination: |1|
           PROMPT
         end
       end

@@ -265,7 +265,7 @@ module ManageIQ
 
       def file_menu_args
         [
-          action == :restore ? "Restore Database File" : "#{action.capitalize} Output File Name",
+          action == :restore ? "Restore Database File Source" : "#{action.capitalize} Output File Destination",
           file_options,
           "local",
           nil
