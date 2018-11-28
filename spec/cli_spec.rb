@@ -3,13 +3,13 @@ describe ManageIQ::ApplianceConsole::Cli do
 
   describe "#parse" do
     it "fails if a region is not specified for a local database" do
-      expect { subject.parse(%w(--internal)) }.to raise_error(TrollopDieSpecError)
+      expect { subject.parse(%w(--internal)) }.to raise_error(OptimistDieSpecError)
     end
   end
 
   describe "#run" do
     it "should educate if parameters are not passed" do
-      expect { subject.parse([]).run }.to raise_error(TrollopEducateSpecError)
+      expect { subject.parse([]).run }.to raise_error(OptimistEducateSpecError)
     end
   end
 
