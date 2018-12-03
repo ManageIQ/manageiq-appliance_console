@@ -20,15 +20,15 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activerecord",            ">= 4.2.2"
-  spec.add_runtime_dependency "activesupport",           ">= 4.2.2"
+  spec.add_runtime_dependency "activerecord",            "~> 5.0.7.1"
+  spec.add_runtime_dependency "activesupport",           "~> 5.0.7.1"
   spec.add_runtime_dependency "awesome_spawn",           "~> 1.4"
   spec.add_runtime_dependency "bcrypt",                  "~> 3.1.10"
   spec.add_runtime_dependency "highline",                "~> 1.6.21"
-  spec.add_runtime_dependency "i18n",                    "~> 0.7"
   spec.add_runtime_dependency "linux_admin",             ["~> 1.0", ">=1.2.2"]
   spec.add_runtime_dependency "optimist",                "~> 3.0"
   spec.add_runtime_dependency "pg"
+  spec.add_runtime_dependency "rails-i18n",              "~> 5.x"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "codeclimate-test-reporter", "~> 1.0.0"
