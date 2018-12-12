@@ -217,8 +217,8 @@ FRIENDLY
     def validated
       !!validate!
     rescue => err
-      say_error(__method__, err.message)
       log_error(__method__, err.message)
+      say_error(__method__, err.message)
       false
     end
 
