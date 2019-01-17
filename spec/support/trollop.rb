@@ -1,16 +1,16 @@
 require 'active_support/core_ext/string/strip'
-require 'trollop'
+require 'optimist'
 
-class TrollopEducateSpecError < StandardError; end
-class TrollopDieSpecError < StandardError; end
+class OptimistEducateSpecError < StandardError; end
+class OptimistDieSpecError < StandardError; end
 
 RSpec.configure do |config|
   config.before(:each) do
     err_string = <<-EOF.strip_heredoc
       Don't allow methods that exit the calling process to be executed in specs.
-      If you were testing that we call Trollop.educate or Trollop.die, expect that a TrollopEducateSpecError or TrollopDieSpecError be raised instead
+      If you were testing that we call Optimist.educate or Optimist.die, expect that a OptimistEducateSpecError or OptimistDieSpecError be raised instead
     EOF
-    allow(Trollop).to receive(:educate).and_raise(TrollopEducateSpecError.new(err_string))
-    allow(Trollop).to receive(:die).and_raise(TrollopDieSpecError.new(err_string))
+    allow(Optimist).to receive(:educate).and_raise(OptimistEducateSpecError.new(err_string))
+    allow(Optimist).to receive(:die).and_raise(OptimistDieSpecError.new(err_string))
   end
 end

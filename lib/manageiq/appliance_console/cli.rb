@@ -1,4 +1,4 @@
-require 'trollop'
+require 'optimist'
 require 'pathname'
 
 # support for appliance_console methods
@@ -106,7 +106,7 @@ module ApplianceConsole
 
     def parse(args)
       args.shift if args.first == "--" # Handle when called through script/runner
-      self.options = Trollop.options(args) do
+      self.options = Optimist.options(args) do
         banner "Usage: appliance_console_cli [options]"
 
         opt :host,     "/etc/hosts name",    :type => :string,  :short => 'H'
@@ -147,7 +147,7 @@ module ApplianceConsole
         opt :extauth_opts,         "External Authentication Options",   :type => :string
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
       end
-      Trollop.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
+      Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       self
     end
 
@@ -156,7 +156,7 @@ module ApplianceConsole
     end
 
     def run
-      Trollop.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
+      Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
                              time_zone? || date_time? || set_server_state? || set_replication?
       if set_host?
