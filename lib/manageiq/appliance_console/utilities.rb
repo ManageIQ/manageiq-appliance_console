@@ -48,7 +48,7 @@ module ApplianceConsole
         return
       end
 
-      result.output.strip
+      result.output.split.last
     end
 
     def self.pg_status
