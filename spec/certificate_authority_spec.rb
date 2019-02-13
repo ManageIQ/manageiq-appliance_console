@@ -44,7 +44,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
 
       expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
-      expect(FileUtils).to receive(:chmod).with(0644, anything)
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
       expect(subject).to receive(:say).twice
       subject.activate
@@ -52,7 +52,6 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(subject.status_string).to eq("http: complete")
       expect(subject).to be_complete
     end
-
   end
 
   context "#postgres client" do
@@ -71,7 +70,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
 
       allow(File).to receive(:exist?).and_return(true)
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
-      expect(FileUtils).to receive(:chmod).with(0644, anything)
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
       expect(subject).to receive(:say)
       subject.activate
@@ -100,7 +99,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       allow(PostgresAdmin).to receive_messages(:service_name => "postgresql")
       expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
-      expect(FileUtils).to receive(:chmod).with(0644, anything)
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
       expect(subject).to receive(:say).twice
       subject.activate
