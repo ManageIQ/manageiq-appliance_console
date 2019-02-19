@@ -67,8 +67,8 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
         use_replication_slots=1
         pg_basebackup_options='--xlog-method=stream'
         failover=automatic
-        promote_command='repmgr standby promote -f /etc/repmgr.conf --log-to-file'
-        follow_command='repmgr standby follow -f /etc/repmgr.conf --log-to-file --upstream-node-id=%n'
+        promote_command='repmgr standby promote -f /etc/repmgr/10/repmgr.conf --log-to-file'
+        follow_command='repmgr standby follow -f /etc/repmgr/10/repmgr.conf --log-to-file --upstream-node-id=%n'
         log_file=/var/log/repmgr/repmgrd.log
         service_start_command='sudo systemctl start postgresql-9.5'
         service_stop_command='sudo systemctl stop postgresql-9.5'

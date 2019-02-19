@@ -7,7 +7,7 @@ module ApplianceConsole
   class DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
 
-    REPMGR_CONFIG     = '/etc/repmgr.conf'.freeze
+    REPMGR_CONFIG     = '/etc/repmgr/10/repmgr.conf'.freeze
     REPMGR_LOG        = '/var/log/repmgr/repmgrd.log'.freeze
     PGPASS_FILE       = '/var/lib/pgsql/.pgpass'.freeze
     NETWORK_INTERFACE = 'eth0'.freeze
