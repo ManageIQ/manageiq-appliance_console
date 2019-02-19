@@ -59,7 +59,7 @@ Replication Server Configuration
         node_name=#{host}
         conninfo='host=#{host} user=#{database_user} dbname=#{database_name}'
         use_replication_slots=1
-        pg_basebackup_options='--xlog-method=stream'
+        pg_basebackup_options='--wal-method=stream'
         failover=automatic
         promote_command='repmgr standby promote -f #{REPMGR_CONFIG} --log-to-file'
         follow_command='repmgr standby follow -f #{REPMGR_CONFIG} --log-to-file --upstream-node-id=%n'

@@ -65,7 +65,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
         node_name=host
         conninfo='host=host user=user dbname=databasename'
         use_replication_slots=1
-        pg_basebackup_options='--xlog-method=stream'
+        pg_basebackup_options='--wal-method=stream'
         failover=automatic
         promote_command='repmgr standby promote -f /etc/repmgr/10/repmgr.conf --log-to-file'
         follow_command='repmgr standby follow -f /etc/repmgr/10/repmgr.conf --log-to-file --upstream-node-id=%n'
