@@ -1,4 +1,5 @@
 require "awesome_spawn"
+require 'linux_admin'
 
 module ManageIQ
 module ApplianceConsole
@@ -101,6 +102,11 @@ module ApplianceConsole
 
     def status
       @status ||= key_status
+    end
+
+    def enable_certmonger
+      say "enabling certmonger to start on reboot"
+      LinuxAdmin::Service.new("certmonger").enable.start
     end
 
     private

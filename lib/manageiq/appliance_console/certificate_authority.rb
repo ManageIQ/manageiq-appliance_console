@@ -74,8 +74,7 @@ module ApplianceConsole
       ).request
 
       if cert.complete?
-        say "configuring certmonger to start on reboot"
-        LinuxAdmin::Service.new("certmonger").enable.start
+        cert.enable_certmonger
       end
       self.pgclient = cert.status
     end
@@ -99,8 +98,7 @@ module ApplianceConsole
         InternalDatabaseConfiguration.new(:ssl => true).configure_postgres
         LinuxAdmin::Service.new(PostgresAdmin.service_name).restart
 
-        say "configuring certmonger to start on reboot"
-        LinuxAdmin::Service.new("certmonger").enable.start
+        cert.enable_certmonger
       end
       self.pgserver = cert.status
     end
@@ -120,8 +118,7 @@ module ApplianceConsole
         say "configuring apache to use new certs"
         LinuxAdmin::Service.new("httpd").restart
 
-        say "configuring certmonger to start on reboot"
-        LinuxAdmin::Service.new("certmonger").enable.start
+        cert.enable_certmonger
       end
       self.http = cert.status
     end

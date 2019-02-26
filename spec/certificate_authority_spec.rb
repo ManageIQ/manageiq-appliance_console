@@ -46,7 +46,8 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
       expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
-      expect(subject).to receive(:say).twice
+      allow_any_instance_of(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
+      expect(subject).to receive(:say)
       subject.activate
       expect(subject.http).to eq(:complete)
       expect(subject.status_string).to eq("http: complete")
@@ -72,7 +73,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
       expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
-      expect(subject).to receive(:say)
+      allow_any_instance_of(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
       subject.activate
       expect(subject.pgclient).to eq(:complete)
       expect(subject.status_string).to eq("pgclient: complete")
@@ -101,7 +102,8 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
       expect(FileUtils).to receive(:chmod).with(0o644, anything)
 
-      expect(subject).to receive(:say).twice
+      allow_any_instance_of(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
+      expect(subject).to receive(:say)
       subject.activate
       expect(subject.pgserver).to eq(:complete)
       expect(subject.status_string).to eq("pgserver: complete")
