@@ -105,7 +105,7 @@ module ApplianceConsole
     end
 
     def enable_certmonger
-      say "enabling certmonger to start on reboot"
+      say("enabling certmonger to start on reboot")
       LinuxAdmin::Service.new("certmonger").enable.start
     end
 
