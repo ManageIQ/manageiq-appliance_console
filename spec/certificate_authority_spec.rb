@@ -28,6 +28,57 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
     end
   end
 
+  context "#http" do
+    before do
+      subject.http = true
+    end
+
+    it "without ipa client should not install" do
+      ipa_configured(false)
+      expect { subject.activate }.to raise_error(ArgumentError, /ipa client/)
+    end
+
+    it "should configure http" do
+      ipa_configured(true)
+      expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
+
+      expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
+      expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
+      allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
+      expect(subject).to receive(:say)
+      subject.activate
+      expect(subject.http).to eq(:complete)
+      expect(subject.status_string).to eq("http: complete")
+      expect(subject).to be_complete
+    end
+  end
+
+  context "#postgres client" do
+    before do
+      subject.pgclient = true
+    end
+
+    it "without ipa client should not install" do
+      ipa_configured(false)
+      expect { subject.activate }.to raise_error(ArgumentError, /ipa client/)
+    end
+
+    it "should configure postgres client" do
+      ipa_configured(true)
+      expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
+
+      allow(File).to receive(:exist?).and_return(true)
+      expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
+      allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
+      subject.activate
+      expect(subject.pgclient).to eq(:complete)
+      expect(subject.status_string).to eq("pgclient: complete")
+      expect(subject).to be_complete
+    end
+  end
+
   context "#postgres server" do
     before do
       subject.pgserver = true
@@ -46,8 +97,9 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
         .and_return(double("config", :activate => true, :configure_postgres => true))
       allow(PostgresAdmin).to receive_messages(:service_name => "postgresql")
       expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
-      expect(FileUtils).to receive(:chmod).with(0644, anything)
-
+      expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
+      expect(FileUtils).to receive(:chmod).with(0o644, anything)
+      allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
       expect(subject).to receive(:say)
       subject.activate
       expect(subject.pgserver).to eq(:complete)

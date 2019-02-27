@@ -63,7 +63,7 @@ module ApplianceConsole
         AwesomeSpawn.run!("/sbin/restorecon -R #{PSQL_CLIENT_DIR}")
       end
 
-      self.pgclient = Certificate.new(
+      cert = Certificate.new(
         :cert_filename => "#{PSQL_CLIENT_DIR}/postgresql.crt",
         :root_filename => "#{PSQL_CLIENT_DIR}/root.crt",
         :service       => "manageiq",
@@ -71,7 +71,12 @@ module ApplianceConsole
         :ca_name       => ca_name,
         :hostname      => hostname,
         :realm         => realm,
-      ).request.status
+      ).request
+
+      if cert.complete?
+        cert.enable_certmonger
+      end
+      self.pgclient = cert.status
     end
 
     def configure_pgserver
@@ -92,6 +97,8 @@ module ApplianceConsole
         # no need for username/password since not writing database.yml
         InternalDatabaseConfiguration.new(:ssl => true).configure_postgres
         LinuxAdmin::Service.new(PostgresAdmin.service_name).restart
+
+        cert.enable_certmonger
       end
       self.pgserver = cert.status
     end
@@ -110,6 +117,8 @@ module ApplianceConsole
       if cert.complete?
         say "configuring apache to use new certs"
         LinuxAdmin::Service.new("httpd").restart
+
+        cert.enable_certmonger
       end
       self.http = cert.status
     end
