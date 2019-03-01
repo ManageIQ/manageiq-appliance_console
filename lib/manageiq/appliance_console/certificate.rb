@@ -1,5 +1,6 @@
 require "awesome_spawn"
-require 'linux_admin'
+require "linux_admin"
+require "fileutils"
 
 module ManageIQ
 module ApplianceConsole
@@ -40,8 +41,11 @@ module ApplianceConsole
     end
 
     def request
+      undo_tracking if complete?
+
       if should_request_key?
         principal.register
+        remove_key_pair
         request_certificate
         # NOTE: status probably changed
         set_owner_of_key unless rejected?
@@ -110,6 +114,22 @@ module ApplianceConsole
     end
 
     private
+
+    def remove_key_pair
+      FileUtils.rm_f(cert_filename) if File.exist?(cert_filename)
+      FileUtils.rm_f(key_filename)  if File.exist?(key_filename)
+    end
+
+    def undo_tracking
+      stop_tracking
+      FileUtils.rm_f(root_filename) if File.exist?(root_filename)
+      remove_key_pair
+      clear_status
+    end
+
+    def stop_tracking
+      AwesomeSpawn.run!("/usr/bin/getcert", :params => ["stop-tracking", "-f", cert_filename, "-k", key_filename])
+    end
 
     def request_first
       params = {

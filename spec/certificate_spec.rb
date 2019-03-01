@@ -12,7 +12,9 @@ describe ManageIQ::ApplianceConsole::Certificate do
                         :hostname      => host,
                         :service       => service,
                         :realm         => realm,
-                        :cert_filename => cert_filename)
+                        :root_filename => root_filename,
+                        :cert_filename => cert_filename,
+                        :key_filename  => key_filename)
   end
 
   it "should set proper realm" do
@@ -31,7 +33,11 @@ describe ManageIQ::ApplianceConsole::Certificate do
     expect_principal_register
     expect_request
     expect_chown
-    expect_chmod([cert_filename])
+    expect_chmod([root_filename, cert_filename])
+    allow(File).to receive(:exist?).with(cert_filename).and_return(true)
+    allow(File).to receive(:exist?).with(key_filename).and_return(true)
+    expect(FileUtils).to receive(:rm_f).with(key_filename).once
+    expect(FileUtils).to receive(:rm_f).with(cert_filename).once
 
     expect(subject.request).to be_complete
     expect(subject.status).to eq(:complete)
@@ -47,9 +53,16 @@ describe ManageIQ::ApplianceConsole::Certificate do
     expect(subject.status).to eq(:rejected)
   end
 
-  it "should only run complete block if keys already exist" do
-    expect_getcert_status(response)
-    expect_chmod([cert_filename])
+  it "should reset tracking if keys already exist" do
+    expect_getcert_status(response).twice
+    expect_getcert_stop_tracking(response)
+    allow(File).to receive(:exist?).with(root_filename).and_return(true)
+    allow(File).to receive(:exist?).with(cert_filename).and_return(true)
+    allow(File).to receive(:exist?).with(key_filename).and_return(true)
+    expect(FileUtils).to receive(:rm_f).with(root_filename).once
+    expect(FileUtils).to receive(:rm_f).with(cert_filename).once
+    expect(FileUtils).to receive(:rm_f).with(key_filename).once
+    expect_chmod([root_filename, cert_filename])
     yielded = false
 
     subject.request { yielded = true }
@@ -86,6 +99,10 @@ describe ManageIQ::ApplianceConsole::Certificate do
 
   def expect_request_again
     expect_run(/getcert/, ["resubmit", "-w", "-f", cert_filename])
+  end
+
+  def expect_getcert_stop_tracking(*responses)
+    expect_run(/getcert/, ["stop-tracking", "-f", cert_filename, "-k", key_filename], *responses)
   end
 
   def expect_getcert_status(*responses)

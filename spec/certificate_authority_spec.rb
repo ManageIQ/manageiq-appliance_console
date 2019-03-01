@@ -40,7 +40,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
 
     it "should configure http" do
       ipa_configured(true)
-      expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
+      expect_run(/getcert/, anything, response).at_least(3).times
 
       expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
@@ -66,7 +66,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
 
     it "should configure postgres client" do
       ipa_configured(true)
-      expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
+      expect_run(/getcert/, anything, response).at_least(3).times
 
       allow(File).to receive(:exist?).and_return(true)
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
@@ -91,7 +91,7 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
 
     it "should install postgres server" do
       ipa_configured(true)
-      expect_run(/getcert/, anything, response) # getcert returns: the certificate already exist
+      expect_run(/getcert/, anything, response).at_least(3).times
 
       expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
         .and_return(double("config", :activate => true, :configure_postgres => true))
