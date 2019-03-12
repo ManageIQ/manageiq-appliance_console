@@ -123,7 +123,7 @@ module ApplianceConsole
     end
 
     def run_initdb
-      AwesomeSpawn.run!("service", :params => {nil => [PostgresAdmin.service_name, "initdb"]})
+      AwesomeSpawn.run!("postgresql-setup", :params => {:initdb => nil, :unit => PostgresAdmin.service_name})
     end
 
     def start_postgres
