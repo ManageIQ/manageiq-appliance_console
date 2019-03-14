@@ -73,4 +73,27 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
       @config.post_activation
     end
   end
+
+  describe "#initialize_postgresql_disk" do
+    before do
+      lvm = double("LogicalVolumeManagement", :setup => nil)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new).and_return(lvm)
+    end
+
+    it "resets the permissions on the postgres users home directory if we mount on top of it" do
+      allow(@config).to receive(:mount_point).and_return(Pathname.new("/var/lib/pgsql"))
+      expect(FileUtils).to receive(:chown).with(PostgresAdmin.user, PostgresAdmin.group, "/var/lib/pgsql")
+      expect(FileUtils).to receive(:chmod).with(0o700, "/var/lib/pgsql")
+
+      @config.initialize_postgresql_disk
+    end
+
+    it "leaves the mount point alone if it is not the postgres users home directory" do
+      allow(@config).to receive(:mount_point).and_return(Pathname.new("/tmp/pgsql"))
+      expect(FileUtils).not_to receive(:chown)
+      expect(FileUtils).not_to receive(:chown)
+
+      @config.initialize_postgresql_disk
+    end
+  end
 end

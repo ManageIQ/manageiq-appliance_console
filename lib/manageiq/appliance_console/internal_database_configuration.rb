@@ -82,6 +82,12 @@ module ApplianceConsole
                                     :filesystem_type     => PostgresAdmin.database_disk_filesystem,
                                     :logical_volume_path => PostgresAdmin.logical_volume_path).setup
       end
+
+      # if we mounted the disk onto the postgres user's home directory, fix the permissions
+      if mount_point.to_s == "/var/lib/pgsql"
+        FileUtils.chown(PostgresAdmin.user, PostgresAdmin.group, "/var/lib/pgsql")
+        FileUtils.chmod(0o700, "/var/lib/pgsql")
+      end
     end
 
     def initialize_postgresql
