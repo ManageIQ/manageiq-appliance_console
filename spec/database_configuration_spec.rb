@@ -1,12 +1,6 @@
 describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
   before do
-    @old_key_root = MiqPassword.key_root
-    MiqPassword.key_root = ManageIQ::Gems::Pending.root.join("spec/support")
     @config = described_class.new
-  end
-
-  after do
-    MiqPassword.key_root = @old_key_root
   end
 
   context ".initialize" do
@@ -51,7 +45,7 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
 
   context "#password=" do
     it "decrypts encrypted value" do
-      @config.password = MiqPassword.encrypt("test")
+      @config.password = ManageIQ::Password.encrypt("test")
       expect(@config.password).to eq("test")
     end
 
@@ -88,7 +82,7 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
 
   context ".decrypt_password" do
     it "decrypt" do
-      hash = {"production" => {"password" => MiqPassword.encrypt("test")}}
+      hash = {"production" => {"password" => ManageIQ::Password.encrypt("test")}}
       expect(described_class.decrypt_password(hash)["production"]["password"]).to eq("test")
     end
 

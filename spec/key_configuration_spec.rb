@@ -69,7 +69,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
         it "creates key" do
           subject.action = :create
           v2_exists(false)
-          expect(MiqPassword).to receive(:generate_symmetric).and_return(154)
+          expect(ManageIQ::Password).to receive(:generate_symmetric).and_return(154)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
           expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
           expect(subject.activate).to be_truthy

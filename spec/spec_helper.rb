@@ -3,6 +3,14 @@ if ENV['CI']
   SimpleCov.start
 end
 
+require "manageiq-appliance_console"
+ManageIQ::ApplianceConsole.logger = Logger.new("/dev/null")
+
+require "manageiq/password/rspec_matchers"
+
+# Requires supporting files with custom matchers and macros, etc, in spec/support/ and its subdirectories.
+Dir[File.expand_path(File.join(__dir__, "support/**/*.rb"))].each { |f| require f }
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
@@ -13,14 +21,13 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.before do
+    @old_key_root = ManageIQ::Password.key_root
+    ManageIQ::Password.key_root = File.join(__dir__, "support")
+  end
+
+  config.after do
+    ManageIQ::Password.key_root = @old_key_root
+  end
 end
-
-# Requires supporting files with custom matchers and macros, etc, in spec/support/ and its subdirectories.
-Dir[File.expand_path(File.join(__dir__, "support/**/*.rb"))].each { |f| require f }
-
-require "manageiq-appliance_console"
-ManageIQ::ApplianceConsole.logger = Logger.new("/dev/null")
-
-# For encryption rspec matchers
-require "manageiq-gems-pending"
-Dir[ManageIQ::Gems::Pending.root.join("spec/support/custom_matchers/*.rb")].each { |f| require f }
