@@ -57,8 +57,8 @@ AS_OPTIONS = I18n.t("advanced_settings.menu_order").collect do |item|
   I18n.t("advanced_settings.#{item}")
 end
 
-require 'util/miq-password'
-MiqPassword.key_root = ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs").to_s
+require 'manageiq-password'
+ManageIQ::Password.key_root = ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs").to_s
 
 # Load appliance_console libraries
 include ManageIQ::ApplianceConsole::Prompts

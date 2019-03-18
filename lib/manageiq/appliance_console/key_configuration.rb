@@ -2,7 +2,7 @@ require 'pathname'
 require 'fileutils'
 require 'net/scp'
 require 'active_support/all'
-require 'util/miq-password'
+require 'manageiq-password'
 
 module ManageIQ
 module ApplianceConsole
@@ -89,7 +89,7 @@ module ApplianceConsole
     end
 
     def create_key
-      MiqPassword.generate_symmetric(NEW_KEY_FILE) && true
+      ManageIQ::Password.generate_symmetric(NEW_KEY_FILE) && true
     end
 
     def fetch_key

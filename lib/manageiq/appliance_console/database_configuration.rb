@@ -1,8 +1,8 @@
 require 'active_record'
 require 'active_support/core_ext'
 require 'linux_admin'
+require 'manageiq-password'
 require 'pathname'
-require 'util/miq-password'
 require 'fileutils'
 
 module ManageIQ
@@ -56,7 +56,7 @@ module ApplianceConsole
     end
 
     def password=(value)
-      @password = MiqPassword.try_decrypt(value)
+      @password = ManageIQ::Password.try_decrypt(value)
     end
 
     def activate
@@ -187,11 +187,11 @@ FRIENDLY
     end
 
     def self.encrypt_password(settings)
-      encrypt_decrypt_password(settings) { |pass| MiqPassword.try_encrypt(pass) }
+      encrypt_decrypt_password(settings) { |pass| ManageIQ::Password.try_encrypt(pass) }
     end
 
     def self.decrypt_password(settings)
-      encrypt_decrypt_password(settings) { |pass| MiqPassword.try_decrypt(pass) }
+      encrypt_decrypt_password(settings) { |pass| ManageIQ::Password.try_decrypt(pass) }
     end
 
     def self.current

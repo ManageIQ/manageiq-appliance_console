@@ -1,12 +1,6 @@
 describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
   before do
-    @old_key_root = MiqPassword.key_root
-    MiqPassword.key_root = ManageIQ::Gems::Pending.root.join("spec/support")
     @config = described_class.new
-  end
-
-  after do
-    MiqPassword.key_root = @old_key_root
   end
 
   context ".new" do
