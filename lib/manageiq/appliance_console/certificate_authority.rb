@@ -4,21 +4,14 @@ require 'util/postgres_admin'
 
 module ManageIQ
 module ApplianceConsole
-  # configure ssl certificates for postgres communication
-  # and appliance to appliance communications
   class CertificateAuthority
     CFME_DIR        = "/var/www/miq/vmdb/certs"
-    PSQL_CLIENT_DIR = "/root/.postgresql"
 
     # hostname of current machine
     attr_accessor :hostname
     attr_accessor :realm
     # name of certificate authority
     attr_accessor :ca_name
-    # true if we should configure postgres client
-    attr_accessor :pgclient
-    # true if we should configure postgres server
-    attr_accessor :pgserver
     # true if we should configure http endpoint
     attr_accessor :http
     attr_accessor :verbose
@@ -33,8 +26,6 @@ module ApplianceConsole
         self.principal = just_ask("IPA Server Principal", @principal)
         self.password  = ask_for_password("IPA Server Principal Password", @password)
       end
-      self.pgclient = ask_yn("Configure certificate for postgres client", "Y")
-      self.pgserver = ask_yn("Configure certificate for postgres server", "Y")
       self.http = ask_yn("Configure certificate for http server", "Y")
       true
     end
@@ -42,8 +33,6 @@ module ApplianceConsole
     def activate
       valid_environment?
 
-      configure_pgclient if pgclient
-      configure_pgserver if pgserver
       configure_http if http
 
       status_string
@@ -55,52 +44,6 @@ module ApplianceConsole
       end
 
       raise ArgumentError, "hostname needs to be defined" unless hostname
-    end
-
-    def configure_pgclient
-      unless File.exist?(PSQL_CLIENT_DIR)
-        FileUtils.mkdir_p(PSQL_CLIENT_DIR, :mode => 0700)
-        AwesomeSpawn.run!("/sbin/restorecon -R #{PSQL_CLIENT_DIR}")
-      end
-
-      cert = Certificate.new(
-        :cert_filename => "#{PSQL_CLIENT_DIR}/postgresql.crt",
-        :root_filename => "#{PSQL_CLIENT_DIR}/root.crt",
-        :service       => "manageiq",
-        :extensions    => %w(client),
-        :ca_name       => ca_name,
-        :hostname      => hostname,
-        :realm         => realm,
-      ).request
-
-      if cert.complete?
-        cert.enable_certmonger
-      end
-      self.pgclient = cert.status
-    end
-
-    def configure_pgserver
-      cert = Certificate.new(
-        :cert_filename => "#{CFME_DIR}/postgres.crt",
-        :root_filename => "#{CFME_DIR}/root.crt",
-        :service       => "postgresql",
-        :extensions    => %w(server),
-        :ca_name       => ca_name,
-        :hostname      => hostname,
-        :realm         => realm,
-        :owner         => "postgres.postgres"
-      ).request
-
-      if cert.complete?
-        say "configuring postgres to use certs"
-        # only telling postgres to rewrite server configuration files
-        # no need for username/password since not writing database.yml
-        InternalDatabaseConfiguration.new(:ssl => true).configure_postgres
-        LinuxAdmin::Service.new(PostgresAdmin.service_name).restart
-
-        cert.enable_certmonger
-      end
-      self.pgserver = cert.status
     end
 
     def configure_http
@@ -124,7 +67,7 @@ module ApplianceConsole
     end
 
     def status
-      {"pgclient" => pgclient, "pgserver" => pgserver, "http" => http}.delete_if { |_n, v| !v }
+      {"http" => http}.delete_if { |_n, v| !v }
     end
 
     def status_string

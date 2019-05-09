@@ -258,13 +258,11 @@ describe ManageIQ::ApplianceConsole::Cli do
           :hostname => "client.domain.com",
           :realm    => nil,
           :ca_name  => "ipa",
-          :pgclient => true,
-          :pgserver => false,
           :http     => true,
           :verbose  => false,
         ).and_return(double(:activate => true, :status_string => "good", :complete? => true))
 
-      subject.parse(%w(--postgres-client-cert --http-cert)).run
+      subject.parse(["--http-cert"]).run
     end
 
     it "should basic install waiting (manual ca_name, verbose)" do
@@ -277,13 +275,11 @@ describe ManageIQ::ApplianceConsole::Cli do
           :hostname => "client.domain.com",
           :realm    => "realm.domain.com",
           :ca_name  => "super",
-          :pgclient => false,
-          :pgserver => true,
-          :http     => false,
+          :http     => true,
           :verbose  => true,
         ).and_return(double(:activate => true, :status_string => "good", :complete? => false))
 
-      subject.parse(%w(--postgres-server-cert --verbose --ca super --iparealm realm.domain.com)).run
+      subject.parse(%w(--http-cert --verbose --ca super --iparealm realm.domain.com)).run
     end
   end
 
@@ -568,20 +564,8 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     context "#certs?" do
-      it "should install certs if postgres client is specified" do
-        expect(subject.parse(%w(--postgres-client-cert))).to be_certs
-      end
-
-      it "should install certs if postgres server is specified" do
-        expect(subject.parse(%w(--postgres-server-cert))).to be_certs
-      end
-
       it "should install certs if a http is specified" do
         expect(subject.parse(%w(--http-cert))).to be_certs
-      end
-
-      it "should install certs if all params are specified" do
-        expect(subject.parse(%w(--postgres-client-cert --postgres-server-cert --http-cert))).to be_certs
       end
     end
   end

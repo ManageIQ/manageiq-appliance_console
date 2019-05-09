@@ -9,22 +9,16 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(subject).to be_complete
     end
 
-    it "should have status for waiting and complete services (not complete)" do
-      subject.pgserver = :complete
-      subject.pgclient = :waiting
+    it "should be waiting if status is waiting" do
+      subject.http = :waiting
       expect(subject).not_to be_complete
-      expect(subject.status_string).to eq("pgclient: waiting pgserver: complete")
+      expect(subject.status_string).to eq("http: waiting")
     end
 
     it "should be complete if all statuses are complete" do
-      subject.pgserver = :complete
+      subject.http = :complete
       expect(subject).to be_complete
-      expect(subject.status_string).to eq("pgserver: complete")
-    end
-
-    it "should not be complete if any statuses have issues" do
-      subject.pgserver = :complete
-      subject.pgclient = :waiting
+      expect(subject.status_string).to eq("http: complete")
     end
   end
 
@@ -51,72 +45,6 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(subject.http).to eq(:complete)
       expect(subject.status_string).to eq("http: complete")
       expect(subject).to be_complete
-    end
-  end
-
-  context "#postgres client" do
-    before do
-      subject.pgclient = true
-    end
-
-    it "without ipa client should not install" do
-      ipa_configured(false)
-      expect { subject.activate }.to raise_error(ArgumentError, /ipa client/)
-    end
-
-    it "should configure postgres client" do
-      ipa_configured(true)
-      expect_run(/getcert/, anything, response).at_least(3).times
-
-      allow(File).to receive(:exist?).and_return(true)
-      expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
-      expect(FileUtils).to receive(:chmod).with(0o644, anything)
-      allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
-      subject.activate
-      expect(subject.pgclient).to eq(:complete)
-      expect(subject.status_string).to eq("pgclient: complete")
-      expect(subject).to be_complete
-    end
-  end
-
-  context "#postgres server" do
-    before do
-      subject.pgserver = true
-    end
-
-    it "without ipa client should not install" do
-      ipa_configured(false)
-      expect { subject.activate }.to raise_error(ArgumentError, /ipa client/)
-    end
-
-    it "should install postgres server" do
-      ipa_configured(true)
-      expect_run(/getcert/, anything, response).at_least(3).times
-
-      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-        .and_return(double("config", :activate => true, :configure_postgres => true))
-      allow(PostgresAdmin).to receive_messages(:service_name => "postgresql")
-      expect(LinuxAdmin::Service).to receive(:new).and_return(double("Service", :restart => true))
-      expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
-      expect(FileUtils).to receive(:chmod).with(0o644, anything)
-      allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
-      expect(subject).to receive(:say)
-      subject.activate
-      expect(subject.pgserver).to eq(:complete)
-      expect(subject.status_string).to eq("pgserver: complete")
-      expect(subject).to be_complete
-    end
-
-    it "should not change postgres if service not responding" do
-      ipa_configured(true)
-      expect_run(/getcert/, anything, response(3)) # getcert returns: waiting on the CA
-
-      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).not_to receive(:new)
-      expect(LinuxAdmin::Service).not_to receive(:new)
-      subject.activate
-      expect(subject.pgserver).to eq(:waiting)
-      expect(subject.status_string).to eq("pgserver: waiting")
-      expect(subject).not_to be_complete
     end
   end
 

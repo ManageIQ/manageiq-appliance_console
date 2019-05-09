@@ -44,7 +44,7 @@ module ApplianceConsole
     end
 
     def certs?
-      options[:postgres_client_cert] || options[:postgres_server_cert] || options[:http_cert]
+      options[:http_cert]
     end
 
     def uninstall_ipa?
@@ -141,8 +141,6 @@ module ApplianceConsole
         opt :ca,                   "CA name used for certmonger",       :type => :string,  :default => "ipa"
         opt :timezone,             "Time zone",                         :type => :string
         opt :datetime,             "Date and time, in YYYY-MM-DDTHH:MM:SS (ISO8601) format", :type => :string
-        opt :postgres_client_cert, "install certs for postgres client", :type => :boolean
-        opt :postgres_server_cert, "install certs for postgres server", :type => :boolean
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
@@ -323,8 +321,6 @@ module ApplianceConsole
         :hostname => host,
         :realm    => options[:iparealm],
         :ca_name  => options[:ca],
-        :pgclient => options[:postgres_client_cert],
-        :pgserver => options[:postgres_server_cert],
         :http     => options[:http_cert],
         :verbose  => options[:verbose],
       )
