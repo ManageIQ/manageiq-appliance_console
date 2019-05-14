@@ -346,27 +346,6 @@ Static Network Configuration
         end
         press_any_key
 
-      when I18n.t("advanced_settings.ca")
-        say("#{selection}\n\n")
-        begin
-          ca = CertificateAuthority.new(:hostname => host)
-          if ca.ask_questions && ca.activate
-            say "\ncertificate result: #{ca.status_string}"
-            unless ca.complete?
-              say "After the certificates are retrieved, rerun to update service configuration files"
-            end
-            press_any_key
-          else
-            say("\nCertificates not fetched.\n")
-            press_any_key
-          end
-        rescue AwesomeSpawn::CommandResultError => e
-          say e.result.output
-          say e.result.error
-          say ""
-          press_any_key
-        end
-
       when I18n.t("advanced_settings.evmstop")
         say("#{selection}\n\n")
         service = LinuxAdmin::Service.new("evmserverd")

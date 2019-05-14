@@ -12,5 +12,7 @@ RSpec.configure do |config|
     EOF
     allow(Optimist).to receive(:educate).and_raise(OptimistEducateSpecError.new(err_string))
     allow(Optimist).to receive(:die).and_raise(OptimistDieSpecError.new(err_string))
+    allow_any_instance_of(Optimist::Parser).to receive(:educate).and_raise(OptimistEducateSpecError.new(err_string))
+    allow_any_instance_of(Optimist::Parser).to receive(:die).and_raise(OptimistDieSpecError.new(err_string))
   end
 end
