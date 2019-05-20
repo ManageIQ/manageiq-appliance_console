@@ -31,6 +31,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         subject.ask_questions
       end
+
+      it "raises MiqSignalError for :restore action if evmserverd is running" do
+        service = double(:service)
+        expect(LinuxAdmin::Service).to receive(:new).and_return(service)
+        allow(service).to receive(:running?).and_return(true)
+        allow(subject).to receive(:press_any_key)
+
+        expect { subject.ask_questions }.to raise_error signal_error
+      end
     end
 
     describe "#activate" do
@@ -1821,7 +1830,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           ]
         end
         before do
-          expect_custom_prompts(host, 
+          expect_custom_prompts(host,
                                 :filename_text      => "Target please",
                                 :filename_validator => "^[0-9]+-.+$",
                                 :rake_options       => { :skip_directory => true }).twice
