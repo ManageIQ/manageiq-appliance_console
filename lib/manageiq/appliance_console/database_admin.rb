@@ -43,6 +43,11 @@ module ManageIQ
 
       def ask_questions
         setting_header
+        if action == :restore && LinuxAdmin::Service.new("evmserverd").running?
+          say("\nDatabase restore failed. Please execute the \“Stop EVM Server Processes\” command and try again.")
+          press_any_key
+          raise MiqSignalError
+        end
         say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
         ask_for_tables_to_exclude_in_dump
