@@ -34,8 +34,8 @@ module ApplianceConsole
       create_volume_group
       create_logical_volume_to_fill_volume_group
       format_logical_volume
-      mount_disk
       update_fstab
+      mount_disk
     end
 
     private
@@ -74,8 +74,7 @@ module ApplianceConsole
         FileUtils.rm_rf(mount_point)
         FileUtils.mkdir_p(mount_point)
       end
-      AwesomeSpawn.run!("mount", :params => {"-t" => filesystem_type,
-                                             nil  => [logical_volume.path, mount_point]})
+      AwesomeSpawn.run!("mount", :params => ["-a"])
     end
 
     def update_fstab
