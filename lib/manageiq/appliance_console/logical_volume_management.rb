@@ -80,19 +80,18 @@ module ApplianceConsole
 
     def update_fstab
       fstab = LinuxAdmin::FSTab.instance
-      return if fstab.entries.find { |e| e.mount_point == mount_point }
+      entry = fstab.entries.find { |e| e.mount_point == mount_point } || LinuxAdmin::FSTabEntry.new
+      fstab.entries.delete(entry)
 
-      entry = LinuxAdmin::FSTabEntry.new(
-        :device        => logical_volume.path,
-        :mount_point   => mount_point,
-        :fs_type       => filesystem_type,
-        :mount_options => "rw,noatime",
-        :dumpable      => 0,
-        :fsck_order    => 0
-      )
+      entry.device        = logical_volume_path
+      entry.mount_point   = mount_point
+      entry.fs_type       = filesystem_type
+      entry.mount_options = "rw,noatime"
+      entry.dumpable      = 0
+      entry.fsck_order    = 0
 
       fstab.entries << entry
-      fstab.write! # Test this more, whitespace is removed
+      fstab.write!
     end
   end
 end

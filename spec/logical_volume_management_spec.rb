@@ -60,9 +60,7 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
       @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
       expect(@fstab).to receive(:write!)
       expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
-      expect(AwesomeSpawn).to receive(:run!)
-        .with("mount",
-              :params => {"-t" => @config.filesystem_type, nil => ["/dev/vg_test/lv_test", @config.mount_point]})
+      expect(AwesomeSpawn).to receive(:run!).with("mount", :params => ["-a"])
 
       @config.setup
       expect(@config.partition).to eq(:fake_partition)
@@ -83,31 +81,8 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
       expect(FileUtils).to receive(:rm_rf).with(@config.mount_point)
       expect(FileUtils).to receive(:mkdir_p).with(@config.mount_point)
       expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
-      expect(AwesomeSpawn).to receive(:run!)
-        .with("mount",
-              :params => {"-t" => @config.filesystem_type, nil => ["/dev/vg_test/lv_test", @config.mount_point]})
+      expect(AwesomeSpawn).to receive(:run!).with("mount", :params => ["-a"])
       @config.setup
-      expect(@config.partition).to eq(:fake_partition)
-      expect(@config.physical_volume).to eq(:fake_physical_volume)
-      expect(@config.volume_group).to eq(:fake_volume_group)
-      expect(@config.logical_volume).to eq(@fake_logical_volume)
-      expect(@fstab.entries.count).to eq(1)
-    end
-
-    it "skips update if mount point is in fstab when mount point is in already fstab" do
-      expect(@disk_double).to receive(:size).and_return(@dos_disk_size)
-      expect(@disk_double).to receive(:create_partition_table).with("msdos")
-      @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
-      expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
-      expect(AwesomeSpawn).to receive(:run!)
-        .with("mount",
-              :params => {"-t" => @config.filesystem_type, nil => ["/dev/vg_test/lv_test", @config.mount_point]})
-      allow(@fstab).to receive_messages(:entries => [double(@spec_name, :mount_point => @config.mount_point)])
-      expect(@fstab).to receive(:write!).never
-      allow(LinuxAdmin::FSTab).to receive_messages(:instance => @fstab)
-
-      @config.setup
-
       expect(@config.partition).to eq(:fake_partition)
       expect(@config.physical_volume).to eq(:fake_physical_volume)
       expect(@config.volume_group).to eq(:fake_volume_group)
@@ -121,9 +96,7 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
       @tmp_mount_point = @config.mount_point = Pathname.new(Dir.mktmpdir)
       expect(@fstab).to receive(:write!)
       expect(FileUtils).to_not receive(:mkdir_p).with(@config.mount_point)
-      expect(AwesomeSpawn).to receive(:run!)
-        .with("mount",
-              :params => {"-t" => @config.filesystem_type, nil => ["/dev/vg_test/lv_test", @config.mount_point]})
+      expect(AwesomeSpawn).to receive(:run!).with("mount", :params => ["-a"])
 
       @config.setup
       expect(@config.partition).to eq(:fake_partition)
@@ -131,6 +104,84 @@ describe ManageIQ::ApplianceConsole::LogicalVolumeManagement do
       expect(@config.volume_group).to eq(:fake_volume_group)
       expect(@config.logical_volume).to eq(@fake_logical_volume)
       expect(@fstab.entries.count).to eq(1)
+    end
+  end
+
+  describe "#update_fstab" do
+    let(:fstab) do
+      <<~END_OF_FSTAB
+
+        #
+        # /etc/fstab
+        # Created by anaconda on Wed May 29 12:37:40 2019
+        #
+        # Accessible filesystems, by reference, are maintained under '/dev/disk'
+        # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+        #
+        /dev/mapper/VG--MIQ-lv_os /                       xfs     defaults        0 0
+        UUID=02bf07b5-2404-4779-b93c-d8eb7f2eedea /boot                   xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_home /home                   xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_tmp /tmp                    xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_var /var                    xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_var_log /var/log                xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_var_log_audit /var/log/audit          xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_log /var/www/miq/vmdb/log   xfs     defaults        0 0
+        /dev/mapper/VG--MIQ-lv_swap swap                    swap    defaults        0 0
+      END_OF_FSTAB
+    end
+
+    before do
+      stub_const("LinuxAdmin::FSTab", LinuxAdmin::FSTab.dup)
+      expect(File).to receive(:read).with("/etc/fstab").and_return(fstab)
+    end
+
+    it "writes new entries" do
+      new_content = <<~END_OF_FSTAB
+
+        # /etc/fstab
+        # Created by anaconda on Wed May 29 12:37:40 2019
+
+        # Accessible filesystems, by reference, are maintained under '/dev/disk'
+        # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+
+                        /dev/mapper/VG--MIQ-lv_os                     /  xfs   defaults 0 0
+        UUID=02bf07b5-2404-4779-b93c-d8eb7f2eedea                 /boot  xfs   defaults 0 0
+                      /dev/mapper/VG--MIQ-lv_home                 /home  xfs   defaults 0 0
+                       /dev/mapper/VG--MIQ-lv_tmp                  /tmp  xfs   defaults 0 0
+                       /dev/mapper/VG--MIQ-lv_var                  /var  xfs   defaults 0 0
+                   /dev/mapper/VG--MIQ-lv_var_log              /var/log  xfs   defaults 0 0
+             /dev/mapper/VG--MIQ-lv_var_log_audit        /var/log/audit  xfs   defaults 0 0
+                       /dev/mapper/VG--MIQ-lv_log /var/www/miq/vmdb/log  xfs   defaults 0 0
+                      /dev/mapper/VG--MIQ-lv_swap                  swap swap   defaults 0 0
+                           /dev/vg_stuff/lv_stuff            /somewhere  xfs rw,noatime 0 0
+      END_OF_FSTAB
+      expect(File).to receive(:write).with("/etc/fstab", new_content)
+
+      ManageIQ::ApplianceConsole::LogicalVolumeManagement.new(:disk => "/dev/sdb", :mount_point => "/somewhere", :name => "stuff").send(:update_fstab)
+    end
+
+    it "updates existing entries" do
+      new_content = <<~END_OF_FSTAB
+
+        # /etc/fstab
+        # Created by anaconda on Wed May 29 12:37:40 2019
+
+        # Accessible filesystems, by reference, are maintained under '/dev/disk'
+        # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+
+                        /dev/mapper/VG--MIQ-lv_os                     /  xfs   defaults 0 0
+        UUID=02bf07b5-2404-4779-b93c-d8eb7f2eedea                 /boot  xfs   defaults 0 0
+                      /dev/mapper/VG--MIQ-lv_home                 /home  xfs   defaults 0 0
+                       /dev/mapper/VG--MIQ-lv_var                  /var  xfs   defaults 0 0
+                   /dev/mapper/VG--MIQ-lv_var_log              /var/log  xfs   defaults 0 0
+             /dev/mapper/VG--MIQ-lv_var_log_audit        /var/log/audit  xfs   defaults 0 0
+                       /dev/mapper/VG--MIQ-lv_log /var/www/miq/vmdb/log  xfs   defaults 0 0
+                      /dev/mapper/VG--MIQ-lv_swap                  swap swap   defaults 0 0
+                           /dev/vg_stuff/lv_stuff                  /tmp  xfs rw,noatime 0 0
+      END_OF_FSTAB
+      expect(File).to receive(:write).with("/etc/fstab", new_content)
+
+      ManageIQ::ApplianceConsole::LogicalVolumeManagement.new(:disk => "/dev/sdb", :mount_point => "/tmp", :name => "stuff").send(:update_fstab)
     end
   end
 end
