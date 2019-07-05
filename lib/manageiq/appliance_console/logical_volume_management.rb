@@ -79,7 +79,7 @@ module ApplianceConsole
 
     def update_fstab
       fstab = LinuxAdmin::FSTab.instance
-      entry = fstab.entries.find { |e| e.mount_point == mount_point } || LinuxAdmin::FSTabEntry.new
+      entry = fstab.entries.find { |e| e.mount_point == mount_point.to_s } || LinuxAdmin::FSTabEntry.new
       fstab.entries.delete(entry)
 
       entry.device        = logical_volume_path
