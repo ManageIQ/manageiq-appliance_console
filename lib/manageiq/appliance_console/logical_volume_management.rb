@@ -35,6 +35,7 @@ module ApplianceConsole
       create_logical_volume_to_fill_volume_group
       format_logical_volume
       update_fstab
+      lazy_unmount_mount_point
       mount_disk
     end
 
@@ -67,6 +68,10 @@ module ApplianceConsole
 
     def format_logical_volume
       AwesomeSpawn.run!("mkfs.#{filesystem_type} #{logical_volume.path}")
+    end
+
+    def lazy_unmount_mount_point
+      AwesomeSpawn.run!("umount", :params => ["-l", mount_point.to_s]) if File.file?("/proc/mounts") && File.read("/proc/mounts").include?(" #{mount_point} ")
     end
 
     def mount_disk
