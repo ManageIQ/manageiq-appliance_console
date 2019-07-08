@@ -34,8 +34,9 @@ module ApplianceConsole
       create_volume_group
       create_logical_volume_to_fill_volume_group
       format_logical_volume
-      mount_disk
       update_fstab
+      lazy_unmount_mount_point
+      mount_disk
     end
 
     private
@@ -69,30 +70,32 @@ module ApplianceConsole
       AwesomeSpawn.run!("mkfs.#{filesystem_type} #{logical_volume.path}")
     end
 
+    def lazy_unmount_mount_point
+      AwesomeSpawn.run!("umount", :params => ["-l", mount_point.to_s]) if File.file?("/proc/mounts") && File.read("/proc/mounts").include?(" #{mount_point} ")
+    end
+
     def mount_disk
       if mount_point.symlink?
         FileUtils.rm_rf(mount_point)
         FileUtils.mkdir_p(mount_point)
       end
-      AwesomeSpawn.run!("mount", :params => {"-t" => filesystem_type,
-                                             nil  => [logical_volume.path, mount_point]})
+      AwesomeSpawn.run!("mount", :params => ["-a"])
     end
 
     def update_fstab
       fstab = LinuxAdmin::FSTab.instance
-      return if fstab.entries.find { |e| e.mount_point == mount_point }
+      entry = fstab.entries.find { |e| e.mount_point == mount_point.to_s } || LinuxAdmin::FSTabEntry.new
+      fstab.entries.delete(entry)
 
-      entry = LinuxAdmin::FSTabEntry.new(
-        :device        => logical_volume.path,
-        :mount_point   => mount_point,
-        :fs_type       => filesystem_type,
-        :mount_options => "rw,noatime",
-        :dumpable      => 0,
-        :fsck_order    => 0
-      )
+      entry.device        = logical_volume_path
+      entry.mount_point   = mount_point
+      entry.fs_type       = filesystem_type
+      entry.mount_options = "rw,noatime"
+      entry.dumpable      = 0
+      entry.fsck_order    = 0
 
       fstab.entries << entry
-      fstab.write! # Test this more, whitespace is removed
+      fstab.write!
     end
   end
 end
