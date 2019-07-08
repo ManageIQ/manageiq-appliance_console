@@ -3,7 +3,7 @@ module ApplianceConsole
   class TempStorageConfiguration
     TEMP_DISK_FILESYSTEM_TYPE = "xfs".freeze
     TEMP_DISK_MOUNT_POINT     = Pathname.new("/var/www/miq_tmp").freeze
-    TEMP_DISK_MOUNT_OPTS      = "rw,noatime,nobarrier".freeze
+    TEMP_DISK_MOUNT_OPTS      = "rw,noatime".freeze
 
     attr_reader :disk
 
