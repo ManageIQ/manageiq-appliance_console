@@ -62,6 +62,7 @@ module ApplianceConsole
       stop_repmgrd
       initialize_postgresql_disk if disk
       PostgresAdmin.prep_data_directory if disk || resync_data
+      relabel_postgresql_dir
       save_database_yml
       create_config_file(standby_host) &&
         write_pgpass_file &&
@@ -162,7 +163,17 @@ module ApplianceConsole
                                     :volume_group_name   => PostgresAdmin.volume_group_name,
                                     :filesystem_type     => PostgresAdmin.database_disk_filesystem,
                                     :logical_volume_path => PostgresAdmin.logical_volume_path).setup
+
+        # if we mounted the disk onto the postgres user's home directory, fix the permissions
+        if PostgresAdmin.mount_point.to_s == "/var/lib/pgsql"
+          FileUtils.chown(PostgresAdmin.user, PostgresAdmin.group, "/var/lib/pgsql")
+          FileUtils.chmod(0o700, "/var/lib/pgsql")
+        end
       end
+    end
+
+    def relabel_postgresql_dir
+      AwesomeSpawn.run!("/sbin/restorecon -R -v #{PostgresAdmin.mount_point}")
     end
   end # class DatabaseReplicationStandby < DatabaseReplication
 end # module ApplianceConsole

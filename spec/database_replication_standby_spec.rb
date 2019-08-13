@@ -111,6 +111,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
     before do
       expect(subject).to receive(:stop_postgres)
       expect(subject).to receive(:stop_repmgrd)
+      expect(subject).to receive(:relabel_postgresql_dir)
       expect(subject).to receive(:save_database_yml)
       expect(subject).to receive(:create_config_file).and_return(true)
       expect(subject).to receive(:clone_standby_server).and_return(true)
