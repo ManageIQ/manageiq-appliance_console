@@ -216,7 +216,7 @@ module ApplianceConsole
       # verify, set up the database with region. activate does it all!
       unless config.activate
         say "Failed to configure internal database"
-        return
+        exit(1)
       end
 
       # enable/start related services
@@ -224,6 +224,7 @@ module ApplianceConsole
     rescue RuntimeError => e
       say e.message
       say "Failed to configure internal database"
+      exit(1)
     end
 
     def set_external_db
@@ -241,7 +242,7 @@ module ApplianceConsole
       # call create_or_join_region (depends on region value)
       unless config.activate
         say "Failed to configure external database"
-        return
+        exit(1)
       end
 
       # enable/start related services
