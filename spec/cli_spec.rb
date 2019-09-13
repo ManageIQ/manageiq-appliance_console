@@ -136,14 +136,13 @@ describe ManageIQ::ApplianceConsole::Cli do
     expect { subject.run }.to raise_error(RuntimeError, "A password is required to configure a database")
   end
 
-  
   context "database activation failed" do
     before do
       expect(subject).to receive(:exit).with(1)
     end
 
     it "should not run post activation if internal database activation fails" do
-      subject.parse(%w(--internal --username user --password pass -r 1 --dbdisk x))
+      subject.parse(%w[--internal --username user --password pass -r 1 --dbdisk x])
       expect_v2_key
       expect(subject).to receive(:disk_from_string).and_return('x')
       expect(subject).to receive(:say).twice
@@ -163,7 +162,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should not run activation if internal database not setting in a separate mount point" do
-      subject.parse(%w(--internal --username user --password pass -r 1))
+      subject.parse(%w[--internal --username user --password pass -r 1])
       expect_v2_key
       expect(subject).to receive(:disk_from_string).and_return(nil)
       expect(subject).to receive(:say).exactly(3).times
@@ -183,7 +182,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should not run post activation if external database activation fails" do
-      subject.parse(%w(--hostname host --dbname db --username user --password pass -r 1))
+      subject.parse(%w[--hostname host --dbname db --username user --password pass -r 1])
       expect_v2_key
       expect(subject).to receive(:say).twice
       config_double = double(:activate => false)
