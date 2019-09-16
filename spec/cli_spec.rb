@@ -145,7 +145,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       subject.parse(%w[--internal --username user --password pass -r 1 --dbdisk x])
       expect_v2_key
       expect(subject).to receive(:disk_from_string).and_return('x')
-      expect(subject).to receive(:say).twice
+      expect(subject).to receive(:say).exactly(3).times
       config_double = double(:check_disk_is_mount_point => true, :activate => false)
       expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
         .with(:region            => 1,
@@ -156,7 +156,7 @@ describe ManageIQ::ApplianceConsole::Cli do
               :disk              => 'x',
               :run_as_evm_server => true)
         .and_return(config_double)
-      expect(config_double).to receive(:post_activation).with(no_args)
+      expect(config_double).to_not receive(:post_activation)
 
       subject.run
     end
@@ -165,7 +165,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       subject.parse(%w[--internal --username user --password pass -r 1])
       expect_v2_key
       expect(subject).to receive(:disk_from_string).and_return(nil)
-      expect(subject).to receive(:say).exactly(3).times
+      expect(subject).to receive(:say).exactly(4).times
       config_double = double
       expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
         .with(:region            => 1,
@@ -184,7 +184,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     it "should not run post activation if external database activation fails" do
       subject.parse(%w[--hostname host --dbname db --username user --password pass -r 1])
       expect_v2_key
-      expect(subject).to receive(:say).twice
+      expect(subject).to receive(:say).exactly(3).times
       config_double = double(:activate => false)
       expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
         .with(:host        => 'host',
@@ -195,7 +195,7 @@ describe ManageIQ::ApplianceConsole::Cli do
               :password    => 'pass',
               :interactive => false)
         .and_return(config_double)
-      expect(config_double).to receive(:post_activation).with(no_args)
+      expect(config_double).to_not receive(:post_activation)
 
       subject.run
     end

@@ -10,6 +10,8 @@ end
 
 module ManageIQ
 module ApplianceConsole
+  class CliError < StandardError; end
+
   class Cli
     attr_accessor :options
 
@@ -176,6 +178,10 @@ module ApplianceConsole
       install_certs if certs?
       extauth_opts if extauth_opts?
       set_server_state if set_server_state?
+    rescue CliError => e
+      say e
+      say ""
+      exit(1)
     rescue AwesomeSpawn::CommandResultError => e
       say e.result.output
       say e.result.error
@@ -214,17 +220,13 @@ module ApplianceConsole
       # initdb, relabel log directory for selinux, update configs,
       # start pg, create user, create db update the rails configuration,
       # verify, set up the database with region. activate does it all!
-      unless config.activate
-        say "Failed to configure internal database"
-        exit(1)
-      end
+      raise CliError, "Failed to configure internal database" unless config.activate
 
       # enable/start related services
       config.post_activation
     rescue RuntimeError => e
       say e.message
-      say "Failed to configure internal database"
-      exit(1)
+      raise CliError, "Failed to configure internal database"
     end
 
     def set_external_db
@@ -240,10 +242,7 @@ module ApplianceConsole
       }.delete_if { |_n, v| v.nil? })
 
       # call create_or_join_region (depends on region value)
-      unless config.activate
-        say "Failed to configure external database"
-        exit(1)
-      end
+      raise CliError, "Failed to configure external database" unless config.activate
 
       # enable/start related services
       config.post_activation
