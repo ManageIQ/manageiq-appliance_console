@@ -165,7 +165,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       subject.parse(%w[--internal --username user --password pass -r 1])
       expect_v2_key
       expect(subject).to receive(:disk_from_string).and_return(nil)
-      expect(subject).to receive(:say).exactly(4).times
+      expect(subject).to receive(:say).exactly(3).times
       config_double = double
       expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
         .with(:region            => 1,

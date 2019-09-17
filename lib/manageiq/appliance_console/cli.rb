@@ -225,8 +225,7 @@ module ApplianceConsole
       # enable/start related services
       config.post_activation
     rescue RuntimeError => e
-      say e.message
-      raise CliError, "Failed to configure internal database"
+      raise CliError, "Failed to configure internal database #{e.message}"
     end
 
     def set_external_db
