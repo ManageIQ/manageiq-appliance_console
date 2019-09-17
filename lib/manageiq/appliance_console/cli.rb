@@ -179,7 +179,7 @@ module ApplianceConsole
       extauth_opts if extauth_opts?
       set_server_state if set_server_state?
     rescue CliError => e
-      say(e)
+      say(e.message)
       say("")
       exit(1)
     rescue AwesomeSpawn::CommandResultError => e
