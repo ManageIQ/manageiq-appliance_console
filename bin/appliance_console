@@ -296,30 +296,6 @@ Static Network Configuration
           end
         end
 
-      when I18n.t("advanced_settings.timezone")
-        say("#{selection}\n\n")
-        timezone_config = ManageIQ::ApplianceConsole::TimezoneConfiguration.new(timezone)
-        if timezone_config.ask_questions && timezone_config.activate
-          say("Timezone configured")
-          press_any_key
-        else
-          say("Timezone not configured")
-          press_any_key
-          raise MiqSignalError
-        end
-
-      when I18n.t("advanced_settings.datetime")
-        say("#{selection}\n\n")
-        date_time_config = ManageIQ::ApplianceConsole::DateTimeConfiguration.new
-        if date_time_config.ask_questions && date_time_config.activate
-          say("Date and time configured")
-          press_any_key
-        else
-          say("Date and time not configured")
-          press_any_key
-          raise MiqSignalError
-        end
-
       when I18n.t("advanced_settings.httpdauth")
         say("#{selection}\n\n")
 

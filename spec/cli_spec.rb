@@ -651,47 +651,6 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
-  context "#set_time_zone" do
-    let(:timezone) { double("time zone") }
-    it "should set timezone" do
-      expect(subject).to receive(:say)
-      expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("Europe/Madrid").and_return(timezone)
-      expect(timezone).to receive(:new_timezone=).with("Europe/Madrid")
-      expect(timezone).to receive(:activate).and_return(true)
-      subject.parse(%w(--timezone Europe/Madrid)).run
-    end
-
-    it "should not set timezone" do
-      expect(subject).to receive(:say)
-      expect(ManageIQ::ApplianceConsole::TimezoneConfiguration).to receive(:new).with("ss/dd").and_return(timezone)
-      expect(timezone).to receive(:new_timezone=).with("ss/dd")
-      expect(timezone).to receive(:activate).and_return(false)
-      subject.parse(%w(--timezone ss/dd)).run
-    end
-  end
-
-  context "#set_date_time" do
-    let(:datetime) { ManageIQ::ApplianceConsole::DateTimeConfiguration.new }
-
-    before do
-      expect(ManageIQ::ApplianceConsole::DateTimeConfiguration).to receive(:new).and_return(datetime)
-    end
-
-    it "should set auto sync when datetime option is auto" do
-      expect(datetime).to receive(:activate).and_return(true)
-      subject.parse(%w(--datetime auto)).run
-      expect(datetime.manual_time_sync).to be_falsy
-    end
-
-    it "should set date time according to given date time" do
-      expect(datetime).to receive(:activate).and_return(true)
-      subject.parse(%w(--datetime 2017-06-08T09:00:00)).run
-      expect(datetime.manual_time_sync).to be_truthy
-      expect(datetime.new_date).to eq("2017-06-08")
-      expect(datetime.new_time).to eq("09:00:00")
-    end
-  end
-
   context "#disk_from_string" do
     before do
       allow(LinuxAdmin::Disk).to receive_messages(:local => [
