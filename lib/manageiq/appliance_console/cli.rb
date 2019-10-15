@@ -65,14 +65,6 @@ module ApplianceConsole
       options[:logdisk]
     end
 
-    def time_zone?
-      options[:timezone]
-    end
-
-    def date_time?
-      options[:datetime]
-    end
-
     def extauth_opts?
       options[:extauth_opts]
     end
@@ -141,8 +133,6 @@ module ApplianceConsole
         opt :ipadomain,     "IPA Server domain (optional)", :type => :string
         opt :iparealm,      "IPA Server realm (optional)", :type => :string
         opt :ca,                   "CA name used for certmonger",       :type => :string,  :default => "ipa"
-        opt :timezone,             "Time zone",                         :type => :string
-        opt :datetime,             "Date and time, in YYYY-MM-DDTHH:MM:SS (ISO8601) format", :type => :string
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
@@ -158,7 +148,7 @@ module ApplianceConsole
     def run
       Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             time_zone? || date_time? || set_server_state? || set_replication?
+                             set_server_state? || set_replication?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -169,8 +159,6 @@ module ApplianceConsole
       create_key if key?
       set_db if database?
       set_replication if set_replication?
-      set_time_zone if time_zone?
-      set_date_time if date_time?
       config_tmp_disk if tmp_disk?
       config_log_disk if log_disk?
       uninstall_ipa if uninstall_ipa?
@@ -264,36 +252,6 @@ module ApplianceConsole
       db_replication.node_number = options[:cluster_node_number]
       db_replication.database_password = options[:password]
       db_replication.activate
-    end
-
-    def set_time_zone
-      timezone_config = ManageIQ::ApplianceConsole::TimezoneConfiguration.new(options[:timezone])
-      timezone_config.new_timezone = options[:timezone]
-      if timezone_config.activate
-        say("Timezone configured")
-      else
-        say("Timezone not configured")
-      end
-    end
-
-    def set_date_time
-      date_time_config = ManageIQ::ApplianceConsole::DateTimeConfiguration.new
-      unless options[:datetime] == "auto"
-        date_time_config.manual_time_sync = true
-        date_time_config.new_date, date_time_config.new_time = options[:datetime].split("T")
-        return unless date_time_valid?(date_time_config)
-      end
-      date_time_config.activate
-    end
-
-    def date_time_valid?(date_time_config)
-      unless ManageIQ::ApplianceConsole::DateTimeConfiguration::DATE_REGEXP =~ date_time_config.new_date &&
-             ManageIQ::ApplianceConsole::DateTimeConfiguration::TIME_REGEXP =~ date_time_config.new_time
-        say("Datetime should be given in YYYY-MM-DDTHH:MM:SS format")
-        say("Datetime not configured")
-        return false
-      end
-      true
     end
 
     def key_configuration

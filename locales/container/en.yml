@@ -4,7 +4,6 @@ en:
     name: ManageIQ
   advanced_settings:
     menu_order:
-    - timezone
     - dbrestore
     - db_config
     - db_replication
@@ -15,7 +14,6 @@ en:
     - shutdown
     - summary
     - quit
-    timezone: Set Timezone
     dbrestore: Restore Database From Backup
     db_config: Configure Database
     db_replication: Configure Database Replication

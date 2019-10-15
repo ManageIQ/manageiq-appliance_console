@@ -5,8 +5,6 @@ en:
   advanced_settings:
     menu_order:
     - networking
-    - timezone
-    - datetime
     - dbbackup
     - dbdump
     - dbrestore
@@ -24,8 +22,6 @@ en:
     - summary
     - quit
     networking: Configure Network
-    timezone: Set Timezone
-    datetime: Set Date and Time
     dbbackup: Create Database Backup
     dbdump: Create Database Dump
     dbrestore: Restore Database From Backup
