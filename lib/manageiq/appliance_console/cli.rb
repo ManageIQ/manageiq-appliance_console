@@ -8,6 +8,9 @@ unless defined?(say)
   end
 end
 
+# define SCAP_RULES_DIR for scap fucntionality
+SCAP_RULES_DIR = File.expand_path("productization/appliance_console/config", ManageIQ::ApplianceConsole::RAILS_ROOT)
+
 module ManageIQ
 module ApplianceConsole
   class CliError < StandardError; end
@@ -81,6 +84,10 @@ module ApplianceConsole
       options[:replication] == "primary" || (options[:replication] == "standby" && options[:primary_host])
     end
 
+    def openscap?
+      options[:openscap]
+    end
+
     def initialize(options = {})
       self.options = options
     end
@@ -136,6 +143,7 @@ module ApplianceConsole
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
+        opt :openscap,             "Setup OpenScap", :type => :boolean, :default => false
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       self
@@ -147,8 +155,8 @@ module ApplianceConsole
 
     def run
       Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
-                             uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             set_server_state? || set_replication?
+                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
+                              set_server_state? || set_replication? || openscap?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -166,6 +174,7 @@ module ApplianceConsole
       install_certs if certs?
       extauth_opts if extauth_opts?
       set_server_state if set_server_state?
+      openscap if openscap?
     rescue CliError => e
       say(e.message)
       say("")
@@ -307,6 +316,11 @@ module ApplianceConsole
       say "Uninstalling IPA-client"
       config = ExternalHttpdAuthentication.new
       config.deactivate if config.ipa_client_configured?
+    end
+
+    def openscap
+      say("Configuring Openscap")
+      ManageIQ::ApplianceConsole::Scap.new(SCAP_RULES_DIR).lockdown
     end
 
     def config_tmp_disk
