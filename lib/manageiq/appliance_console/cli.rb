@@ -69,6 +69,14 @@ module ApplianceConsole
       options[:extauth_opts]
     end
 
+    def saml_config?
+      options[:saml_config]
+    end
+
+    def saml_unconfig?
+      options[:saml_unconfig]
+    end
+
     def set_server_state?
       options[:server]
     end
@@ -135,6 +143,9 @@ module ApplianceConsole
         opt :ca,                   "CA name used for certmonger",       :type => :string,  :default => "ipa"
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
+        opt :saml_config,          "Configure Appliance for SAML Authentication",   :type => :boolean, :default => false
+        opt :saml_unconfig,        "Unconfigure Appliance SAML Authentication",     :type => :boolean, :default => false
+        opt :saml_idp_metadata,    "The file path or URL of the SAML IDP Metadata", :type => :string
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
@@ -148,7 +159,8 @@ module ApplianceConsole
     def run
       Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             set_server_state? || set_replication?
+                             set_server_state? || set_replication? ||
+                             saml_config? || saml_unconfig?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -165,6 +177,8 @@ module ApplianceConsole
       install_ipa if install_ipa?
       install_certs if certs?
       extauth_opts if extauth_opts?
+      saml_config if saml_config?
+      saml_unconfig if saml_unconfig?
       set_server_state if set_server_state?
     rescue CliError => e
       say(e.message)
@@ -344,6 +358,14 @@ module ApplianceConsole
       extauthopts_hash = extauthopts.parse(options[:extauth_opts])
       raise "Must specify at least one external authentication option to set" unless extauthopts_hash.present?
       extauthopts.update_configuration(extauthopts_hash)
+    end
+
+    def saml_config
+      SamlAuthentication.new(options).configure(host)
+    end
+
+    def saml_unconfig
+      SamlAuthentication.new(options).unconfigure
     end
 
     def set_server_state
