@@ -21,10 +21,10 @@ module ManageIQ
 
         say("Configuring SAML Authentication for https://#{host} ...")
         copy_apache_saml_configfiles
-        Dir.mkdir(SAML2_CONFIG_DIRECTORY)
+        Dir.mkdir(SAML2_CONFIG_DIRECTORY) unless File.exist?(SAML2_CONFIG_DIRECTORY)
         Dir.chdir(SAML2_CONFIG_DIRECTORY) do
-          command_run!(MELLON_CREATE_METADATA_COMMAND,
-                       :params => ["https://#{host}", "https://#{host}/saml2"])
+          AwesomeSpawn.run!(MELLON_CREATE_METADATA_COMMAND,
+                            :params => ["https://#{host}", "https://#{host}/saml2"])
         end
         rename_mellon_configfiles
         fetch_idp_metadata
@@ -68,9 +68,9 @@ module ManageIQ
           Dir.glob("https_*.*") do |mellon_file|
             saml2_file = nil
             case mellon_file
-            when /^https_.*\.key$/  then saml2_file = "sp-key.key"
-            when /^https_.*\.cert$/ then saml2_file = "sp-cert.cert"
-            when /^https_.*\.xml$/  then saml2_file = "sp-metadata.xml"
+            when /^https_.*\.key$/  then saml2_file = "miqsp-key.key"
+            when /^https_.*\.cert$/ then saml2_file = "miqsp-cert.cert"
+            when /^https_.*\.xml$/  then saml2_file = "miqsp-metadata.xml"
             end
             if saml2_file
               debug_msg("Renaming #{mellon_file} to #{saml2_file}")
@@ -93,10 +93,10 @@ module ManageIQ
 
       def remove_mellon_configfiles
         debug_msg("Removing mellon config files ...")
-        remove_file(SAML2_CONFIG_DIRECTORY, "sp-key.key")
-        remove_file(SAML2_CONFIG_DIRECTORY, "sp-cert.cert")
-        remove_file(SAML2_CONFIG_DIRECTORY, "sp-metadata.xml")
-        remove_file(IDP_METADATAFILE)
+        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-key.key")
+        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-cert.cert")
+        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-metadata.xml")
+        remove_file(IDP_METADATA_FILE)
       end
 
       def copy_apache_saml_configfiles
@@ -112,7 +112,7 @@ module ManageIQ
       end
 
       def configured?
-        Pathname.new(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").exist?
+        path_join(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").exist?
       end
 
       def restart_httpd
@@ -124,7 +124,7 @@ module ManageIQ
 
       def validate_saml_idp_metadata_option
         idp_metadata = options[:saml_idp_metadata]
-        raise "Must specify the SAML IDP metadata file or URL via --saml_idp_metadata" if idp_metadata.blank?
+        raise "Must specify the SAML IDP metadata file or URL via --saml-idp-metadata" if idp_metadata.blank?
 
         raise "Missing SAML IDP metadata file #{idp_metadata}" if path_is_file(idp_metadata) && !File.exist?(idp_metadata)
       end
@@ -140,7 +140,7 @@ module ManageIQ
       # File Management
 
       def remove_file(*args)
-        path = Pathname.new(args)
+        path = path_join(*args)
         if path.exist?
           debug_msg("Removing #{path} ...")
           File.delete(path)
@@ -148,8 +148,8 @@ module ManageIQ
       end
 
       def copy_template(dir, file)
-        src_path = Pathname.new(template_directory, dir, file)
-        dest_path = Pathname.new(dir, file)
+        src_path = path_join(template_directory, dir, file)
+        dest_path = path_join(dir, file)
         debug_msg("Copying template #{src_path} to #{dest_path} ...")
         FileUtils.cp(src_path, dest_path)
       end
@@ -168,12 +168,19 @@ module ManageIQ
         @template_directory ||= Pathname.new(ENV.fetch("APPLIANCE_TEMPLATE_DIRECTORY"))
       end
 
+      def path_join(*args)
+        path = Pathname.new(args.shift)
+        args.each { |path_seg| path = path.join("./#{path_seg}") }
+        path
+      end
+
       # Appliance Settings
 
       def configure_auth_settings_saml
         say("Setting Appliance Authentication Settings to SAML ...")
         params = [
           "/authentication/mode=httpd",
+          "/authentication/httpd_role=true",
           "/authentication/saml_enabled=true",
           "/authentication/oidc_enabled=false",
           "/authentication/provider_type=saml"
@@ -185,6 +192,7 @@ module ManageIQ
         say("Setting Appliance Authentication Settings to Database ...")
         params = [
           "/authentication/mode=database",
+          "/authentication/httpd_role=false",
           "/authentication/saml_enabled=false",
           "/authentication/oidc_enabled=false",
           "/authentication/provider_type=none"
