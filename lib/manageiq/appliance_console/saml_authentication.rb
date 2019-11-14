@@ -183,6 +183,7 @@ module ManageIQ
           "/authentication/httpd_role=true",
           "/authentication/saml_enabled=true",
           "/authentication/oidc_enabled=false",
+          "/authentication/sso_enabled=#{options[:saml_enable_sso] ? 'true' : 'false'}",
           "/authentication/provider_type=saml"
         ]
         ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
@@ -195,6 +196,7 @@ module ManageIQ
           "/authentication/httpd_role=false",
           "/authentication/saml_enabled=false",
           "/authentication/oidc_enabled=false",
+          "/authentication/sso_enabled=false",
           "/authentication/provider_type=none"
         ]
         ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)

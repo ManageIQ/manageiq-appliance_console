@@ -146,6 +146,7 @@ module ApplianceConsole
         opt :saml_config,          "Configure Appliance for SAML Authentication",        :type => :boolean, :default => false
         opt :saml_client_host,     "Optional Appliance host used for SAML registration", :type => :string
         opt :saml_idp_metadata,    "The file path or URL of the SAML IDP Metadata",      :type => :string
+        opt :saml_enable_sso,      "Optionally enable SSO with SAML Authentication",     :type => :boolean, :default => false
         opt :saml_unconfig,        "Unconfigure Appliance SAML Authentication",          :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
       end
