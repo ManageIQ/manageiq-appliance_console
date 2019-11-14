@@ -9,7 +9,7 @@ module ManageIQ
       SAML2_CONFIG_DIRECTORY = "/etc/httpd/saml2".freeze
       IDP_METADATA_FILE      = "#{SAML2_CONFIG_DIRECTORY}/idp-metadata.xml".freeze
 
-      attr_accessor host, options
+      attr_accessor :host, :options
 
       def initialize(options)
         @options = options

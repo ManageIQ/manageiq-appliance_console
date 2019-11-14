@@ -143,9 +143,10 @@ module ApplianceConsole
         opt :ca,                   "CA name used for certmonger",       :type => :string,  :default => "ipa"
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
-        opt :saml_config,          "Configure Appliance for SAML Authentication",   :type => :boolean, :default => false
-        opt :saml_unconfig,        "Unconfigure Appliance SAML Authentication",     :type => :boolean, :default => false
-        opt :saml_idp_metadata,    "The file path or URL of the SAML IDP Metadata", :type => :string
+        opt :saml_config,          "Configure Appliance for SAML Authentication",        :type => :boolean, :default => false
+        opt :saml_client_host,     "Optional Appliance host used for SAML registration", :type => :string
+        opt :saml_idp_metadata,    "The file path or URL of the SAML IDP Metadata",      :type => :string
+        opt :saml_unconfig,        "Unconfigure Appliance SAML Authentication",          :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
@@ -361,7 +362,7 @@ module ApplianceConsole
     end
 
     def saml_config
-      SamlAuthentication.new(options).configure(host)
+      SamlAuthentication.new(options).configure(options[:saml_client_host] || host)
     end
 
     def saml_unconfig
