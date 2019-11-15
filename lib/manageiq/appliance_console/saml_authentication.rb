@@ -44,7 +44,6 @@ module ManageIQ
         raise "Appliance is not currently configured for SAML" unless configured?
 
         say("Unconfiguring SAML Authentication ...")
-        remove_mellon_configfiles
         remove_apache_saml_configfiles
         configure_auth_settings_database
         restart_httpd
@@ -89,14 +88,6 @@ module ManageIQ
           debug_msg("Downloading IDP metadata file from #{idp_metadata}")
           download_network_file(idp_metadata, IDP_METADATA_FILE)
         end
-      end
-
-      def remove_mellon_configfiles
-        debug_msg("Removing mellon config files ...")
-        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-key.key")
-        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-cert.cert")
-        remove_file(SAML2_CONFIG_DIRECTORY, "miqsp-metadata.xml")
-        remove_file(IDP_METADATA_FILE)
       end
 
       def copy_apache_saml_configfiles
