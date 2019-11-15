@@ -116,8 +116,11 @@ module ManageIQ
       end
 
       def restart_httpd
-        say("Restarting httpd ...")
-        LinuxAdmin::Service.new("httpd").restart
+        httpd_service = LinuxAdmin::Service.new("httpd")
+        if httpd_service.running?
+          say("Restarting httpd ...")
+          httpd_service.restart
+        end
       end
 
       # SAML IDP Metadata
