@@ -160,9 +160,9 @@ module ApplianceConsole
 
     def run
       Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
-                             uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                             set_server_state? || set_replication? ||
-                             saml_config? || saml_unconfig?
+                              uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
+                              set_server_state? || set_replication? ||
+                              saml_config? || saml_unconfig?
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
