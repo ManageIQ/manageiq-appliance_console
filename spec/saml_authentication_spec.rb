@@ -2,6 +2,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
   HTTPD_CONFIG_DIRECTORY = "/etc/httpd/conf.d".freeze
   SAML2_CONFIG_DIRECTORY = "/etc/httpd/saml2".freeze
   IDP_METADATA_FILE      = "#{SAML2_CONFIG_DIRECTORY}/idp-metadata.xml".freeze
+  MELLON_CREATE_METADATA_COMMAND = "/usr/libexec/mod_auth_mellon/mellon_create_metadata.sh".freeze
 
   let(:client_host) { "client.example.com" }
 
@@ -40,8 +41,10 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
 
       expect(File).to receive(:exist?).with(downloaded_idp_metadata).and_return(true)
       expect(File).to receive(:exist?).with(SAML2_CONFIG_DIRECTORY).and_return(true)
-      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_return(0)
       expect(FileUtils).to receive(:cp).with(downloaded_idp_metadata, IDP_METADATA_FILE).and_return(true)
+      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_yield
+      expect(AwesomeSpawn).to receive(:run!).with(MELLON_CREATE_METADATA_COMMAND,
+                                                  :params => ["https://#{client_host}", "https://#{client_host}/saml2"])
 
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf").and_return(true)
@@ -49,6 +52,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to SAML ...")
       expect(subject).to receive(:say).with("Configuring SAML Authentication for https://#{client_host} ...")
+
       expect(subject).to receive(:say).with("Restarting httpd ...")
       expect(subject.configure(client_host)).to eq(true)
     end
@@ -69,7 +73,9 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
       subject = described_class.new(:saml_idp_metadata => idp_metadata_url)
 
       expect(File).to receive(:exist?).with(SAML2_CONFIG_DIRECTORY).and_return(true)
-      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_return(0)
+      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_yield
+      expect(AwesomeSpawn).to receive(:run!).with(MELLON_CREATE_METADATA_COMMAND,
+                                                  :params => ["https://#{client_host}", "https://#{client_host}/saml2"])
 
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf").and_return(true)
@@ -102,7 +108,9 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
 
       expect(File).to receive(:exist?).with(downloaded_idp_metadata).and_return(true)
       expect(File).to receive(:exist?).with(SAML2_CONFIG_DIRECTORY).and_return(true)
-      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_return(0)
+      allow(Dir).to receive(:chdir).with(SAML2_CONFIG_DIRECTORY).and_yield
+      expect(AwesomeSpawn).to receive(:run!).with(MELLON_CREATE_METADATA_COMMAND,
+                                                  :params => ["https://#{alternate_client_host}", "https://#{alternate_client_host}/saml2"])
 
       expect(FileUtils).to receive(:cp).with(downloaded_idp_metadata, IDP_METADATA_FILE).and_return(true)
 
