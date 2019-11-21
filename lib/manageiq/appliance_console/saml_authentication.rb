@@ -3,11 +3,11 @@ require "uri"
 module ManageIQ
   module ApplianceConsole
     class SamlAuthentication
-      MELLON_CREATE_METADATA_COMMAND = "/usr/libexec/mod_auth_mellon/mellon_create_metadata.sh".freeze
+      MELLON_CREATE_METADATA_COMMAND = Pathname.new("/usr/libexec/mod_auth_mellon/mellon_create_metadata.sh")
 
-      HTTPD_CONFIG_DIRECTORY = "/etc/httpd/conf.d".freeze
-      SAML2_CONFIG_DIRECTORY = "/etc/httpd/saml2".freeze
-      IDP_METADATA_FILE      = "#{SAML2_CONFIG_DIRECTORY}/idp-metadata.xml".freeze
+      HTTPD_CONFIG_DIRECTORY = Pathname.new("/etc/httpd/conf.d")
+      SAML2_CONFIG_DIRECTORY = Pathname.new("/etc/httpd/saml2")
+      IDP_METADATA_FILE      = SAML2_CONFIG_DIRECTORY.join("idp-metadata.xml")
 
       attr_accessor :host, :options
 
@@ -21,11 +21,10 @@ module ManageIQ
 
         say("Configuring SAML Authentication for https://#{host} ...")
         copy_apache_saml_configfiles
-        Dir.mkdir(SAML2_CONFIG_DIRECTORY) unless File.exist?(SAML2_CONFIG_DIRECTORY)
-        Dir.chdir(SAML2_CONFIG_DIRECTORY) do
-          AwesomeSpawn.run!(MELLON_CREATE_METADATA_COMMAND,
-                            :params => ["https://#{host}", "https://#{host}/saml2"])
-        end
+        FileUtils.mkdir_p(SAML2_CONFIG_DIRECTORY)
+        AwesomeSpawn.run!(MELLON_CREATE_METADATA_COMMAND,
+                          :chdir  => SAML2_CONFIG_DIRECTORY,
+                          :params => ["https://#{host}", "https://#{host}/saml2"])
         rename_mellon_configfiles
         fetch_idp_metadata
         configure_auth_settings_saml
@@ -65,12 +64,12 @@ module ManageIQ
         debug_msg("Renaming mellon config files ...")
         Dir.chdir(SAML2_CONFIG_DIRECTORY) do
           Dir.glob("https_*.*") do |mellon_file|
-            saml2_file = nil
-            case mellon_file
-            when /^https_.*\.key$/  then saml2_file = "miqsp-key.key"
-            when /^https_.*\.cert$/ then saml2_file = "miqsp-cert.cert"
-            when /^https_.*\.xml$/  then saml2_file = "miqsp-metadata.xml"
-            end
+            saml2_file =
+              case mellon_file
+              when /^https_.*\.key$/  then "miqsp-key.key"
+              when /^https_.*\.cert$/ then "miqsp-cert.cert"
+              when /^https_.*\.xml$/  then "miqsp-metadata.xml"
+              end
             if saml2_file
               debug_msg("Renaming #{mellon_file} to #{saml2_file}")
               File.rename(mellon_file, saml2_file)
@@ -81,10 +80,10 @@ module ManageIQ
 
       def fetch_idp_metadata
         idp_metadata = options[:saml_idp_metadata]
-        if path_is_file(idp_metadata) && idp_metadata != IDP_METADATA_FILE
+        if path_is_file?(idp_metadata) && idp_metadata != IDP_METADATA_FILE
           debug_msg("Copying IDP metadata file #{idp_metadata} to #{IDP_METADATA_FILE} ...")
           FileUtils.cp(idp_metadata, IDP_METADATA_FILE)
-        elsif path_is_url(idp_metadata)
+        elsif path_is_url?(idp_metadata)
           debug_msg("Downloading IDP metadata file from #{idp_metadata}")
           download_network_file(idp_metadata, IDP_METADATA_FILE)
         end
@@ -98,12 +97,12 @@ module ManageIQ
 
       def remove_apache_saml_configfiles
         debug_msg("Removing Apache SAML Config files ...")
-        remove_file(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf")
-        remove_file(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf")
+        remove_file(HTTPD_CONFIG_DIRECTORY.join("manageiq-remote-user.conf"))
+        remove_file(HTTPD_CONFIG_DIRECTORY.join("manageiq-external-auth-saml.conf"))
       end
 
       def configured?
-        path_join(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").exist?
+        HTTPD_CONFIG_DIRECTORY.join("manageiq-external-auth-saml.conf").exist?
       end
 
       def restart_httpd
@@ -120,21 +119,20 @@ module ManageIQ
         idp_metadata = options[:saml_idp_metadata]
         raise "Must specify the SAML IDP metadata file or URL via --saml-idp-metadata" if idp_metadata.blank?
 
-        raise "Missing SAML IDP metadata file #{idp_metadata}" if path_is_file(idp_metadata) && !File.exist?(idp_metadata)
+        raise "Missing SAML IDP metadata file #{idp_metadata}" if path_is_file?(idp_metadata) && !File.exist?(idp_metadata)
       end
 
-      def path_is_file(path)
-        path.present? && !path_is_url(path)
+      def path_is_file?(path)
+        path.present? && !path_is_url?(path)
       end
 
-      def path_is_url(path)
-        path =~ /\A#{URI.regexp(["http", "https"])}\z/
+      def path_is_url?(path)
+        path =~ /\A#{URI.regexp(["http", "https"])}\z/x
       end
 
       # File Management
 
-      def remove_file(*args)
-        path = path_join(*args)
+      def remove_file(path)
         if path.exist?
           debug_msg("Removing #{path} ...")
           File.delete(path)
@@ -142,8 +140,8 @@ module ManageIQ
       end
 
       def copy_template(dir, file)
-        src_path = path_join(template_directory, dir, file)
-        dest_path = path_join(dir, file)
+        src_path = template_directory.join(relative_from_root(dir), file)
+        dest_path = dir.join(file)
         debug_msg("Copying template #{src_path} to #{dest_path} ...")
         FileUtils.cp(src_path, dest_path)
       end
@@ -162,10 +160,8 @@ module ManageIQ
         @template_directory ||= Pathname.new(ENV.fetch("APPLIANCE_TEMPLATE_DIRECTORY"))
       end
 
-      def path_join(*args)
-        path = Pathname.new(args.shift)
-        args.each { |path_seg| path = path.join("./#{path_seg}") }
-        path
+      def relative_from_root(path)
+        path.absolute? ? path.relative_path_from(Pathname.new("/")) : path
       end
 
       # Appliance Settings
@@ -180,7 +176,7 @@ module ManageIQ
           "/authentication/sso_enabled=#{options[:saml_enable_sso] ? 'true' : 'false'}",
           "/authentication/provider_type=saml"
         ]
-        ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
+        Utilities.rake_run("evm:settings:set", params)
       end
 
       def configure_auth_settings_database
@@ -193,7 +189,7 @@ module ManageIQ
           "/authentication/sso_enabled=false",
           "/authentication/provider_type=none"
         ]
-        ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
+        Utilities.rake_run("evm:settings:set", params)
       end
 
       # Logging
