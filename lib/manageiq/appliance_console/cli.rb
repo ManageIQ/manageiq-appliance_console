@@ -77,6 +77,14 @@ module ApplianceConsole
       options[:saml_unconfig]
     end
 
+    def saml_config?
+      options[:saml_config]
+    end
+
+    def saml_unconfig?
+      options[:saml_unconfig]
+    end
+
     def set_server_state?
       options[:server]
     end
