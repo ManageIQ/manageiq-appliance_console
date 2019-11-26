@@ -27,6 +27,7 @@ require 'manageiq/appliance_console/prompts'
 require 'manageiq-gems-pending'
 require 'highline'
 
+require 'manageiq/appliance_console/auth_utilities'
 require 'manageiq/appliance_console/certificate'
 require 'manageiq/appliance_console/certificate_authority'
 require 'manageiq/appliance_console/cli'
