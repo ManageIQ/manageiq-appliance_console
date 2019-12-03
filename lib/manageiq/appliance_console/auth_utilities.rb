@@ -27,7 +27,7 @@ module ManageIQ
       def remove_file(path)
         if path.exist?
           debug_msg("Removing #{path} ...")
-          File.delete(path)
+          path.delete
         end
       end
 
@@ -37,12 +37,10 @@ module ManageIQ
         dest_path = dest_path.sub_ext('') if src_path.extname == ".erb"
         debug_msg("Copying template #{src_path} to #{dest_path} ...")
         if src_path.extname == ".erb"
+          raise ArgumentError, "Must specify template parameters for ERB files" if template_parameters.nil?
+
           template = ERB.new(File.read(src_path), nil, '-')
-          if template_parameters
-            File.write(dest_path, template.result_with_hash(template_parameters))
-          else
-            File.write(dest_path, template.result(binding))
-          end
+          File.write(dest_path, template.result_with_hash(template_parameters))
         else
           FileUtils.cp(src_path, dest_path)
         end
