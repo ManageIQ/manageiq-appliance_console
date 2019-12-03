@@ -18,7 +18,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
     end
 
     it "fails without the oidc-client-secret option specified" do
-      subject = described_class.new(:oidc_url => "http://oidc.provider.example.com", :oidc_client_id => "https://#{client_host}")
+      subject = described_class.new(:oidc_url => "http://oidc.provider.example.com", :oidc_client_id => client_host)
 
       expect(subject).to receive(:say).with(/Must specify the OpenID-Connect Client Secret via --oidc-client-secret/)
       expect(subject.configure(client_host)).to eq(false)
@@ -37,7 +37,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
                                                                                 "/authentication/sso_enabled=false",
                                                                                 "/authentication/provider_type=oidc"])
 
-      oidc_client_id = "https://#{client_host}"
+      oidc_client_id     = client_host
       oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
       subject = described_class.new(:oidc_url => oidc_url, :oidc_client_id => oidc_client_id, :oidc_client_secret => oidc_client_secret)
 
@@ -71,8 +71,8 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
                                                                                 "/authentication/provider_type=oidc"])
 
       alternate_client_host = "alternate.example.com"
-      oidc_client_id = "https://altern#{alternate_client_host}"
-      oidc_client_secret = "18106c0d-8456-4b87-83e5-c74a9ad583e0"
+      oidc_client_id        = alternate_client_host
+      oidc_client_secret    = "18106c0d-8456-4b87-83e5-c74a9ad583e0"
       subject = described_class.new(:oidc_url           => oidc_url,
                                     :oidc_client_id     => oidc_client_id,
                                     :oidc_client_secret => oidc_client_secret,
