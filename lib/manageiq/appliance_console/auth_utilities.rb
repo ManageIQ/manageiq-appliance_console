@@ -60,15 +60,16 @@ module ManageIQ
 
       def configure_auth_settings_database
         say("Setting Appliance Authentication Settings to Database ...")
-        params = [
-          "/authentication/mode=database",
-          "/authentication/httpd_role=false",
-          "/authentication/saml_enabled=false",
-          "/authentication/oidc_enabled=false",
-          "/authentication/sso_enabled=false",
-          "/authentication/provider_type=none"
-        ]
-        Utilities.rake_run("evm:settings:set", params)
+        configure_auth_settings(:mode          => "database",
+                                :httpd_role    => false,
+                                :saml_enabled  => false,
+                                :oidc_enabled  => false,
+                                :sso_enabled   => false,
+                                :provider_type => "none")
+      end
+
+      def configure_auth_settings(args)
+        Utilities.rake_run("evm:settings:set", args.collect { |key, val| "/authentication/#{key}=#{val}" })
       end
 
       # Logging

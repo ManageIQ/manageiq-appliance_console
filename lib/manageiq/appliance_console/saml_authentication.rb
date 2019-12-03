@@ -129,15 +129,12 @@ module ManageIQ
 
       def configure_auth_settings_saml
         say("Setting Appliance Authentication Settings to SAML ...")
-        params = [
-          "/authentication/mode=httpd",
-          "/authentication/httpd_role=true",
-          "/authentication/saml_enabled=true",
-          "/authentication/oidc_enabled=false",
-          "/authentication/sso_enabled=#{options[:saml_enable_sso] ? 'true' : 'false'}",
-          "/authentication/provider_type=saml"
-        ]
-        Utilities.rake_run("evm:settings:set", params)
+        configure_auth_settings(:mode          => "httpd",
+                                :httpd_role    => true,
+                                :saml_enabled  => true,
+                                :oidc_enabled  => false,
+                                :sso_enabled   => options[:saml_enable_sso] ? true : false,
+                                :provider_type => "saml")
       end
     end
   end

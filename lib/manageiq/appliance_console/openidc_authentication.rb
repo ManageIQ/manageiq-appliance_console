@@ -80,15 +80,12 @@ module ManageIQ
 
       def configure_auth_settings_openidc
         say("Setting Appliance Authentication Settings to OpenID-Connect ...")
-        params = [
-          "/authentication/mode=httpd",
-          "/authentication/httpd_role=true",
-          "/authentication/saml_enabled=false",
-          "/authentication/oidc_enabled=true",
-          "/authentication/sso_enabled=#{options[:openidc_enable_sso] ? 'true' : 'false'}",
-          "/authentication/provider_type=oidc"
-        ]
-        Utilities.rake_run("evm:settings:set", params)
+        configure_auth_settings(:mode          => "httpd",
+                                :httpd_role    => true,
+                                :saml_enabled  => false,
+                                :oidc_enabled  => true,
+                                :sso_enabled   => options[:openidc_enable_sso] ? true : false,
+                                :provider_type => "oidc")
       end
     end
   end
