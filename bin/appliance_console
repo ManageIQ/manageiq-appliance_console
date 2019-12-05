@@ -374,7 +374,7 @@ Static Network Configuration
           raise MiqSignalError
         end
 
-      when I18n.t("advanced_settings.db_config")
+      when I18n.t("advanced_settings.app_config")
         say("#{selection}\n\n")
 
         ensure_key_configured

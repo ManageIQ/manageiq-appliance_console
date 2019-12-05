@@ -5,7 +5,7 @@ en:
   advanced_settings:
     menu_order:
     - dbrestore
-    - db_config
+    - app_config
     - db_replication
     - failover_monitor
     - key_gen
@@ -15,7 +15,7 @@ en:
     - summary
     - quit
     dbrestore: Restore Database From Backup
-    db_config: Configure Database
+    app_config: Configure Application
     db_replication: Configure Database Replication
     failover_monitor: Configure Application Database Failover Monitor
     evmstop: Stop EVM Server Processes
