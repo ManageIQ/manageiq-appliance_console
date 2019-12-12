@@ -72,6 +72,22 @@ module ApplianceConsole
       options[:extauth_opts]
     end
 
+    def saml_config?
+      options[:saml_config]
+    end
+
+    def saml_unconfig?
+      options[:saml_unconfig]
+    end
+
+    def oidc_config?
+      options[:oidc_config]
+    end
+
+    def oidc_unconfig?
+      options[:oidc_unconfig]
+    end
+
     def set_server_state?
       options[:server]
     end
@@ -142,6 +158,18 @@ module ApplianceConsole
         opt :ca,                   "CA name used for certmonger",       :type => :string,  :default => "ipa"
         opt :http_cert,            "install certs for http server",     :type => :boolean
         opt :extauth_opts,         "External Authentication Options",   :type => :string
+        opt :saml_config,          "Configure Appliance for SAML Authentication",        :type => :boolean, :default => false
+        opt :saml_client_host,     "Optional Appliance host used for SAML registration", :type => :string
+        opt :saml_idp_metadata,    "The file path or URL of the SAML IDP Metadata",      :type => :string
+        opt :saml_enable_sso,      "Optionally enable SSO with SAML Authentication",     :type => :boolean, :default => false
+        opt :saml_unconfig,        "Unconfigure Appliance SAML Authentication",          :type => :boolean, :default => false
+        opt :oidc_config,          "Configure Appliance for OpenID-Connect Authentication",          :type => :boolean, :default => false
+        opt :oidc_url,             "The OpenID-Connect Provider URL",                                :type => :string
+        opt :oidc_client_host,     "Optional Appliance host used for OpenID-Connect Authentication", :type => :string
+        opt :oidc_client_id,       "The OpenID-Connect Provider Client ID",                          :type => :string
+        opt :oidc_client_secret,   "The OpenID-Connect Provider Client Secret",                      :type => :string
+        opt :oidc_enable_sso,      "Optionally enable SSO with OpenID-Connect Authentication",       :type => :boolean, :default => false
+        opt :oidc_unconfig,        "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
         opt :openscap,             "Setup OpenScap", :type => :boolean, :default => false
       end
@@ -156,7 +184,10 @@ module ApplianceConsole
     def run
       Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
                               uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
-                              set_server_state? || set_replication? || openscap?
+                              set_server_state? || set_replication? || openscap? ||
+                              saml_config? || saml_unconfig? ||
+                              oidc_config? || oidc_unconfig?
+
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
         system_hosts.hostname = options[:host]
@@ -173,6 +204,10 @@ module ApplianceConsole
       install_ipa if install_ipa?
       install_certs if certs?
       extauth_opts if extauth_opts?
+      saml_config if saml_config?
+      saml_unconfig if saml_unconfig?
+      oidc_config if oidc_config?
+      oidc_unconfig if oidc_unconfig?
       set_server_state if set_server_state?
       openscap if openscap?
     rescue CliError => e
@@ -358,6 +393,22 @@ module ApplianceConsole
       extauthopts_hash = extauthopts.parse(options[:extauth_opts])
       raise "Must specify at least one external authentication option to set" unless extauthopts_hash.present?
       extauthopts.update_configuration(extauthopts_hash)
+    end
+
+    def saml_config
+      SamlAuthentication.new(options).configure(options[:saml_client_host] || host)
+    end
+
+    def saml_unconfig
+      SamlAuthentication.new(options).unconfigure
+    end
+
+    def oidc_config
+      OIDCAuthentication.new(options).configure(options[:oidc_client_host] || host)
+    end
+
+    def oidc_unconfig
+      OIDCAuthentication.new(options).unconfigure
     end
 
     def set_server_state
