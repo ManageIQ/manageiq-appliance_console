@@ -13,7 +13,7 @@ module ApplianceConsole
         require 'yaml'
         scap_config = YAML.load_file(yaml_filename)
         begin
-          LinuxAdmin::Scap.new("rhel7").lockdown(*scap_config['rules'], scap_config['values'])
+          LinuxAdmin::Scap.new("rhel8").lockdown(*scap_config['rules'], scap_config['values'])
         rescue => e
           say("Configuration failed: #{e.message}")
         else
@@ -32,7 +32,7 @@ module ApplianceConsole
       if !LinuxAdmin::Scap.openscap_available?
         say("OpenSCAP has not been installed")
         false
-      elsif !LinuxAdmin::Scap.ssg_available?("rhel7")
+      elsif !LinuxAdmin::Scap.ssg_available?("rhel8")
         say("SCAP Security Guide has not been installed")
         false
       else
