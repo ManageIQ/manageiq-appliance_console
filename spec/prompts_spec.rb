@@ -153,9 +153,21 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
         expect(subject.ask_for_ip('prompt', '1.1.1.1')).to eq('dead:beef::1')
       end
 
-      it "should handle hostname" do
-        say %w(5x redhat.com)
+      it "should handle hostname beginning with a digit" do
+        say "198.51.100.1.example.com"
+        expect(subject.ask_for_ip_or_hostname("prompt", "1.1.1.1")).to eq("198.51.100.1.example.com")
+        expect_heard("Enter the prompt: |1.1.1.1| ")
+      end
+
+      it "should handle hostname beginning with a letter" do
+        say "redhat.com"
         expect(subject.ask_for_ip_or_hostname("prompt", "1.1.1.1")).to eq("redhat.com")
+        expect_heard("Enter the prompt: |1.1.1.1| ")
+      end
+
+      it "should fail on hostname length check if > 63 octets" do
+        say ["re" * 35 + ".com", "198.51.100.1.example.com"]
+        expect(subject.ask_for_ip_or_hostname("prompt", "1.1.1.1")).to eq("198.51.100.1.example.com")
         expect_heard ["Enter the prompt: |1.1.1.1| ", "Please provide a valid Hostname or IP Address.", prompt]
       end
     end
@@ -173,9 +185,21 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
         expect_heard("Enter the prompt: |1.1.1.1| ")
       end
 
-      it "should handle hostname" do
-        say %w(5x redhat.com)
+      it "should handle hostname starting with a digit" do
+        say "198.51.100.1.example.com"
+        expect(subject.ask_for_ip_or_hostname_or_none("prompt", "1.1.1.1")).to eq("198.51.100.1.example.com")
+        expect_heard("Enter the prompt: |1.1.1.1| ")
+      end
+
+      it "should handle hostname starting with a letter" do
+        say "redhat.com"
         expect(subject.ask_for_ip_or_hostname_or_none("prompt", "1.1.1.1")).to eq("redhat.com")
+        expect_heard("Enter the prompt: |1.1.1.1| ")
+      end
+
+      it "should fail on hostname length check if > 63 octets" do
+        say ["re" * 35 + ".com", "198.51.100.1.example.com"]
+        expect(subject.ask_for_ip_or_hostname_or_none("prompt", "1.1.1.1")).to eq("198.51.100.1.example.com")
         expect_heard ["Enter the prompt: |1.1.1.1| ", "Please provide a valid Hostname or IP Address.", prompt]
       end
 
