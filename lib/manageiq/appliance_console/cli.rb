@@ -8,9 +8,6 @@ unless defined?(say)
   end
 end
 
-# define SCAP_RULES_DIR for scap fucntionality
-SCAP_RULES_DIR = File.expand_path("productization/appliance_console/config", ManageIQ::ApplianceConsole::RAILS_ROOT)
-
 module ManageIQ
 module ApplianceConsole
   class CliError < StandardError; end
@@ -355,7 +352,7 @@ module ApplianceConsole
 
     def openscap
       say("Configuring Openscap")
-      ManageIQ::ApplianceConsole::Scap.new(SCAP_RULES_DIR).lockdown
+      ManageIQ::ApplianceConsole::Scap.new.lockdown
     end
 
     def config_tmp_disk
