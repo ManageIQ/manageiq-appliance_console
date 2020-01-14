@@ -19,8 +19,6 @@ include HighLine::SystemExtensions
 
 require 'manageiq/appliance_console/i18n'
 
-SCAP_RULES_DIR = File.expand_path("productization/appliance_console/config", ManageIQ::ApplianceConsole::RAILS_ROOT)
-
 $terminal.wrap_at = 80
 $terminal.page_at = 35
 
@@ -538,7 +536,7 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.scap")
         say("#{selection}\n\n")
-        ManageIQ::ApplianceConsole::Scap.new(SCAP_RULES_DIR).lockdown
+        ManageIQ::ApplianceConsole::Scap.new.lockdown
         press_any_key
 
       when I18n.t("advanced_settings.summary")

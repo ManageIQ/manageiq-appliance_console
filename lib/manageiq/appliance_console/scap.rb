@@ -3,7 +3,9 @@ require 'linux_admin'
 module ManageIQ
 module ApplianceConsole
   class Scap
-    def initialize(rules_dir)
+    RULES_DIR = File.expand_path("productization/appliance_console/config", ManageIQ::ApplianceConsole::RAILS_ROOT).freeze
+
+    def initialize(rules_dir = RULES_DIR)
       @rules_dir = rules_dir
     end
 
