@@ -278,7 +278,7 @@ Static Network Configuration
 
         when 'hostname'
           say("Hostname Configuration\n\n")
-          new_host = just_ask("new hostname", host)
+          new_host = just_ask("new hostname", host, HOSTNAME_REGEXP, "Please enter a valid hostname")
 
           if new_host != host
             say("Applying new hostname...")
