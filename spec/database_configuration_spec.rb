@@ -288,8 +288,8 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
         exception.set_backtrace(@backtrace)
 
         expect(@config).to receive(:say_info).with(:some_method, "starting")
-        expect(@config).to receive(:say_error).with(:some_method, message)
-        expect(@config).to receive(:log_error).with(:some_method, "Command failed: #{message}. Error: stderr. Output: stdout. At: #{@backtrace.last}")
+        expect(@config).to receive(:say_error).with(:some_method, exception.message)
+        expect(@config).to receive(:log_error).with(:some_method, "Command failed: #{exception.message}. Error: stderr. Output: stdout. At: #{@backtrace.last}")
         expect(@config.log_and_feedback(:some_method) { raise exception }).to be_nil
       end
 

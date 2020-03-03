@@ -77,7 +77,7 @@ describe ManageIQ::ApplianceConsole::Logging do
 
         expect(subject.logger).to receive(:info)
         expect(subject.logger).to receive(:error)
-          .with("MIQ(#some_method)  Command failed: #{message}. Error: stderr. Output: stdout. At: #{@backtrace.last}")
+          .with("MIQ(#some_method)  Command failed: #{exception.message}. Error: stderr. Output: stdout. At: #{@backtrace.last}")
         expect(subject).to receive(:say).with("Some method starting")
         expect(subject).to receive(:say).with(/Some method.*error.*some error/)
         expect(subject).to receive(:press_any_key)
