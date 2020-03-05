@@ -385,8 +385,7 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
         expect(@config).to receive(:fork) do |&block|
           service = double(:service)
           expect(LinuxAdmin::Service).to receive(:new).and_return(service)
-          expect(service).to receive(:enable).and_return(service)
-          expect(service).to receive(:start).and_return(service)
+          expect(service).to receive(:start).with(true).and_return(service)
           block.call
           1234 # return a test pid
         end
