@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "i18n",                    "~> 0.8"
   spec.add_runtime_dependency "linux_admin",             "~> 2.0"
   spec.add_runtime_dependency "manageiq-password",       "~> 0.3"
+  spec.add_runtime_dependency "net-scp",                 "~> 1.2.1"
   spec.add_runtime_dependency "optimist",                "~> 3.0"
   spec.add_runtime_dependency "pg"
   spec.add_runtime_dependency "rbnacl",                  ">= 3.2", "< 5.0"
