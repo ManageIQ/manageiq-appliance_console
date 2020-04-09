@@ -1,6 +1,4 @@
 describe ManageIQ::ApplianceConsole::DatabaseReplication do
-  SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
-
   before do
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)

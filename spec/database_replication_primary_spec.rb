@@ -1,9 +1,7 @@
 describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
-  SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
-
   before do
     stub_const("ManageIQ::ApplianceConsole::NETWORK_INTERFACE", "either_net")
-    expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(SPEC_NAME, :address => "192.0.2.1"))
+    expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(:address => "192.0.2.1"))
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
     allow(subject).to receive(:agree)
@@ -13,7 +11,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
 
   context "#ask_questions" do
     before do
-      allow(PG::Connection).to receive(:new).and_return(double(SPEC_NAME, :exec => double(SPEC_NAME, :first => "1")))
+      allow(PG::Connection).to receive(:new).and_return(double(:exec => double(:first => "1")))
     end
 
     it "returns true when input is confirmed" do

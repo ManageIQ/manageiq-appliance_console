@@ -1,10 +1,8 @@
 describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
-  SPEC_NAME = File.basename(__FILE__).split(".rb").first.freeze
-
   before do
     allow(ENV).to receive(:fetch).and_return("/test/postgres/directory")
     stub_const("ManageIQ::ApplianceConsole::NETWORK_INTERFACE", "either_net")
-    expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(SPEC_NAME, :address => "192.0.2.1"))
+    expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(:address => "192.0.2.1"))
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
     allow(subject).to receive(:agree)
@@ -169,7 +167,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
 
     context "#clone_standby_server" do
       it "raises an error when REGISTER_CMD fails" do
-        result = double(SPEC_NAME, :output => "", :error => "")
+        result = double(:output => "", :error => "")
         allow(AwesomeSpawn).to receive(:run!).and_raise(AwesomeSpawn::CommandResultError.new("", result))
         expect { subject.clone_standby_server }.to raise_error(AwesomeSpawn::CommandResultError)
       end
@@ -177,7 +175,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
 
     context "#register_standby_server" do
       it "raises an error when REGISTER_CMD fails" do
-        result = double(SPEC_NAME, :output => "", :error => "")
+        result = double(:output => "", :error => "")
         allow(AwesomeSpawn).to receive(:run!).and_raise(AwesomeSpawn::CommandResultError.new("", result))
         expect { subject.register_standby_server }.to raise_error(AwesomeSpawn::CommandResultError)
       end
@@ -232,7 +230,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
 
   context "#start_postgres" do
     it "should start postgres and return true" do
-      service = double(SPEC_NAME, :service => nil)
+      service = double(:service => nil)
       expect(LinuxAdmin::Service).to receive(:new).and_return(service)
       expect(service).to receive(:enable).and_return(service)
       expect(service).to receive(:start).and_return(service)
@@ -252,7 +250,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
 
   context "#start_repmgrd" do
     it "starts and enables repmgrd" do
-      service = double(SPEC_NAME)
+      service = double
       expect(LinuxAdmin::Service).to receive(:new).and_return(service)
       expect(service).to receive(:enable).and_return(service)
       expect(service).to receive(:start).and_return(service)
@@ -260,8 +258,8 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
     end
 
     it "returns false if the service fails to start" do
-      service = double(SPEC_NAME)
-      result = double(SPEC_NAME, :output => "", :error => "")
+      service = double
+      result = double(:output => "", :error => "")
       expect(LinuxAdmin::Service).to receive(:new).and_return(service)
       expect(service).to receive(:enable).and_return(service)
       expect(service).to receive(:start).and_raise(AwesomeSpawn::CommandResultError.new("", result))
