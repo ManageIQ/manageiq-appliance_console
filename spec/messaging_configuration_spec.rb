@@ -38,4 +38,24 @@ describe ManageIQ::ApplianceConsole::MessagingConfiguration do
       subject.ask_for_messaging_credentials
     end
   end
+
+  it "#save encrypts the password" do
+    subject.host     = "abc.example.com"
+    subject.password = "abc123"
+    subject.port     = 9092
+    subject.username = "admin"
+
+    expected_string = <<~EXPECTED
+      ---
+      production:
+        hostname: abc.example.com
+        port: 9092
+        username: admin
+        password: v2:{7dUJhm+whBC1Y2Bn1Kf+Ug==}
+    EXPECTED
+
+    expect(File).to receive(:write).with(anything, expected_string)
+
+    subject.send(:save)
+  end
 end
