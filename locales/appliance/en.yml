@@ -8,7 +8,7 @@ en:
     - dbbackup
     - dbdump
     - dbrestore
-    - db_config
+    - app_config
     - db_replication
     - log_config
     - failover_monitor
@@ -25,7 +25,7 @@ en:
     dbbackup: Create Database Backup
     dbdump: Create Database Dump
     dbrestore: Restore Database From Backup
-    db_config: Configure Database
+    app_config: Configure Application
     db_replication: Configure Database Replication
     log_config: Logfile Configuration
     failover_monitor: Configure Application Database Failover Monitor

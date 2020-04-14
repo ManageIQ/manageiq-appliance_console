@@ -374,7 +374,7 @@ Static Network Configuration
           raise MiqSignalError
         end
 
-      when I18n.t("advanced_settings.db_config")
+      when I18n.t("advanced_settings.app_config")
         say("#{selection}\n\n")
 
         ensure_key_configured
@@ -383,21 +383,29 @@ Static Network Configuration
           "Create Internal Database"           => "create_internal",
           "Create Region in External Database" => "create_external",
           "Join Region in External Database"   => "join_external",
-          "Reset Configured Database"          => "reset_region"
+          "Reset Configured Database"          => "reset_region",
+          "No changes"                         => "no_changes"
         }
-        action = ask_with_menu("Database Operation", options)
+        database_action = ask_with_menu("Database Operation", options)
+
+        messaging_options = {
+          "Use an external messaging system" => "external_messaging",
+          "No changes"                       => "no_changes"
+        }
+
+        messaging_action = ask_with_menu("Configure Messaging", messaging_options)
 
         database_configuration =
-          case action
+          case database_action
           when "create_internal"
             ManageIQ::ApplianceConsole::InternalDatabaseConfiguration.new
           when /_external/
-            ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration.new(:action => action.split("_").first.to_sym)
+            ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration.new(:action => database_action.split("_").first.to_sym)
           else
             ManageIQ::ApplianceConsole::DatabaseConfiguration.new
           end
 
-        case action
+        case database_action
         when "reset_region"
           if database_configuration.reset_region
             say("Database reset successfully")
@@ -410,6 +418,11 @@ Static Network Configuration
         end
         # Get the region again because it may have changed
         region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
+
+        case messaging_action
+        when "external_messaging"
+          ManageIQ::ApplianceConsole::MessagingConfiguration.new.run_interactive
+        end
 
         press_any_key
 

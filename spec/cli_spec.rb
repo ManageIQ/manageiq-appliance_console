@@ -704,6 +704,35 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
+  context "Configuring Messaging" do
+    options = {"--messaging-hostname" => "server.example.com", "--messaging-username" => "user", "--messaging-password" => "pass", "--messaging-port" => "9092"}
+
+    it "success" do
+      subject.parse(options.flatten)
+      expect(subject).to receive(:say)
+      config = ManageIQ::ApplianceConsole::MessagingConfiguration
+      expect(ManageIQ::ApplianceConsole::MessagingConfiguration).to receive(:new).and_return(config)
+      expect(config).to receive(:save).with(
+        "hostname" => "server.example.com",
+        "password" => "pass",
+        "port"     => 9092,
+        "username" => "user"
+      )
+
+      subject.run
+    end
+
+    context "failure" do
+      options.keys.each do |key|
+        it "missing option #{key}" do
+          subject.parse(options.except(key).flatten)
+
+          expect { subject.run }.to raise_error(OptimistEducateSpecError)
+        end
+      end
+    end
+  end
+
   private
 
   def expect_v2_key(exists = true)
