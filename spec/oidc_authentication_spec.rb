@@ -1,6 +1,7 @@
 describe ManageIQ::ApplianceConsole::OIDCAuthentication do
   let(:client_host) { "client.example.com" }
   let(:oidc_url) { "http://oidc.example.com:8080/auth/realms/manageiq/.well-known/openid-configuration" }
+  let(:oidc_introspection) { "http://oidc.example.com:8080/auth/realms/manageiq/protocol/openid-connect/token/introspect" }
 
   context "configuring OpenID-Connect" do
     it "fails without the oidc-url option specified" do
@@ -39,16 +40,20 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
 
       oidc_client_id     = client_host
       oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
-      subject = described_class.new(:oidc_url => oidc_url, :oidc_client_id => oidc_client_id, :oidc_client_secret => oidc_client_secret)
+      subject = described_class.new(:oidc_url                    => oidc_url,
+                                    :oidc_client_id              => oidc_client_id,
+                                    :oidc_client_secret          => oidc_client_secret,
+                                    :oidc_introspection_endpoint => oidc_introspection)
 
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
                                                       "manageiq-external-auth-openidc.conf.erb",
-                                                      :miq_appliance              => client_host,
-                                                      :oidc_client_id             => oidc_client_id,
-                                                      :oidc_client_secret         => oidc_client_secret,
-                                                      :oidc_provider_metadata_url => oidc_url).and_return(true)
+                                                      :miq_appliance               => client_host,
+                                                      :oidc_client_id              => oidc_client_id,
+                                                      :oidc_client_secret          => oidc_client_secret,
+                                                      :oidc_introspection_endpoint => oidc_introspection,
+                                                      :oidc_provider_metadata_url  => oidc_url).and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
       expect(subject).to receive(:say).with("Configuring OpenID-Connect Authentication for https://#{client_host} ...")
@@ -73,10 +78,11 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
       alternate_client_host = "alternate.example.com"
       oidc_client_id        = alternate_client_host
       oidc_client_secret    = "18106c0d-8456-4b87-83e5-c74a9ad583e0"
-      subject = described_class.new(:oidc_url           => oidc_url,
-                                    :oidc_client_id     => oidc_client_id,
-                                    :oidc_client_secret => oidc_client_secret,
-                                    :oidc_enable_sso    => true)
+      subject = described_class.new(:oidc_url                    => oidc_url,
+                                    :oidc_client_id              => oidc_client_id,
+                                    :oidc_client_secret          => oidc_client_secret,
+                                    :oidc_introspection_endpoint => oidc_introspection,
+                                    :oidc_enable_sso             => true)
 
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
@@ -85,6 +91,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
                                                       :miq_appliance              => alternate_client_host,
                                                       :oidc_client_id             => oidc_client_id,
                                                       :oidc_client_secret         => oidc_client_secret,
+                                                      :oidc_introspection_endpoint => oidc_introspection,
                                                       :oidc_provider_metadata_url => oidc_url).and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
