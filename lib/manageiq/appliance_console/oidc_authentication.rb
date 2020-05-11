@@ -5,9 +5,9 @@ module ManageIQ
 
       attr_accessor :host, :options
 
-      URL_SUFFIX = /\/\.well-known\/openid-configuration$/
-      INTROSPECT_SUFFIX = "/protocol/openid-connect/token/introspect"
-      INTROSPECT_ENDPOINT_ERROR = "Unable to derive the OpenID-Connect Client Introspection Endpoint. Use --oidc-introspection-endpoint"
+      URL_SUFFIX = /\/\.well-known\/openid-configuration$/.freeze
+      INTROSPECT_SUFFIX = "/protocol/openid-connect/token/introspect".freeze
+      INTROSPECT_ENDPOINT_ERROR = "Unable to derive the OpenID-Connect Client Introspection Endpoint. Use --oidc-introspection-endpoint".freeze
 
       def initialize(options)
         @options = options
@@ -61,8 +61,7 @@ module ManageIQ
                       :oidc_provider_metadata_url  => options[:oidc_url],
                       :oidc_client_id              => options[:oidc_client_id],
                       :oidc_client_secret          => options[:oidc_client_secret],
-                      :oidc_introspection_endpoint => options[:oidc_introspection_endpoint],
-)
+                      :oidc_introspection_endpoint => options[:oidc_introspection_endpoint])
       end
 
       def remove_apache_oidc_configfiles
@@ -85,6 +84,7 @@ module ManageIQ
 
       def derive_introspection_endpoint
         return if options[:oidc_introspection_endpoint].present?
+
         options[:oidc_introspection_endpoint] = options[:oidc_url].sub(URL_SUFFIX, INTROSPECT_SUFFIX) if options[:oidc_url].match(URL_SUFFIX)
         raise INTROSPECT_ENDPOINT_ERROR if options[:oidc_introspection_endpoint].blank?
       end
