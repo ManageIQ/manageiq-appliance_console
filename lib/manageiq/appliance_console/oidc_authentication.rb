@@ -5,6 +5,10 @@ module ManageIQ
 
       attr_accessor :host, :options
 
+      URL_SUFFIX = /\/\.well-known\/openid-configuration$/.freeze
+      INTROSPECT_SUFFIX = "/protocol/openid-connect/token/introspect".freeze
+      INTROSPECT_ENDPOINT_ERROR = "Unable to derive the OpenID-Connect Client Introspection Endpoint. Use --oidc-introspection-endpoint".freeze
+
       def initialize(options)
         @options = options
       end
@@ -12,6 +16,7 @@ module ManageIQ
       def configure(host)
         @host = host
         validate_oidc_options
+        derive_introspection_endpoint
 
         say("Configuring OpenID-Connect Authentication for https://#{host} ...")
         copy_apache_oidc_configfiles
@@ -52,10 +57,11 @@ module ManageIQ
         debug_msg("Copying Apache OpenID-Connect Config files ...")
         copy_template(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf")
         copy_template(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-openidc.conf.erb",
-                      :miq_appliance              => host,
-                      :oidc_provider_metadata_url => options[:oidc_url],
-                      :oidc_client_id             => options[:oidc_client_id],
-                      :oidc_client_secret         => options[:oidc_client_secret])
+                      :miq_appliance               => host,
+                      :oidc_provider_metadata_url  => options[:oidc_url],
+                      :oidc_client_id              => options[:oidc_client_id],
+                      :oidc_client_secret          => options[:oidc_client_secret],
+                      :oidc_introspection_endpoint => options[:oidc_introspection_endpoint])
       end
 
       def remove_apache_oidc_configfiles
@@ -74,6 +80,13 @@ module ManageIQ
         raise "Must specify the OpenID-Connect Provider URL via --oidc-url" if options[:oidc_url].blank?
         raise "Must specify the OpenID-Connect Client ID via --oidc-client-id" if options[:oidc_client_id].blank?
         raise "Must specify the OpenID-Connect Client Secret via --oidc-client-secret" if options[:oidc_client_secret].blank?
+      end
+
+      def derive_introspection_endpoint
+        return if options[:oidc_introspection_endpoint].present?
+
+        options[:oidc_introspection_endpoint] = options[:oidc_url].sub(URL_SUFFIX, INTROSPECT_SUFFIX) if options[:oidc_url].match(URL_SUFFIX)
+        raise INTROSPECT_ENDPOINT_ERROR if options[:oidc_introspection_endpoint].blank?
       end
 
       # Appliance Settings

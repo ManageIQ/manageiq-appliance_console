@@ -169,6 +169,7 @@ module ApplianceConsole
         opt :oidc_client_host,     "Optional Appliance host used for OpenID-Connect Authentication", :type => :string
         opt :oidc_client_id,       "The OpenID-Connect Provider Client ID",                          :type => :string
         opt :oidc_client_secret,   "The OpenID-Connect Provider Client Secret",                      :type => :string
+        opt :oidc_introspection_endpoint, "The OpenID-Connect Provider Introspect Endpoint",         :type => :string
         opt :oidc_enable_sso,      "Optionally enable SSO with OpenID-Connect Authentication",       :type => :boolean, :default => false
         opt :oidc_unconfig,        "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string

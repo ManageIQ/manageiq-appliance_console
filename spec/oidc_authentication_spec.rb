@@ -1,6 +1,7 @@
 describe ManageIQ::ApplianceConsole::OIDCAuthentication do
   let(:client_host) { "client.example.com" }
   let(:oidc_url) { "http://oidc.example.com:8080/auth/realms/manageiq/.well-known/openid-configuration" }
+  let(:oidc_introspection) { "http://oidc.example.com:8080/auth/realms/manageiq/protocol/openid-connect/token/introspect" }
 
   context "configuring OpenID-Connect" do
     it "fails without the oidc-url option specified" do
@@ -24,7 +25,18 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
       expect(subject.configure(client_host)).to eq(false)
     end
 
-    it "succeeds with provider url, client id and secret specified and restarts httpd" do
+    it "fails when unable to derive introspect endpoint" do
+      oidc_client_id     = client_host
+      oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
+      subject = described_class.new(:oidc_url           => "http://oidc.provider.example.com/.not-so-well-known",
+                                    :oidc_client_id     => oidc_client_id,
+                                    :oidc_client_secret => oidc_client_secret)
+
+      expect(subject).to receive(:say).with(/Unable to derive the OpenID-Connect Client Introspection Endpoint/)
+      expect(subject.configure(client_host)).to eq(false)
+    end
+
+    it "succeeds with provider url, client id and secret specified, derives introspect and restarts httpd" do
       httpd_service = double(@spec_name, :running? => true)
       expect(httpd_service).to receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
@@ -39,16 +51,56 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
 
       oidc_client_id     = client_host
       oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
-      subject = described_class.new(:oidc_url => oidc_url, :oidc_client_id => oidc_client_id, :oidc_client_secret => oidc_client_secret)
+      subject = described_class.new(:oidc_url           => oidc_url,
+                                    :oidc_client_id     => oidc_client_id,
+                                    :oidc_client_secret => oidc_client_secret)
 
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
                                                       "manageiq-external-auth-openidc.conf.erb",
-                                                      :miq_appliance              => client_host,
-                                                      :oidc_client_id             => oidc_client_id,
-                                                      :oidc_client_secret         => oidc_client_secret,
-                                                      :oidc_provider_metadata_url => oidc_url).and_return(true)
+                                                      :miq_appliance               => client_host,
+                                                      :oidc_client_id              => oidc_client_id,
+                                                      :oidc_client_secret          => oidc_client_secret,
+                                                      :oidc_introspection_endpoint => oidc_introspection,
+                                                      :oidc_provider_metadata_url  => oidc_url).and_return(true)
+
+      expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
+      expect(subject).to receive(:say).with("Configuring OpenID-Connect Authentication for https://#{client_host} ...")
+
+      expect(subject).to receive(:say).with("Restarting httpd ...")
+      expect(subject.configure(client_host)).to eq(true)
+    end
+
+    it "succeeds with provider url, client id secret and introspect specified and restarts httpd" do
+      httpd_service = double(@spec_name, :running? => true)
+      expect(httpd_service).to receive(:restart)
+      expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
+
+      expect(ManageIQ::ApplianceConsole::Utilities).to receive(:rake_run).with("evm:settings:set",
+                                                                               ["/authentication/mode=httpd",
+                                                                                "/authentication/httpd_role=true",
+                                                                                "/authentication/saml_enabled=false",
+                                                                                "/authentication/oidc_enabled=true",
+                                                                                "/authentication/sso_enabled=false",
+                                                                                "/authentication/provider_type=oidc"])
+
+      oidc_client_id     = client_host
+      oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
+      subject = described_class.new(:oidc_url                    => oidc_url,
+                                    :oidc_client_id              => oidc_client_id,
+                                    :oidc_client_secret          => oidc_client_secret,
+                                    :oidc_introspection_endpoint => oidc_introspection)
+
+      allow(subject).to receive(:copy_template)
+      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
+      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
+                                                      "manageiq-external-auth-openidc.conf.erb",
+                                                      :miq_appliance               => client_host,
+                                                      :oidc_client_id              => oidc_client_id,
+                                                      :oidc_client_secret          => oidc_client_secret,
+                                                      :oidc_introspection_endpoint => oidc_introspection,
+                                                      :oidc_provider_metadata_url  => oidc_url).and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
       expect(subject).to receive(:say).with("Configuring OpenID-Connect Authentication for https://#{client_host} ...")
@@ -82,10 +134,11 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
                                                       "manageiq-external-auth-openidc.conf.erb",
-                                                      :miq_appliance              => alternate_client_host,
-                                                      :oidc_client_id             => oidc_client_id,
-                                                      :oidc_client_secret         => oidc_client_secret,
-                                                      :oidc_provider_metadata_url => oidc_url).and_return(true)
+                                                      :miq_appliance               => alternate_client_host,
+                                                      :oidc_client_id              => oidc_client_id,
+                                                      :oidc_client_secret          => oidc_client_secret,
+                                                      :oidc_introspection_endpoint => oidc_introspection,
+                                                      :oidc_provider_metadata_url  => oidc_url).and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
       expect(subject).to receive(:say).with("Configuring OpenID-Connect Authentication for https://#{alternate_client_host} ...")
