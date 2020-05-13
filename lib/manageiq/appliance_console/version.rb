@@ -1,5 +1,5 @@
 module ManageIQ
   module ApplianceConsole
-    VERSION = '5.4.0'.freeze
+    VERSION = '5.5.0'.freeze
   end
 end
