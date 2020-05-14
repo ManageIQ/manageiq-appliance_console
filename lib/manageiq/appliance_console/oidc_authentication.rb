@@ -65,6 +65,11 @@ module ManageIQ
                       :oidc_client_id              => options[:oidc_client_id],
                       :oidc_client_secret          => options[:oidc_client_secret],
                       :oidc_introspection_endpoint => options[:oidc_introspection_endpoint])
+
+        File.open("#{HTTPD_CONFIG_DIRECTORY}/manageiq-external-auth-openidc.conf", "a") do |f|
+          f.write("\nOIDCSSLValidateServer      Off\n")
+          f.write("OIDCOAuthSSLValidateServer Off\n")
+        end if options[:oidc_insecure]
       end
 
       def remove_apache_oidc_configfiles
