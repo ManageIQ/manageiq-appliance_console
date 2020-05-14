@@ -88,7 +88,7 @@ module ManageIQ
       def derive_introspection_endpoint
         return if options[:oidc_introspection_endpoint].present?
 
-        options[:oidc_introspection_endpoint] = fetch_introspection_endpoint || compose_introspection_endpoint
+        options[:oidc_introspection_endpoint] = fetch_introspection_endpoint
         raise INTROSPECT_ENDPOINT_ERROR if options[:oidc_introspection_endpoint].blank?
       end
 
@@ -96,16 +96,16 @@ module ManageIQ
         uri = URI.parse(options[:oidc_url])
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == "https")
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
         request = Net::HTTP::Get.new(uri.request_uri)
         request.basic_auth(options[:oidc_client_id], options[:oidc_client_secret])
         response = http.request(request)
 
         JSON.parse(response.body)["introspection_endpoint"]
-      end
-
-      def compose_introspection_endpoint
-        options[:oidc_url].sub(URL_SUFFIX, INTROSPECT_SUFFIX) if options[:oidc_url].match(URL_SUFFIX)
+      rescue => err
+        say("Failed to fetch introspection endpoint - #{err}")
+        return nil
       end
 
       # Appliance Settings

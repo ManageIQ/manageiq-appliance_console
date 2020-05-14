@@ -57,45 +57,6 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
                                     :oidc_client_id     => oidc_client_id,
                                     :oidc_client_secret => oidc_client_secret)
 
-      expect(subject).to_not receive(:compose_introspection_endpoint)
-
-      allow(subject).to receive(:copy_template)
-      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
-      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
-                                                      "manageiq-external-auth-openidc.conf.erb",
-                                                      :miq_appliance               => client_host,
-                                                      :oidc_client_id              => oidc_client_id,
-                                                      :oidc_client_secret          => oidc_client_secret,
-                                                      :oidc_introspection_endpoint => oidc_introspection,
-                                                      :oidc_provider_metadata_url  => oidc_url).and_return(true)
-
-      expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to OpenID-Connect ...")
-      expect(subject).to receive(:say).with("Configuring OpenID-Connect Authentication for https://#{client_host} ...")
-
-      expect(subject).to receive(:say).with("Restarting httpd ...")
-      expect(subject.configure(client_host)).to eq(true)
-    end
-
-    it "succeeds with provider url, client id and secret specified, derives introspect and restarts httpd" do
-      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {}.to_json))
-      httpd_service = double(@spec_name, :running? => true)
-      expect(httpd_service).to receive(:restart)
-      expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
-
-      expect(ManageIQ::ApplianceConsole::Utilities).to receive(:rake_run).with("evm:settings:set",
-                                                                               ["/authentication/mode=httpd",
-                                                                                "/authentication/httpd_role=true",
-                                                                                "/authentication/saml_enabled=false",
-                                                                                "/authentication/oidc_enabled=true",
-                                                                                "/authentication/sso_enabled=false",
-                                                                                "/authentication/provider_type=oidc"])
-
-      oidc_client_id     = client_host
-      oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
-      subject = described_class.new(:oidc_url           => oidc_url,
-                                    :oidc_client_id     => oidc_client_id,
-                                    :oidc_client_secret => oidc_client_secret)
-
       allow(subject).to receive(:copy_template)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-openidc.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY,
@@ -151,7 +112,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
     end
 
     it "succeeds with client host, enabling SSO, and restarts httpd" do
-      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {}.to_json))
+      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {"introspection_endpoint" => oidc_introspection}.to_json))
       httpd_service = double(@spec_name, :running? => true)
       expect(httpd_service).to receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
