@@ -96,7 +96,7 @@ module ManageIQ
         uri = URI.parse(options[:oidc_url])
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == "https")
-        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE if options[:oidc_insecure]
 
         request = Net::HTTP::Get.new(uri.request_uri)
         request.basic_auth(options[:oidc_client_id], options[:oidc_client_secret])
@@ -105,7 +105,7 @@ module ManageIQ
         JSON.parse(response.body)["introspection_endpoint"]
       rescue => err
         say("Failed to fetch introspection endpoint - #{err}")
-        return nil
+        nil
       end
 
       # Appliance Settings
