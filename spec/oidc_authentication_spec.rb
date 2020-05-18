@@ -26,6 +26,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
     end
 
     it "fails when unable to derive introspect endpoint" do
+      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {}.to_json))
       oidc_client_id     = client_host
       oidc_client_secret = "17106c0d-8446-4b87-82e4-b7408ad583d0"
       subject = described_class.new(:oidc_url           => "http://oidc.provider.example.com/.not-so-well-known",
@@ -36,7 +37,8 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
       expect(subject.configure(client_host)).to eq(false)
     end
 
-    it "succeeds with provider url, client id and secret specified, derives introspect and restarts httpd" do
+    it "succeeds with provider url, client id and secret specified, fetches introspect from metadata and restarts httpd" do
+      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {"introspection_endpoint" => oidc_introspection}.to_json))
       httpd_service = double(@spec_name, :running? => true)
       expect(httpd_service).to receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
@@ -110,6 +112,7 @@ describe ManageIQ::ApplianceConsole::OIDCAuthentication do
     end
 
     it "succeeds with client host, enabling SSO, and restarts httpd" do
+      allow_any_instance_of(Net::HTTP).to receive(:request).and_return(double(:body => {"introspection_endpoint" => oidc_introspection}.to_json))
       httpd_service = double(@spec_name, :running? => true)
       expect(httpd_service).to receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("httpd").and_return(httpd_service)
