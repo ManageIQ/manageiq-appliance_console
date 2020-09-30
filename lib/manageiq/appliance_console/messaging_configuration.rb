@@ -82,7 +82,7 @@ module ManageIQ
       def save(settings = nil)
         settings ||= settings_from_input
 
-        settings["password"] = MiqPassword.try_encrypt(settings.delete("password"))
+        settings["password"] = ManageIQ::Password.try_encrypt(settings.delete("password"))
 
         require 'yaml'
         File.write(MESSAGING_YML, YAML.dump("production" => settings))
