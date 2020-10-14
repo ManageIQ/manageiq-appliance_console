@@ -320,6 +320,33 @@ Static Network Configuration
         end
         press_any_key
 
+      when I18n.t("advanced_settings.message_server")
+        say("#{selection}\n\n")
+
+        message_server = MessageServerConfiguration.new
+        if message_server.ask_questions && message_server.activate
+          message_server.post_activation
+          say("\nMessage Server configured successfully.\n")
+          press_any_key
+        else
+          say("\nMessage Server configuration failed!\n")
+          press_any_key
+          raise MiqSignalError
+        end
+
+      when I18n.t("advanced_settings.message_client")
+        say("#{selection}\n\n")
+
+        message_client = MessageClientConfiguration.new
+        if message_client.ask_questions && message_client.activate
+          say("\nMessage Client configured successfully.\n")
+          press_any_key
+        else
+          say("\nMessage Client configuration failed!\n")
+          press_any_key
+          raise MiqSignalError
+        end
+
       when I18n.t("advanced_settings.evmstop")
         say("#{selection}\n\n")
         service = LinuxAdmin::Service.new("evmserverd")

@@ -1,0 +1,307 @@
+require 'tempfile'
+
+describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
+  let(:username) { "admin" }
+  let(:password) { "super_secret" }
+  subject { described_class.new(:username => username, :password => password) }
+
+  before do
+    @spec_name = File.basename(__FILE__).split(".rb").first.freeze
+    @tmp_base_dir = Pathname.new(Dir.mktmpdir)
+    @tmp_miq_config_dir = Pathname.new(Dir.mktmpdir)
+    @this = ManageIQ::ApplianceConsole::MessageConfiguration
+    stub_const("#{@this}::BASE_DIR", @tmp_base_dir)
+    stub_const("#{@this}::LOGS_DIR", "#{@tmp_base_dir}/logs")
+    stub_const("#{@this}::CONFIG_DIR", "#{@tmp_base_dir}/config")
+    stub_const("#{@this}::SAMPLE_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
+    stub_const("#{@this}::MIQ_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
+
+    FileUtils.mkdir_p("#{@tmp_base_dir}/config")
+    FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
+
+    allow_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('my-host-name.example.com')
+  end
+
+  after do
+    FileUtils.rm_rf(@tmp_base_dir)
+    FileUtils.rm_rf(@tmp_miq_config_dir)
+  end
+
+  describe "#ask_questions" do
+    before do
+      expect(LinuxAdmin::Rpm).to receive(:list_installed).at_least(1).times.and_return("kafka" => "kafka")
+
+      allow(subject).to receive(:agree).and_return(true)
+      allow(subject).to receive(:host_reachable?).and_return(true)
+      allow(subject).to receive(:message_server_configured?).and_return(false)
+    end
+
+    it "should prompt for Username and Password" do
+      expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
+      expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+
+      allow(subject).to receive(:say).at_least(5).times
+
+      expect(subject.send(:ask_questions)).to be_truthy
+    end
+
+    it "should display Server Hostname and Key Username" do
+      allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
+      allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+
+      expect(subject).to receive(:say).with("\nMessage Server Parameters:\n\n")
+      expect(subject).to receive(:say).with("\nMessage Server Configuration:\n")
+      expect(subject).to receive(:say).with("Message Server Details:\n")
+      expect(subject).to receive(:say).with("  Message Server Hostname:   my-host-name.example.com\n")
+      expect(subject).to receive(:say).with("  Message Key Username:      admin\n")
+
+      expect(subject.send(:ask_questions)).to be_truthy
+    end
+  end
+
+  describe "#create_tools_log_config" do
+    before do
+      expect(subject).to receive(:say).with("Create Tools Log Config")
+    end
+
+    it "copies the sample tools log config file" do
+      expect(FileUtils).to receive(:cp).with(subject.tools_log4_properties_sample_path, subject.tools_log4_properties_path)
+      expect(subject.send(:create_tools_log_config)).to be_nil
+    end
+
+    it "does not recopy the sample tools log config file if it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(subject.tools_log4_properties_path)
+      expect(FileUtils).not_to receive(:cp)
+      expect(subject.send(:create_tools_log_config)).to be_nil
+    end
+  end
+
+  describe "#create_jaas_config" do
+    before do
+      expect(subject).to receive(:say).with("Create Jaas Config")
+    end
+
+    it "creates the jaas config file" do
+      expect(subject.send(:create_jaas_config)).to be_positive
+      expect(subject.jaas_config_path).to exist
+    end
+
+    it "correctly populates the jaas config file" do
+      content = <<~JAAS
+        KafkaServer {
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username=#{username}
+          password=#{password}
+          user_admin=#{password} ;
+        };
+      JAAS
+
+      expect(File).to receive(:write).with(subject.jaas_config_path, content)
+      expect(subject.send(:create_jaas_config)).to be_nil
+    end
+
+    it "does not recreate the jaas config file if it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(subject.jaas_config_path)
+      expect(File).not_to receive(:write)
+      expect(subject.send(:create_jaas_config)).to be_nil
+    end
+  end
+
+  describe "#create_client_properties" do
+    before do
+      expect(subject).to receive(:say).with("Create Client Properties")
+    end
+
+    it "creates the client properties config file" do
+      expect(subject.send(:create_client_properties)).to be_positive
+      expect(subject.client_properties_path).to exist
+    end
+
+    it "correctly populates the client properties config file" do
+      content = <<~CLIENT_PROPERTIES
+        ssl.truststore.location=#{subject.truststore_path}
+        ssl.truststore.password=#{password}
+
+        sasl.mechanism=PLAIN
+        security.protocol=SASL_SSL
+        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
+          username=#{username} \\
+          password=#{password} ;
+      CLIENT_PROPERTIES
+
+      expect(File).to receive(:write).with(subject.client_properties_path, content)
+      expect(subject.send(:create_client_properties)).to be_nil
+    end
+
+    it "does not recreate the client properties config file if it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(subject.client_properties_path)
+      expect(File).not_to receive(:write)
+      expect(subject.send(:create_client_properties)).to be_nil
+    end
+  end
+
+  describe "#create_logs_directory" do
+    before do
+      expect(subject).to receive(:say).with("Create Logs Directory")
+    end
+
+    it "creates the logs directory" do
+      expect(FileUtils).to receive(:chown).with("kafka", "kafka", @this::LOGS_DIR)
+      expect(subject.send(:create_logs_directory)).to be_nil
+      expect(File.directory?(@this::LOGS_DIR)).to be_truthy
+    end
+
+    it "does not recreate the logs directory if it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(@this::LOGS_DIR)
+      expect(FileUtils).not_to receive(:mkdir)
+      expect(subject.send(:create_logs_directory)).to be_truthy
+    end
+  end
+
+  describe "#configure_firewall" do
+    before do
+      expect(subject).to receive(:say).with("Configure Firewall")
+    end
+
+    it "will issue the firewall commands to add the kafka ports" do
+      expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --add-port=9092/tcp --permanent")
+      expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --add-port=9093/tcp --permanent")
+      expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --reload")
+      expect(subject.send(:configure_firewall)).to be_nil
+    end
+  end
+
+  describe "#configure_keystore" do
+    before do
+      expect(subject).to receive(:say).with("Configure Keystore")
+    end
+
+    it "creates and populates the keystore directory" do
+      expect(AwesomeSpawn).to receive(:run!).exactly(7).times
+
+      expect(subject.send(:configure_keystore)).to be_nil
+      expect(File.directory?(subject.keystore_dir_path)).to be_truthy
+    end
+
+    it "does not recreate the logs directory if it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(subject.keystore_dir_path)
+      expect(FileUtils).not_to receive(:mkdir_p)
+      expect(subject.send(:configure_keystore)).to be_truthy
+    end
+  end
+
+  describe "#create_server_properties" do
+    before do
+      @content = <<~SERVER_PROPERTIES
+
+        listeners=SASL_SSL://:9093
+
+        ssl.keystore.location=#{subject.keystore_path}
+        ssl.keystore.password=#{password}
+        ssl.key.password=#{password}
+
+        ssl.truststore.location=#{subject.truststore_path}
+        ssl.truststore.password=#{password}
+
+        ssl.client.auth=required
+
+        sasl.enabled.mechanisms=PLAIN
+        sasl.mechanism.inter.broker.protocol=PLAIN
+
+        security.inter.broker.protocol=SASL_SSL
+      SERVER_PROPERTIES
+
+      FileUtils.touch(subject.server_properties_sample_path)
+      FileUtils.touch(subject.server_properties_path)
+      expect(subject).to receive(:say).with("Create Server Properties")
+    end
+
+    it "creates the service properties config file" do
+      expect(subject.send(:create_server_properties)).to be_positive
+      expect(subject.server_properties_path).to exist
+    end
+
+    it "correctly populates the server properties config file" do
+      expect(File).to receive(:write).with(subject.server_properties_path, @content, :mode => "a")
+      expect(subject.send(:create_server_properties)).to be_nil
+    end
+
+    it "does not recreate the server properties config file if it already exists" do
+      expect(subject).to receive(:say)
+      File.write(subject.server_properties_path, @content, :mode => "a")
+      expect(File).not_to receive(:write)
+      expect(subject.send(:create_server_properties)).to be_nil
+    end
+  end
+
+  describe "#configure_messaging_yaml" do
+    before do
+      content = <<~MESSAGING_KAFKA_YML
+        ---
+        base: &base
+          hostname: localhost
+          port: 9092
+          username: admin
+          password: smartvm
+
+        development:
+          <<: *base
+
+        production:
+          <<: *base
+
+        test:
+          <<: *base
+      MESSAGING_KAFKA_YML
+
+      File.write(subject.messaging_yaml_sample_path, content)
+      expect(subject).to receive(:say).with("Configure Messaging Yaml")
+    end
+
+    it "creates the messaging yaml file" do
+      expect(subject.send(:configure_messaging_yaml)).to be_positive
+      expect(subject.messaging_yaml_path).to exist
+    end
+
+    it "correctly populates the messaging yaml file" do
+      content = <<~MESSAGING_YML
+        ---
+        base:
+          hostname: localhost
+          port: 9092
+          username: admin
+          password: smartvm
+        development:
+          hostname: localhost
+          port: 9092
+          username: admin
+          password: smartvm
+        production:
+          hostname: my-host-name.example.com
+          port: 9093
+          username: admin
+          password: super_secret
+        test:
+          hostname: localhost
+          port: 9092
+          username: admin
+          password: smartvm
+      MESSAGING_YML
+
+      expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
+      expect(subject.send(:configure_messaging_yaml)).to be_nil
+    end
+
+    it "does not recreate the messaging yaml file it already exists" do
+      expect(subject).to receive(:say)
+      FileUtils.touch(subject.messaging_yaml_path)
+      expect(YAML).not_to receive(:load_file)
+      expect(subject.send(:configure_messaging_yaml)).to be_truthy
+    end
+  end
+end
