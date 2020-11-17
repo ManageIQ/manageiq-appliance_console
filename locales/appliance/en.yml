@@ -13,8 +13,6 @@ en:
     - log_config
     - failover_monitor
     - httpdauth
-    - message_server
-    - message_client
     - extauth_opts
     - key_gen
     - evmstop
@@ -32,8 +30,6 @@ en:
     log_config: Logfile Configuration
     failover_monitor: Control Application Database Failover Monitor
     httpdauth: Configure External Authentication (httpd)
-    message_server: Configure Message Server
-    message_client: Configure Message Client
     extauth_opts: Update External Authentication Options
     evmstop: Stop EVM Server Processes
     key_gen: Generate Custom Encryption Key

@@ -320,33 +320,6 @@ Static Network Configuration
         end
         press_any_key
 
-      when I18n.t("advanced_settings.message_server")
-        say("#{selection}\n\n")
-
-        message_server = MessageServerConfiguration.new
-        if message_server.ask_questions && message_server.activate
-          message_server.post_activation
-          say("\nMessage Server configured successfully.\n")
-          press_any_key
-        else
-          say("\nMessage Server configuration failed!\n")
-          press_any_key
-          raise MiqSignalError
-        end
-
-      when I18n.t("advanced_settings.message_client")
-        say("#{selection}\n\n")
-
-        message_client = MessageClientConfiguration.new
-        if message_client.ask_questions && message_client.activate
-          say("\nMessage Client configured successfully.\n")
-          press_any_key
-        else
-          say("\nMessage Client configuration failed!\n")
-          press_any_key
-          raise MiqSignalError
-        end
-
       when I18n.t("advanced_settings.evmstop")
         say("#{selection}\n\n")
         service = LinuxAdmin::Service.new("evmserverd")
@@ -411,13 +384,15 @@ Static Network Configuration
           "Create Region in External Database" => "create_external",
           "Join Region in External Database"   => "join_external",
           "Reset Configured Database"          => "reset_region",
-          "No changes"                         => "no_changes"
+          "Make No Database Changes"           => "no_changes"
         }
         database_action = ask_with_menu("Database Operation", options)
 
         messaging_options = {
-          "Use an external messaging system" => "external_messaging",
-          "No changes"                       => "no_changes"
+          "Configure this appliance as a messaging server"           => "message_server",
+          "Connect to an appliance configured as a messaging server" => "message_client",
+          "Connect to an external messaging system"                  => "external_messaging",
+          "Make No messaging changes"                                => "no_changes"
         }
 
         messaging_action = ask_with_menu("Configure Messaging", messaging_options)
@@ -447,6 +422,33 @@ Static Network Configuration
         region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
 
         case messaging_action
+        when "message_server"
+          say("#{selection}\n\n")
+
+          message_server = MessageServerConfiguration.new
+          if message_server.ask_questions && message_server.activate
+            message_server.post_activation
+            say("\nMessage Server configured successfully.\n")
+            press_any_key
+          else
+            say("\nMessage Server configuration failed!\n")
+            press_any_key
+            raise MiqSignalError
+          end
+
+        when "message_client"
+          say("#{selection}\n\n")
+
+          message_client = MessageClientConfiguration.new
+          if message_client.ask_questions && message_client.activate
+            say("\nMessage Client configured successfully.\n")
+            press_any_key
+          else
+            say("\nMessage Client configuration failed!\n")
+            press_any_key
+            raise MiqSignalError
+          end
+
         when "external_messaging"
           ManageIQ::ApplianceConsole::MessagingConfiguration.new.run_interactive
         end
