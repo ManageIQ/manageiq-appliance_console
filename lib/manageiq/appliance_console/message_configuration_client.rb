@@ -18,8 +18,8 @@ module ManageIQ
         @server_username = options[:server_usernamed] || "root"
         @server_password = options[:server_password]
 
-        @installed_files = [@tools_log4_properties_path, @client_properties_path,
-                            @messaging_yaml_path, @keystore_dir_path]
+        @installed_files = [tools_log4_properties_path, client_properties_path,
+                            messaging_yaml_path, keystore_dir_path]
       end
 
       def ask_questions
@@ -29,7 +29,7 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_reachable?(@server_hostname, "Message Server Hostname:")
+        return false unless host_reachable?(server_hostname, "Message Server Hostname:")
 
         true
       end
@@ -57,19 +57,19 @@ module ManageIQ
         say("\nMessage Client Parameters:\n\n")
 
         @server_hostname = ask_for_string("Message Server Hostname")
-        @server_username = ask_for_string("Message Server Username", @server_username)
+        @server_username = ask_for_string("Message Server Username", server_username)
         @server_password = ask_for_password("Message Server Password")
 
-        @username  = ask_for_string("Message Key Username", @username)
+        @username  = ask_for_string("Message Key Username", username)
         @password  = ask_for_password("Message Key Password")
       end
 
       def show_parameters
         say("\nMessage Client Configuration:\n")
         say("Message Client Details:\n")
-        say("  Message Server Hostname:   #{@server_hostname}\n")
-        say("  Message Server Username:   #{@server_username}\n")
-        say("  Message Key Username:      #{@username}\n")
+        say("  Message Server Hostname:   #{server_hostname}\n")
+        say("  Message Server Username:   #{server_username}\n")
+        say("  Message Key Username:      #{username}\n")
       end
 
       private
@@ -77,16 +77,16 @@ module ManageIQ
       def fetch_truststore_from_server
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(@truststore_path)
+        return true if file_found?(truststore_path)
 
-        FileUtils.mkdir_p(@keystore_dir_path)
-        FileUtils.chmod(0o755, @keystore_dir_path)
+        FileUtils.mkdir_p(keystore_dir_path)
+        FileUtils.chmod(0o755, keystore_dir_path)
 
-        Net::SCP.start(@server_hostname, @server_username, :password => @server_password) do |scp|
-          scp.download!(@truststore_path, @truststore_path)
+        Net::SCP.start(server_hostname, server_username, :password => server_password) do |scp|
+          scp.download!(truststore_path, truststore_path)
         end
 
-        File.exist?(@truststore_path)
+        File.exist?(truststore_path)
       rescue => e
         say("Failed to fetch server truststore: #{e.message}")
         false
@@ -101,7 +101,7 @@ module ManageIQ
 
       def already_configured?
         installed_file_found = false
-        @installed_files.each do |f|
+        installed_files.each do |f|
           if File.exist?(f)
             installed_file_found = true
             say("Installed file #{f} found.")

@@ -16,18 +16,18 @@ module ManageIQ
 
         @server_hostname = my_hostname
 
-        @jaas_config_path                  = @config_dir_path.join("kafka_server_jaas.conf")
-        @server_properties_path            = @config_dir_path.join("server.properties")
-        @server_properties_sample_path     = @sample_config_dir_path.join("server.properties")
+        @jaas_config_path                  = config_dir_path.join("kafka_server_jaas.conf")
+        @server_properties_path            = config_dir_path.join("server.properties")
+        @server_properties_sample_path     = sample_config_dir_path.join("server.properties")
 
-        @ca_cert_path                      = @keystore_dir_path.join("ca-cert")
-        @ca_key_path                       = @keystore_dir_path.join("ca-key")
-        @cert_file_path                    = @keystore_dir_path.join("cert-file")
-        @cert_signed_path                  = @keystore_dir_path.join("cert-signed")
+        @ca_cert_path                      = keystore_dir_path.join("ca-cert")
+        @ca_key_path                       = keystore_dir_path.join("ca-key")
+        @cert_file_path                    = keystore_dir_path.join("cert-file")
+        @cert_signed_path                  = keystore_dir_path.join("cert-signed")
 
-        @installed_files = [@tools_log4_properties_path, @jaas_config_path,
-                            @client_properties_path, @server_properties_path,
-                            @messaging_yaml_path, LOGS_DIR, @keystore_dir_path]
+        @installed_files = [tools_log4_properties_path, jaas_config_path,
+                            client_properties_path, server_properties_path,
+                            messaging_yaml_path, LOGS_DIR, keystore_dir_path]
       end
 
       def ask_questions
@@ -36,7 +36,7 @@ module ManageIQ
         ask_for_parameters
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
-        return false unless host_reachable?(@server_hostname, "Message Server")
+        return false unless host_reachable?(server_hostname, "Message Server")
 
         true
       end
@@ -75,15 +75,15 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @username  = ask_for_string("Message Key Username", @username)
+        @username  = ask_for_string("Message Key Username", username)
         @password  = ask_for_password("Message Key Password")
       end
 
       def show_parameters
         say("\nMessage Server Configuration:\n")
         say("Message Server Details:\n")
-        say("  Message Server Hostname:   #{@server_hostname}\n")
-        say("  Message Key Username:      #{@username}\n")
+        say("  Message Server Hostname:   #{server_hostname}\n")
+        say("  Message Key Username:      #{username}\n")
       end
 
       private
@@ -98,13 +98,13 @@ module ManageIQ
         content = <<~JAAS
           KafkaServer {
             org.apache.kafka.common.security.plain.PlainLoginModule required
-            username=#{@username}
-            password=#{@password}
-            user_admin=#{@password} ;
+            username=#{username}
+            password=#{password}
+            user_admin=#{password} ;
           };
         JAAS
 
-        File.write(@jaas_config_path, content) unless file_found?(@jaas_config_path)
+        File.write(jaas_config_path, content) unless file_found?(jaas_config_path)
       end
 
       def create_logs_directory
@@ -128,31 +128,31 @@ module ManageIQ
       def configure_keystore
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(@keystore_dir_path)
+        return true if file_found?(keystore_dir_path)
 
-        FileUtils.mkdir_p(@keystore_dir_path)
-        FileUtils.chmod(0o755, @keystore_dir_path)
+        FileUtils.mkdir_p(keystore_dir_path)
+        FileUtils.chmod(0o755, keystore_dir_path)
 
         # Generte a Java keystore and key pair, creating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{@keystore_path} -alias localhost -validity 10000 -genkey -keyalg RSA -storepass #{@password} -keypass #{@password} -dname \"cn=#{@server_hostname}\" ")
+        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -validity 10000 -genkey -keyalg RSA -storepass #{password} -keypass #{password} -dname \"cn=#{server_hostname}\" ")
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
-        AwesomeSpawn.run!("PASSWORD='#{@password}' openssl req -new -x509 -keyout #{@ca_key_path} -out #{@ca_cert_path} -days 10000 -passout 'env:PASSWORD' -subj '/CN=something'")
+        AwesomeSpawn.run!("PASSWORD='#{password}' openssl req -new -x509 -keyout #{ca_key_path} -out #{ca_cert_path} -days 10000 -passout 'env:PASSWORD' -subj '/CN=something'")
 
         # Import the CA cert into the trust store, creating truststore.jks
-        AwesomeSpawn.run!("keytool -keystore #{@truststore_path} -alias CARoot -import -file #{@ca_cert_path} -storepass #{@password} -noprompt")
+        AwesomeSpawn.run!("keytool -keystore #{truststore_path} -alias CARoot -import -file #{ca_cert_path} -storepass #{password} -noprompt")
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool -keystore #{@keystore_path} -alias localhost -certreq -file #{@cert_file_path} -storepass #{@password} ")
+        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -certreq -file #{cert_file_path} -storepass #{password} ")
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
-        AwesomeSpawn.run!("PASSWORD='#{@password}' openssl x509 -req -CA #{@ca_cert_path} -CAkey #{@ca_key_path} -in #{@cert_file_path} -out #{@cert_signed_path} -days 10000 -CAcreateserial -passin 'env:PASSWORD'")
+        AwesomeSpawn.run!("PASSWORD='#{password}' openssl x509 -req -CA #{ca_cert_path} -CAkey #{ca_key_path} -in #{cert_file_path} -out #{cert_signed_path} -days 10000 -CAcreateserial -passin 'env:PASSWORD'")
 
         # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{@keystore_path} -alias CARoot -import -file #{@ca_cert_path} -storepass #{@password} -noprompt")
+        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias CARoot -import -file #{ca_cert_path} -storepass #{password} -noprompt")
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{@keystore_path} -alias localhost -import -file #{@cert_signed_path} -storepass #{@password} -noprompt")
+        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -import -file #{cert_signed_path} -storepass #{password} -noprompt")
       end
 
       def create_server_properties
@@ -162,12 +162,12 @@ module ManageIQ
 
           listeners=SASL_SSL://:9093
 
-          ssl.keystore.location=#{@keystore_path}
-          ssl.keystore.password=#{@password}
-          ssl.key.password=#{@password}
+          ssl.keystore.location=#{keystore_path}
+          ssl.keystore.password=#{password}
+          ssl.key.password=#{password}
 
-          ssl.truststore.location=#{@truststore_path}
-          ssl.truststore.password=#{@password}
+          ssl.truststore.location=#{truststore_path}
+          ssl.truststore.password=#{password}
 
           ssl.client.auth=required
 
@@ -177,10 +177,10 @@ module ManageIQ
           security.inter.broker.protocol=SASL_SSL
         SERVER_PROPERTIES
 
-        return if file_contains?(@server_properties_path, content)
+        return if file_contains?(server_properties_path, content)
 
-        FileUtils.cp(@server_properties_sample_path, @server_properties_path)
-        File.write(@server_properties_path, content, :mode => "a")
+        FileUtils.cp(server_properties_sample_path, server_properties_path)
+        File.write(server_properties_path, content, :mode => "a")
       end
 
       def installation_valid?
@@ -192,7 +192,7 @@ module ManageIQ
 
       def already_configured?
         installed_file_found = false
-        @installed_files.each do |f|
+        installed_files.each do |f|
           if File.exist?(f)
             installed_file_found = true
             say("Installed file #{f} found.")
