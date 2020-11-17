@@ -16,14 +16,14 @@ module ManageIQ
 
         @server_hostname = my_hostname
 
-        @jaas_config_path                  = @config_dir_path.join("", "kafka_server_jaas.conf")
-        @server_properties_path            = @config_dir_path.join("", "server.properties")
-        @server_properties_sample_path     = @sample_config_dir_path.join("", "server.properties")
+        @jaas_config_path                  = @config_dir_path.join("kafka_server_jaas.conf")
+        @server_properties_path            = @config_dir_path.join("server.properties")
+        @server_properties_sample_path     = @sample_config_dir_path.join("server.properties")
 
-        @ca_cert_path                      = @keystore_dir_path.join("", "ca-cert")
-        @ca_key_path                       = @keystore_dir_path.join("", "ca-key")
-        @cert_file_path                    = @keystore_dir_path.join("", "cert-file")
-        @cert_signed_path                  = @keystore_dir_path.join("", "cert-signed")
+        @ca_cert_path                      = @keystore_dir_path.join("ca-cert")
+        @ca_key_path                       = @keystore_dir_path.join("ca-key")
+        @cert_file_path                    = @keystore_dir_path.join("cert-file")
+        @cert_signed_path                  = @keystore_dir_path.join("cert-signed")
 
         @installed_files = [@tools_log4_properties_path, @jaas_config_path,
                             @client_properties_path, @server_properties_path,

@@ -27,16 +27,16 @@ module ManageIQ
         @config_dir_path                   = Pathname.new(CONFIG_DIR)
         @sample_config_dir_path            = Pathname.new(SAMPLE_CONFIG_DIR)
 
-        @tools_log4_properties_path        = @config_dir_path.join("", "tools-log4j.properties")
-        @tools_log4_properties_sample_path = @sample_config_dir_path.join("", "tools-log4j.properties")
-        @client_properties_path            = @config_dir_path.join("", "client.properties")
+        @tools_log4_properties_path        = @config_dir_path.join("tools-log4j.properties")
+        @tools_log4_properties_sample_path = @sample_config_dir_path.join("tools-log4j.properties")
+        @client_properties_path            = @config_dir_path.join("client.properties")
 
-        @keystore_dir_path                 = @config_dir_path.join("", "keystore")
-        @truststore_path                   = @keystore_dir_path.join("", "truststore.jks")
-        @keystore_path                     = @keystore_dir_path.join("", "keystore.jks")
+        @keystore_dir_path                 = @config_dir_path.join("keystore")
+        @truststore_path                   = @keystore_dir_path.join("truststore.jks")
+        @keystore_path                     = @keystore_dir_path.join("keystore.jks")
 
-        @messaging_yaml_sample_path        = @miq_config_dir_path.join("", "messaging.kafka.yml")
-        @messaging_yaml_path               = @miq_config_dir_path.join("", "messaging.yml")
+        @messaging_yaml_sample_path        = @miq_config_dir_path.join("messaging.kafka.yml")
+        @messaging_yaml_path               = @miq_config_dir_path.join("messaging.yml")
       end
 
       def create_tools_log_config
