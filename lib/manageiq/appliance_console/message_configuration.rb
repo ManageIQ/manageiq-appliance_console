@@ -80,7 +80,7 @@ module ManageIQ
       def remove_installed_files
         say(__method__.to_s.tr("_", " ").titleize)
 
-        installed_files.each { |f| FileUtils.rm_rf(f) if File.exist?(f) }
+        installed_files.each { |f| FileUtils.rm_rf(f) }
       end
 
       def valid_environment?
