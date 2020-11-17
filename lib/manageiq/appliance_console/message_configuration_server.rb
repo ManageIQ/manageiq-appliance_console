@@ -47,7 +47,7 @@ module ManageIQ
           create_jaas_config           # Create the message server jaas config file
           create_client_properties     # Create the client.properties config
           create_logs_directory        # Create the logs directory:
-          configure_firewall           # Open the firewall for message port 9092
+          configure_firewall           # Open the firewall for message port 9093
           configure_keystore           # Populate the Java Keystore
           create_server_properties     # Update the /opt/message/config/server.properties
           configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
@@ -120,7 +120,6 @@ module ManageIQ
       def configure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --add-port=9092/tcp --permanent") # insecure
         AwesomeSpawn.run!("firewall-cmd --add-port=9093/tcp --permanent") # secure
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
@@ -210,7 +209,6 @@ module ManageIQ
       def unconfigure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --remove-port=9092/tcp --permanent") # insecure
         AwesomeSpawn.run!("firewall-cmd --remove-port=9093/tcp --permanent") # secure
         AwesomeSpawn.run!("firewall-cmd --reload")
       end

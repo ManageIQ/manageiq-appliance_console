@@ -168,7 +168,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
 
     it "will issue the firewall commands to add the kafka ports" do
-      expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --add-port=9092/tcp --permanent")
       expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --add-port=9093/tcp --permanent")
       expect(AwesomeSpawn).to receive(:run!).with("firewall-cmd --reload")
       expect(subject.send(:configure_firewall)).to be_nil
