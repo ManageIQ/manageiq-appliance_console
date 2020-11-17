@@ -74,7 +74,7 @@ module ManageIQ
         messaging_yaml["production"]["username"] = username
         messaging_yaml["production"]["password"] = password
 
-        File.write(messaging_yaml_path, messaging_yaml.to_yaml) unless file_found?(messaging_yaml_path)
+        File.write(messaging_yaml_path, messaging_yaml.to_yaml)
       end
 
       def remove_installed_files
