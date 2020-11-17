@@ -2,6 +2,7 @@ require "awesome_spawn"
 require "fileutils"
 require "linux_admin"
 require 'net/scp'
+require "manageiq/appliance_console/message_configuration"
 
 module ManageIQ
   module ApplianceConsole

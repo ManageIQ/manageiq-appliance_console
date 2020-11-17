@@ -1,6 +1,7 @@
 require "awesome_spawn"
-require "linux_admin"
 require "fileutils"
+require "linux_admin"
+require "manageiq/appliance_console/message_configuration"
 
 module ManageIQ
   module ApplianceConsole
