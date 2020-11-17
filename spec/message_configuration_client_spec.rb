@@ -188,7 +188,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject).to receive(:say)
       FileUtils.touch(subject.messaging_yaml_path)
       expect(YAML).not_to receive(:load_file)
-      expect(subject.send(:configure_messaging_yaml)).to be_truthy
+      expect(subject.send(:configure_messaging_yaml)).to be_nil
     end
   end
 
@@ -210,7 +210,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       FileUtils.touch(subject.truststore_path)
 
       expect(FileUtils).not_to receive(:mkdir_p)
-      expect(subject.send(:fetch_truststore_from_server)).to be_truthy
+      expect(subject.send(:fetch_truststore_from_server)).to be_nil
     end
   end
 end

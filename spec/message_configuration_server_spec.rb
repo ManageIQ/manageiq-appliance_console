@@ -158,7 +158,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(subject).to receive(:say)
       FileUtils.touch(@this::LOGS_DIR)
       expect(FileUtils).not_to receive(:mkdir)
-      expect(subject.send(:create_logs_directory)).to be_truthy
+      expect(subject.send(:create_logs_directory)).to be_nil
     end
   end
 
@@ -191,7 +191,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(subject).to receive(:say)
       FileUtils.touch(subject.keystore_dir_path)
       expect(FileUtils).not_to receive(:mkdir_p)
-      expect(subject.send(:configure_keystore)).to be_truthy
+      expect(subject.send(:configure_keystore)).to be_nil
     end
   end
 
@@ -301,7 +301,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(subject).to receive(:say)
       FileUtils.touch(subject.messaging_yaml_path)
       expect(YAML).not_to receive(:load_file)
-      expect(subject.send(:configure_messaging_yaml)).to be_truthy
+      expect(subject.send(:configure_messaging_yaml)).to be_nil
     end
   end
 end

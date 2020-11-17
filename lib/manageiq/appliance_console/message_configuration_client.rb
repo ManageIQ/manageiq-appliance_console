@@ -77,7 +77,7 @@ module ManageIQ
       def fetch_truststore_from_server
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(truststore_path)
+        return if file_found?(truststore_path)
 
         FileUtils.mkdir_p(keystore_dir_path)
         FileUtils.chmod(0o755, keystore_dir_path)

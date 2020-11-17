@@ -65,7 +65,7 @@ module ManageIQ
       def configure_messaging_yaml
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(messaging_yaml_path)
+        return if file_found?(messaging_yaml_path)
 
         messaging_yaml = YAML.load_file(messaging_yaml_sample_path)
 

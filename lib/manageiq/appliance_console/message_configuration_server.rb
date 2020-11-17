@@ -110,7 +110,7 @@ module ManageIQ
       def create_logs_directory
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(LOGS_DIR)
+        return if file_found?(LOGS_DIR)
 
         FileUtils.mkdir_p(LOGS_DIR)
         FileUtils.chmod(0o755, LOGS_DIR)
@@ -128,7 +128,7 @@ module ManageIQ
       def configure_keystore
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return true if file_found?(keystore_dir_path)
+        return if file_found?(keystore_dir_path)
 
         FileUtils.mkdir_p(keystore_dir_path)
         FileUtils.chmod(0o755, keystore_dir_path)
