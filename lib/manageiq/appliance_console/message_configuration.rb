@@ -18,10 +18,8 @@ module ManageIQ
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def initialize(options = {})
-        @username, @password = nil
-
         @username = options[:username] || "admin"
-        @password = options[:password]
+        @password = options[:password] || nil
 
         @miq_config_dir_path               = Pathname.new(MIQ_CONFIG_DIR)
         @config_dir_path                   = Pathname.new(CONFIG_DIR)
