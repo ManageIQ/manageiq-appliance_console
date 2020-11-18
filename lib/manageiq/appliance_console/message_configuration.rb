@@ -107,7 +107,7 @@ module ManageIQ
 
         content.split("\n").each do |l|
           l.gsub!("/", "\\/")
-          l.gsub!(/password=.*$/, "password=") # Remove the passord as it can have special characters that grep can not match.
+          l.gsub!(/password=.*$/, "password=") # Remove the password as it can have special characters that grep can not match.
           return false unless File.foreach(path).grep(/#{l}/).any?
         end
 

@@ -133,25 +133,25 @@ module ManageIQ
         FileUtils.chmod(0o755, keystore_dir_path)
 
         # Generte a Java keystore and key pair, creating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -validity 10000 -genkey -keyalg RSA -storepass #{password} -keypass #{password} -dname \"cn=#{server_hostname}\" ")
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_hostname}"})
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
-        AwesomeSpawn.run!("PASSWORD='#{password}' openssl req -new -x509 -keyout #{ca_key_path} -out #{ca_cert_path} -days 10000 -passout 'env:PASSWORD' -subj '/CN=something'")
+        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
 
         # Import the CA cert into the trust store, creating truststore.jks
-        AwesomeSpawn.run!("keytool -keystore #{truststore_path} -alias CARoot -import -file #{ca_cert_path} -storepass #{password} -noprompt")
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -certreq -file #{cert_file_path} -storepass #{password} ")
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
-        AwesomeSpawn.run!("PASSWORD='#{password}' openssl x509 -req -CA #{ca_cert_path} -CAkey #{ca_key_path} -in #{cert_file_path} -out #{cert_signed_path} -days 10000 -CAcreateserial -passin 'env:PASSWORD'")
+        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
 
         # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias CARoot -import -file #{ca_cert_path} -storepass #{password} -noprompt")
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool -keystore #{keystore_path} -alias localhost -import -file #{cert_signed_path} -storepass #{password} -noprompt")
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
       end
 
       def create_server_properties
