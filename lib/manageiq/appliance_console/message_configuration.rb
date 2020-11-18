@@ -15,7 +15,7 @@ module ManageIQ
       LOGS_DIR                          = "#{BASE_DIR}/logs".freeze
       CONFIG_DIR                        = "#{BASE_DIR}/config".freeze
       SAMPLE_CONFIG_DIR                 = "#{BASE_DIR}/config-sample".freeze
-      MIQ_CONFIG_DIR                    = "/var/www/miq/vmdb/config".freeze
+      MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def initialize(options = {})
         @username, @password = nil
