@@ -172,7 +172,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           hostname: my-kafka-server.example.com
           port: 9093
           username: admin
-          password: super_secret
+          password: #{ManageIQ::Password.try_encrypt("super_secret")}
         test:
           hostname: localhost
           port: 9092

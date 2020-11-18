@@ -284,7 +284,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
           hostname: my-host-name.example.com
           port: 9093
           username: admin
-          password: super_secret
+          password: #{ManageIQ::Password.try_encrypt("super_secret")}
         test:
           hostname: localhost
           port: 9092

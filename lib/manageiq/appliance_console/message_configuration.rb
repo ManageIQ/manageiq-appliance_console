@@ -72,7 +72,7 @@ module ManageIQ
         messaging_yaml["production"]["hostname"] = server_hostname
         messaging_yaml["production"]["port"] = 9093
         messaging_yaml["production"]["username"] = username
-        messaging_yaml["production"]["password"] = password
+        messaging_yaml["production"]["password"] = ManageIQ::Password.try_encrypt(password)
 
         File.write(messaging_yaml_path, messaging_yaml.to_yaml)
       end
