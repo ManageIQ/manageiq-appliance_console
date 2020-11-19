@@ -18,8 +18,7 @@ module ManageIQ
         @server_username = options[:server_usernamed] || "root"
         @server_password = options[:server_password]
 
-        @installed_files = [tools_log4_properties_path, client_properties_path,
-                            messaging_yaml_path, keystore_dir_path]
+        @installed_files = [client_properties_path, messaging_yaml_path, keystore_dir_path]
       end
 
       def ask_questions
@@ -36,7 +35,6 @@ module ManageIQ
 
       def activate
         begin
-          create_tools_log_config      # Create the tools log configuration file
           configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
           create_client_properties     # Create the client.properties configuration fle
           fetch_truststore_from_server # Fetch the Java Keystore from the Kafka Server

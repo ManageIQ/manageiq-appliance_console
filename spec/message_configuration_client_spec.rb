@@ -74,24 +74,6 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
   end
 
-  describe "#create_tools_log_config" do
-    before do
-      expect(subject).to receive(:say).with("Create Tools Log Config")
-    end
-
-    it "copies the sample tools log config file" do
-      expect(FileUtils).to receive(:cp).with(subject.tools_log4_properties_sample_path, subject.tools_log4_properties_path)
-      expect(subject.send(:create_tools_log_config)).to be_nil
-    end
-
-    it "does not recopy the sample tools log config file if it already exists" do
-      expect(subject).to receive(:say)
-      FileUtils.touch(subject.tools_log4_properties_path)
-      expect(FileUtils).not_to receive(:cp)
-      expect(subject.send(:create_tools_log_config)).to be_nil
-    end
-  end
-
   describe "#create_client_properties" do
     before do
       expect(subject).to receive(:say).with("Create Client Properties")

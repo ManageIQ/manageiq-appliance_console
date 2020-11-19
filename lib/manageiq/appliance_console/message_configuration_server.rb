@@ -25,8 +25,7 @@ module ManageIQ
         @cert_file_path                    = keystore_dir_path.join("cert-file")
         @cert_signed_path                  = keystore_dir_path.join("cert-signed")
 
-        @installed_files = [tools_log4_properties_path, jaas_config_path,
-                            client_properties_path, server_properties_path,
+        @installed_files = [jaas_config_path, client_properties_path, server_properties_path,
                             messaging_yaml_path, LOGS_DIR, keystore_dir_path]
       end
 
@@ -43,7 +42,6 @@ module ManageIQ
 
       def activate
         begin
-          create_tools_log_config      # Create the tools log configuration file
           create_jaas_config           # Create the message server jaas config file
           create_client_properties     # Create the client.properties config
           create_logs_directory        # Create the logs directory:

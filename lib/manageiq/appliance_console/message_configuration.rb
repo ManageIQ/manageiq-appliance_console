@@ -6,7 +6,6 @@ module ManageIQ
     class MessageConfiguration
       attr_reader :username, :password,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
-                  :tools_log4_properties_path, :tools_log4_properties_sample_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
                   :messaging_yaml_sample_path, :messaging_yaml_path
@@ -25,22 +24,13 @@ module ManageIQ
         @config_dir_path                   = Pathname.new(CONFIG_DIR)
         @sample_config_dir_path            = Pathname.new(SAMPLE_CONFIG_DIR)
 
-        @tools_log4_properties_path        = config_dir_path.join("tools-log4j.properties")
-        @tools_log4_properties_sample_path = sample_config_dir_path.join("tools-log4j.properties")
         @client_properties_path            = config_dir_path.join("client.properties")
-
         @keystore_dir_path                 = config_dir_path.join("keystore")
         @truststore_path                   = keystore_dir_path.join("truststore.jks")
         @keystore_path                     = keystore_dir_path.join("keystore.jks")
 
         @messaging_yaml_sample_path        = miq_config_dir_path.join("messaging.kafka.yml")
         @messaging_yaml_path               = miq_config_dir_path.join("messaging.yml")
-      end
-
-      def create_tools_log_config
-        say(__method__.to_s.tr("_", " ").titleize)
-
-        FileUtils.cp(tools_log4_properties_sample_path, tools_log4_properties_path) unless file_found?(tools_log4_properties_path)
       end
 
       def create_client_properties
