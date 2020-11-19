@@ -33,6 +33,18 @@ module ManageIQ
         @messaging_yaml_path               = miq_config_dir_path.join("messaging.yml")
       end
 
+      def ask_questions
+        return false unless valid_environment?
+
+        ask_for_parameters
+        show_parameters
+        return false unless agree("\nProceed? (Y/N): ")
+
+        return false unless host_reachable?(server_hostname, "Message Server Hostname:")
+
+        true
+      end
+
       def create_client_properties
         say(__method__.to_s.tr("_", " ").titleize)
 

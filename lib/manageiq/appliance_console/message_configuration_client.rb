@@ -21,18 +21,6 @@ module ManageIQ
         @installed_files = [client_properties_path, messaging_yaml_path, keystore_dir_path]
       end
 
-      def ask_questions
-        return false unless valid_environment?
-
-        ask_for_parameters
-        show_parameters
-        return false unless agree("\nProceed? (Y/N): ")
-
-        return false unless host_reachable?(server_hostname, "Message Server Hostname:")
-
-        true
-      end
-
       def activate
         begin
           configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
