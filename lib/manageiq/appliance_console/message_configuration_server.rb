@@ -8,8 +8,8 @@ module ManageIQ
     class MessageServerConfiguration < MessageConfiguration
       attr_reader :server_hostname, :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
-                  :ca_cert_path, :ca_key_path, :cert_file_path, :cert_signed_path,
-                  :installed_files
+                  :ca_cert_path, :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
+                  :keystore_files, :installed_files
 
       def initialize(options = {})
         super(options)
@@ -21,12 +21,13 @@ module ManageIQ
         @server_properties_sample_path     = sample_config_dir_path.join("server.properties")
 
         @ca_cert_path                      = keystore_dir_path.join("ca-cert")
+        @ca_cert_srl_path                  = keystore_dir_path.join("ca-cert.srl")
         @ca_key_path                       = keystore_dir_path.join("ca-key")
         @cert_file_path                    = keystore_dir_path.join("cert-file")
         @cert_signed_path                  = keystore_dir_path.join("cert-signed")
 
-        @installed_files = [jaas_config_path, client_properties_path, server_properties_path,
-                            messaging_yaml_path, LOGS_DIR, keystore_dir_path]
+        @keystore_files  = [ca_cert_path, ca_cert_srl_path, ca_key_path, cert_file_path, cert_signed_path, truststore_path, keystore_path]
+        @installed_files = [jaas_config_path, client_properties_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
       end
 
       def activate
@@ -114,10 +115,7 @@ module ManageIQ
       def configure_keystore
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return if file_found?(keystore_dir_path)
-
-        FileUtils.mkdir_p(keystore_dir_path)
-        FileUtils.chmod(0o755, keystore_dir_path)
+        return if files_found?(keystore_files)
 
         # Generte a Java keystore and key pair, creating keystore.jks
         AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_hostname}"})

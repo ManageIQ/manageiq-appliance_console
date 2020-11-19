@@ -16,7 +16,7 @@ module ManageIQ
         @server_username = options[:server_usernamed] || "root"
         @server_password = options[:server_password]
 
-        @installed_files = [client_properties_path, messaging_yaml_path, keystore_dir_path]
+        @installed_files = [client_properties_path, messaging_yaml_path, truststore_path]
       end
 
       def activate
@@ -62,9 +62,6 @@ module ManageIQ
         say(__method__.to_s.tr("_", " ").titleize)
 
         return if file_found?(truststore_path)
-
-        FileUtils.mkdir_p(keystore_dir_path)
-        FileUtils.chmod(0o755, keystore_dir_path)
 
         Net::SCP.start(server_hostname, server_username, :password => server_password) do |scp|
           scp.download!(truststore_path, truststore_path)

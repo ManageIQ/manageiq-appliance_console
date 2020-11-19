@@ -16,7 +16,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     stub_const("#{@this}::SAMPLE_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
     stub_const("#{@this}::MIQ_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
 
-    FileUtils.mkdir_p("#{@tmp_base_dir}/config")
+    FileUtils.mkdir_p("#{@tmp_base_dir}/config/keystore")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
 
     allow_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('my-host-name.example.com')
@@ -166,10 +166,10 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(File.directory?(subject.keystore_dir_path)).to be_truthy
     end
 
-    it "does not recreate the logs directory if it already exists" do
-      expect(subject).to receive(:say)
-      FileUtils.touch(subject.keystore_dir_path)
-      expect(FileUtils).not_to receive(:mkdir_p)
+    it "does not recreate the keystore files if they already exists" do
+      subject.keystore_files.each { |f| FileUtils.touch(f) }
+      expect(AwesomeSpawn).not_to receive(:run!)
+      expect(subject).to receive(:say).exactly(7).times
       expect(subject.send(:configure_keystore)).to be_nil
     end
   end

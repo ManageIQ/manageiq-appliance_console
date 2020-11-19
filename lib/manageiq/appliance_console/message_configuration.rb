@@ -113,6 +113,13 @@ module ManageIQ
         true
       end
 
+      def files_found?(path_list)
+        return false unless path_list.all? { |path| File.exist?(path) }
+
+        path_list.each { |path| file_found?(path) }
+        true
+      end
+
       def file_contains?(path, content)
         return false unless File.exist?(path)
 
