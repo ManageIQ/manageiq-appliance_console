@@ -78,24 +78,6 @@ module ManageIQ
         false
       end
 
-      def installation_valid?
-        return true if LinuxAdmin::Rpm.list_installed.key?("kafka")
-
-        say("\nAppliance Installation is not valid for enabling Message\n")
-        false
-      end
-
-      def already_configured?
-        installed_file_found = false
-        installed_files.each do |f|
-          if File.exist?(f)
-            installed_file_found = true
-            say("Installed file #{f} found.")
-          end
-        end
-        installed_file_found
-      end
-
       def deactivate
         remove_installed_files
       end

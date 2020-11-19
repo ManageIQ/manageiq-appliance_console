@@ -35,8 +35,6 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
   describe "#ask_questions" do
     before do
-      expect(LinuxAdmin::Rpm).to receive(:list_installed).at_least(1).times.and_return("kafka" => "kafka")
-
       allow(subject).to receive(:agree).and_return(true)
       allow(subject).to receive(:host_reachable?).and_return(true)
       allow(subject).to receive(:message_client_configured?).and_return(false)

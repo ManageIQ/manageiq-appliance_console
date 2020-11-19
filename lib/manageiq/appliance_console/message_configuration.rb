@@ -33,6 +33,17 @@ module ManageIQ
         @messaging_yaml_path               = miq_config_dir_path.join("messaging.yml")
       end
 
+      def already_configured?
+        installed_file_found = false
+        installed_files.each do |f|
+          if File.exist?(f)
+            installed_file_found = true
+            say("Installed file #{f} found.")
+          end
+        end
+        installed_file_found
+      end
+
       def ask_questions
         return false unless valid_environment?
 
@@ -86,8 +97,6 @@ module ManageIQ
       end
 
       def valid_environment?
-        return false unless installation_valid?
-
         if already_configured?
           return false unless agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
 
