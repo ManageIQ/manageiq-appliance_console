@@ -12,8 +12,6 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_hostname, @server_username, @server_password = nil
-
         @server_hostname = options[:server_hostname]
         @server_username = options[:server_usernamed] || "root"
         @server_password = options[:server_password]

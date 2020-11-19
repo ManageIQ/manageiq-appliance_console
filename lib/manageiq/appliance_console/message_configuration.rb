@@ -18,7 +18,7 @@ module ManageIQ
 
       def initialize(options = {})
         @username = options[:username] || "admin"
-        @password = options[:password] || nil
+        @password = options[:password]
 
         @miq_config_dir_path               = Pathname.new(MIQ_CONFIG_DIR)
         @config_dir_path                   = Pathname.new(CONFIG_DIR)
