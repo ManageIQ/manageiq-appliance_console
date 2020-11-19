@@ -36,6 +36,8 @@ module ManageIQ
       def create_client_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
+        return if file_found?(client_properties_path)
+
         content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
@@ -47,7 +49,7 @@ module ManageIQ
             password=#{password} ;
         CLIENT_PROPERTIES
 
-        File.write(client_properties_path, content) unless file_found?(client_properties_path)
+        File.write(client_properties_path, content)
       end
 
       def configure_messaging_yaml
