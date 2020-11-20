@@ -32,13 +32,14 @@ module ManageIQ
 
       def activate
         begin
-          create_jaas_config           # Create the message server jaas config file
-          create_client_properties     # Create the client.properties config
-          create_logs_directory        # Create the logs directory:
-          configure_firewall           # Open the firewall for message port 9093
-          configure_keystore           # Populate the Java Keystore
-          create_server_properties     # Update the /opt/message/config/server.properties
-          configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
+          create_jaas_config                # Create the message server jaas config file
+          create_client_properties          # Create the client.properties config
+          create_logs_directory             # Create the logs directory:
+          configure_firewall                # Open the firewall for message port 9093
+          configure_keystore                # Populate the Java Keystore
+          create_server_properties          # Update the /opt/message/config/server.properties
+          configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
+          configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)
@@ -171,6 +172,7 @@ module ManageIQ
         remove_installed_files
         unconfigure_firewall
         deactivate_services
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
       end
 
       def unconfigure_firewall

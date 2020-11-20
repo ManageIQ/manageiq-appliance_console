@@ -21,9 +21,10 @@ module ManageIQ
 
       def activate
         begin
-          configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
-          create_client_properties     # Create the client.properties configuration fle
-          fetch_truststore_from_server # Fetch the Java Keystore from the Kafka Server
+          configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
+          create_client_properties          # Create the client.properties configuration fle
+          fetch_truststore_from_server      # Fetch the Java Keystore from the Kafka Server
+          configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)
@@ -75,6 +76,7 @@ module ManageIQ
 
       def deactivate
         remove_installed_files
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
       end
     end
   end

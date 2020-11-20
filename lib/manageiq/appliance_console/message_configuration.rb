@@ -133,9 +133,6 @@ module ManageIQ
         true
       end
 
-      #
-      # Network validation
-      #
       def host_reachable?(host, what)
         require 'net/ping'
         say("Checking connectivity to #{host} ... ")
@@ -146,6 +143,13 @@ module ManageIQ
         end
         say("Succeeded.")
         true
+      end
+
+      def configure_messaging_type(value)
+        say(__method__.to_s.tr("_", " ").titleize)
+
+        result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", ["/prototype/messaging_type=#{value}"])
+        raise parse_errors(result).join(', ') if result.failure?
       end
     end
   end
