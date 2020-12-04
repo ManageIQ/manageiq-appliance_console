@@ -38,6 +38,12 @@ module ManageIQ
         true
       end
 
+      def post_activation
+        say("Restart evmserverd if it is running...")
+        evmserverd_service = LinuxAdmin::Service.new("evmserverd")
+        evmserverd_service.restart if evmserverd_service.running?
+      end
+
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
