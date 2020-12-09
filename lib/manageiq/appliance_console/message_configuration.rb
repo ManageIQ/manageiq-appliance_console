@@ -151,6 +151,12 @@ module ManageIQ
         result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", ["/prototype/messaging_type=#{value}"])
         raise parse_errors(result).join(', ') if result.failure?
       end
+
+      def restart_evmserverd
+        say("Restart evmserverd if it is running...")
+        evmserverd_service = LinuxAdmin::Service.new("evmserverd")
+        evmserverd_service.restart if evmserverd_service.running?
+      end
     end
   end
 end

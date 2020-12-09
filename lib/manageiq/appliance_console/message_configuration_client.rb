@@ -25,6 +25,7 @@ module ManageIQ
           create_client_properties          # Create the client.properties configuration fle
           fetch_truststore_from_server      # Fetch the Java Keystore from the Kafka Server
           configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
+          restart_evmserverd
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)
@@ -36,12 +37,6 @@ module ManageIQ
           return false
         end
         true
-      end
-
-      def post_activation
-        say("Restart evmserverd if it is running...")
-        evmserverd_service = LinuxAdmin::Service.new("evmserverd")
-        evmserverd_service.restart if evmserverd_service.running?
       end
 
       def ask_for_parameters
@@ -81,8 +76,9 @@ module ManageIQ
       end
 
       def deactivate
-        remove_installed_files
         configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
+        restart_evmserverd
+        remove_installed_files
       end
     end
   end

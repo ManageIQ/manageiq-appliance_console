@@ -441,7 +441,6 @@ Static Network Configuration
 
           message_client = MessageClientConfiguration.new
           if message_client.ask_questions && message_client.activate
-            message_client.post_activation
             say("\nMessage Client configured successfully.\n")
             press_any_key
           else

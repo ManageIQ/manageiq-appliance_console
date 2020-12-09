@@ -194,17 +194,17 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
   end
 
-  describe "#post_activation" do
+  describe "#restart_evmserverd" do
     it "restarts evmserverd if it is running" do
       expect(subject).to receive(:say)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(double(@spec_name, :running? => true, :restart => nil))
-      expect(subject.send(:post_activation)).to be_nil
+      expect(subject.send(:restart_evmserverd)).to be_nil
     end
 
     it "does not restart evmserverd if it is not running" do
       expect(subject).to receive(:say)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(double(@spec_name, :running? => false))
-      expect(subject.send(:post_activation)).to be_nil
+      expect(subject.send(:restart_evmserverd)).to be_nil
     end
   end
 end

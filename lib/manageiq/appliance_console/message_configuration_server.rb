@@ -60,9 +60,7 @@ module ManageIQ
         say("Starting kafka and configure it to start on reboots ...")
         LinuxAdmin::Service.new("kafka").start.enable
 
-        say("Restart evmserverd if it is running...")
-        evmserverd_service = LinuxAdmin::Service.new("evmserverd")
-        evmserverd_service.restart if evmserverd_service.running?
+        restart_evmserverd
       end
 
       def ask_for_parameters
@@ -173,10 +171,11 @@ module ManageIQ
       end
 
       def deactivate
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
+        restart_evmserverd
         remove_installed_files
         unconfigure_firewall
         deactivate_services
-        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
       end
 
       def unconfigure_firewall
