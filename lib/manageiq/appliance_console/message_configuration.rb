@@ -8,7 +8,8 @@ module ManageIQ
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
-                  :messaging_yaml_sample_path, :messaging_yaml_path
+                  :messaging_yaml_sample_path, :messaging_yaml_path,
+                  :ca_cert_path
 
       BASE_DIR                          = "/opt/kafka".freeze
       LOGS_DIR                          = "#{BASE_DIR}/logs".freeze
@@ -31,6 +32,7 @@ module ManageIQ
 
         @messaging_yaml_sample_path        = miq_config_dir_path.join("messaging.kafka.yml")
         @messaging_yaml_path               = miq_config_dir_path.join("messaging.yml")
+        @ca_cert_path                      = keystore_dir_path.join("ca-cert")
       end
 
       def already_configured?
@@ -82,10 +84,16 @@ module ManageIQ
 
         messaging_yaml = YAML.load_file(messaging_yaml_sample_path)
 
-        messaging_yaml["production"]["hostname"] = server_hostname
-        messaging_yaml["production"]["port"] = 9093
-        messaging_yaml["production"]["username"] = username
-        messaging_yaml["production"]["password"] = ManageIQ::Password.try_encrypt(password)
+        messaging_yaml["production"].delete("username")
+        messaging_yaml["production"].delete("password")
+
+        messaging_yaml["production"]["hostname"]          = server_hostname
+        messaging_yaml["production"]["port"]              = 9093
+        messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
+        messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
+        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
+        messaging_yaml["production"]["sasl.username"]     = username
+        messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(password)
 
         File.write(messaging_yaml_path, messaging_yaml.to_yaml)
       end

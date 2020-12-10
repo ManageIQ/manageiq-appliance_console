@@ -8,7 +8,7 @@ module ManageIQ
     class MessageServerConfiguration < MessageConfiguration
       attr_reader :server_hostname, :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
-                  :ca_cert_path, :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
+                  :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
                   :keystore_files, :installed_files
 
       def initialize(options = {})
@@ -20,7 +20,6 @@ module ManageIQ
         @server_properties_path            = config_dir_path.join("server.properties")
         @server_properties_sample_path     = sample_config_dir_path.join("server.properties")
 
-        @ca_cert_path                      = keystore_dir_path.join("ca-cert")
         @ca_cert_srl_path                  = keystore_dir_path.join("ca-cert.srl")
         @ca_key_path                       = keystore_dir_path.join("ca-key")
         @cert_file_path                    = keystore_dir_path.join("cert-file")

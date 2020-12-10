@@ -263,8 +263,11 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         production:
           hostname: my-host-name.example.com
           port: 9093
-          username: admin
-          password: #{ManageIQ::Password.try_encrypt("super_secret")}
+          security.protocol: SASL_SSL
+          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
         test:
           hostname: localhost
           port: 9092
