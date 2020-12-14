@@ -290,17 +290,27 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   describe "#post_activation" do
     it "starts the needed services" do
       expect(subject).to receive(:say).exactly(3).times
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(double(@spec_name, :start => double(:enable => nil)))
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(double(@spec_name, :start => double(:enable => nil)))
-      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(double(@spec_name, :running? => true, :restart => nil))
+
+      evmserverd = double(@spec_name, :running? => true)
+      expect(evmserverd).to receive(:restart)
+
+      service = double(@spec_name, :start => double(:enable => nil))
+      expect(service).to receive(:start)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(service)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(service)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+
       expect(subject.send(:post_activation)).to be_nil
     end
 
     it "does not restart evmserverd if it is not running" do
       expect(subject).to receive(:say).exactly(3).times
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(double(@spec_name, :start => double(:enable => nil)))
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(double(@spec_name, :start => double(:enable => nil)))
-      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(double(@spec_name, :running? => false))
+
+      evmserverd = double(@spec_name, :running? => false)
+      expect(evmserverd).to_not receive(:restart)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+
       expect(subject.send(:post_activation)).to be_nil
     end
   end
