@@ -291,14 +291,20 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     it "starts the needed services" do
       expect(subject).to receive(:say).exactly(3).times
 
-      evmserverd = double(@spec_name, :running? => true)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(true)
       expect(evmserverd).to receive(:restart)
 
-      service = double(@spec_name, :start => double(:enable => nil))
-      expect(service).to receive(:start)
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:start).and_return(zookeeper)
+      expect(zookeeper).to receive(:enable)
 
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(service)
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(service)
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:start).and_return(kafka)
+      expect(kafka).to receive(:enable)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
 
       expect(subject.send(:post_activation)).to be_nil
@@ -307,16 +313,21 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     it "does not restart evmserverd if it is not running" do
       expect(subject).to receive(:say).exactly(3).times
 
-      evmserverd = double(@spec_name, :running? => false)
-      expect(evmserverd).not_to receive(:restart)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(false)
+      expect(evmserverd).to_not receive(:restart)
 
-      service = double(@spec_name, :start => double(:enable => nil))
-      expect(service).to receive(:start)
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:start).and_return(zookeeper)
+      expect(zookeeper).to receive(:enable)
 
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(service)
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(service)
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:start).and_return(kafka)
+      expect(kafka).to receive(:enable)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
-
       expect(subject.send(:post_activation)).to be_nil
     end
   end
