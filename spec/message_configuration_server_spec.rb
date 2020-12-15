@@ -308,7 +308,13 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(subject).to receive(:say).exactly(3).times
 
       evmserverd = double(@spec_name, :running? => false)
-      expect(evmserverd).to_not receive(:restart)
+      expect(evmserverd).not_to receive(:restart)
+
+      service = double(@spec_name, :start => double(:enable => nil))
+      expect(service).to receive(:start)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(service)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(service)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
 
       expect(subject.send(:post_activation)).to be_nil

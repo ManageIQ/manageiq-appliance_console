@@ -200,7 +200,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
   describe "#restart_evmserverd" do
     it "restarts evmserverd if it is running" do
       expect(subject).to receive(:say)
-      evmserverd = double(@spec_name, :running? => true)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(true)
       expect(evmserverd).to receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
       expect(subject.send(:restart_evmserverd)).to be_nil
@@ -208,7 +209,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     it "does not restart evmserverd if it is not running" do
       expect(subject).to receive(:say)
-      evmserverd = double(@spec_name, :running? => false)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(false)
       expect(evmserverd).to_not receive(:restart)
       expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
       expect(subject.send(:restart_evmserverd)).to be_nil
