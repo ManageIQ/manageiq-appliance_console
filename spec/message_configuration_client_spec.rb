@@ -151,8 +151,11 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
         production:
           hostname: my-kafka-server.example.com
           port: 9093
-          username: admin
-          password: #{ManageIQ::Password.try_encrypt("super_secret")}
+          security.protocol: SASL_SSL
+          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
         test:
           hostname: localhost
           port: 9092
@@ -191,6 +194,26 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
       expect(FileUtils).not_to receive(:mkdir_p)
       expect(subject.send(:fetch_truststore_from_server)).to be_nil
+    end
+  end
+
+  describe "#restart_evmserverd" do
+    it "restarts evmserverd if it is running" do
+      expect(subject).to receive(:say)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(true)
+      expect(evmserverd).to receive(:restart)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+      expect(subject.send(:restart_evmserverd)).to be_nil
+    end
+
+    it "does not restart evmserverd if it is not running" do
+      expect(subject).to receive(:say)
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(false)
+      expect(evmserverd).to_not receive(:restart)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+      expect(subject.send(:restart_evmserverd)).to be_nil
     end
   end
 end

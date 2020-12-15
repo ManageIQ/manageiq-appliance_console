@@ -263,8 +263,11 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         production:
           hostname: my-host-name.example.com
           port: 9093
-          username: admin
-          password: #{ManageIQ::Password.try_encrypt("super_secret")}
+          security.protocol: SASL_SSL
+          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
         test:
           hostname: localhost
           port: 9092
@@ -281,6 +284,51 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       FileUtils.touch(subject.messaging_yaml_path)
       expect(YAML).not_to receive(:load_file)
       expect(subject.send(:configure_messaging_yaml)).to be_nil
+    end
+  end
+
+  describe "#post_activation" do
+    it "starts the needed services" do
+      expect(subject).to receive(:say).exactly(3).times
+
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(true)
+      expect(evmserverd).to receive(:restart)
+
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:start).and_return(zookeeper)
+      expect(zookeeper).to receive(:enable)
+
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:start).and_return(kafka)
+      expect(kafka).to receive(:enable)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+
+      expect(subject.send(:post_activation)).to be_nil
+    end
+
+    it "does not restart evmserverd if it is not running" do
+      expect(subject).to receive(:say).exactly(3).times
+
+      evmserverd = LinuxAdmin::Service.new("evmserverd")
+      expect(evmserverd).to receive(:running?).and_return(false)
+      expect(evmserverd).to_not receive(:restart)
+
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:start).and_return(zookeeper)
+      expect(zookeeper).to receive(:enable)
+
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:start).and_return(kafka)
+      expect(kafka).to receive(:enable)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+      expect(subject.send(:post_activation)).to be_nil
     end
   end
 end

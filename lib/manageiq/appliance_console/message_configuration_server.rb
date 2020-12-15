@@ -8,7 +8,7 @@ module ManageIQ
     class MessageServerConfiguration < MessageConfiguration
       attr_reader :server_hostname, :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
-                  :ca_cert_path, :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
+                  :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
                   :keystore_files, :installed_files
 
       def initialize(options = {})
@@ -20,7 +20,6 @@ module ManageIQ
         @server_properties_path            = config_dir_path.join("server.properties")
         @server_properties_sample_path     = sample_config_dir_path.join("server.properties")
 
-        @ca_cert_path                      = keystore_dir_path.join("ca-cert")
         @ca_cert_srl_path                  = keystore_dir_path.join("ca-cert.srl")
         @ca_key_path                       = keystore_dir_path.join("ca-key")
         @cert_file_path                    = keystore_dir_path.join("cert-file")
@@ -32,13 +31,14 @@ module ManageIQ
 
       def activate
         begin
-          create_jaas_config           # Create the message server jaas config file
-          create_client_properties     # Create the client.properties config
-          create_logs_directory        # Create the logs directory:
-          configure_firewall           # Open the firewall for message port 9093
-          configure_keystore           # Populate the Java Keystore
-          create_server_properties     # Update the /opt/message/config/server.properties
-          configure_messaging_yaml     # Set up the local message client in case EVM is actually running on this, Message Server
+          create_jaas_config                # Create the message server jaas config file
+          create_client_properties          # Create the client.properties config
+          create_logs_directory             # Create the logs directory:
+          configure_firewall                # Open the firewall for message port 9093
+          configure_keystore                # Populate the Java Keystore
+          create_server_properties          # Update the /opt/message/config/server.properties
+          configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
+          configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)
@@ -58,6 +58,8 @@ module ManageIQ
 
         say("Starting kafka and configure it to start on reboots ...")
         LinuxAdmin::Service.new("kafka").start.enable
+
+        restart_evmserverd
       end
 
       def ask_for_parameters
@@ -168,6 +170,8 @@ module ManageIQ
       end
 
       def deactivate
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
+        restart_evmserverd
         remove_installed_files
         unconfigure_firewall
         deactivate_services
