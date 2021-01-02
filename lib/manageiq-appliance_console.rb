@@ -11,10 +11,6 @@ module ManageIQ
     def self.logger
       @logger ||= ManageIQ::ApplianceConsole::Logger.instance
     end
-
-    def self.logger=(logger)
-      @logger = logger
-    end
   end
 end
 
