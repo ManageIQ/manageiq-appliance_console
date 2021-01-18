@@ -7,7 +7,14 @@ require "manageiq/appliance_console/message_configuration"
 module ManageIQ
   module ApplianceConsole
     class MessageClientConfiguration < MessageConfiguration
-      attr_reader :server_hostname, :server_username, :server_password, :installed_files
+      attr_reader :server_password, :server_username, :installed_files
+
+      # JJV 1  - add prompt for server_port. default server_port shold be 9093 (secure)
+      # JJV 2a - if server_port is secure
+      # JJV 2b -   prompt for truststore_path use default
+      # JJV 2b -   fetch_truststore_from_server
+      # withe m
+                            
 
       def initialize(options = {})
         super(options)
@@ -43,6 +50,7 @@ module ManageIQ
         say("\nMessage Client Parameters:\n\n")
 
         @server_hostname = ask_for_string("Message Server Hostname")
+        @server_port     = ask_for_integer("Message Server Port number", (1..65_535), 9_092).to_i
         @server_username = ask_for_string("Message Server Username", server_username)
         @server_password = ask_for_password("Message Server Password")
 

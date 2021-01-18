@@ -5,6 +5,7 @@ module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
       attr_reader :username, :password,
+                  :server_hostname, :server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -18,6 +19,7 @@ module ManageIQ
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def initialize(options = {})
+        @server_port = options[:server_port] || 9093
         @username = options[:username] || "admin"
         @password = options[:password]
 
@@ -61,6 +63,12 @@ module ManageIQ
       def create_client_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
+        create_client_properties_secure if secure?
+      end
+
+      def create_client_properties_secure
+        say(__method__.to_s.tr("_", " ").titleize)
+
         return if file_found?(client_properties_path)
 
         content = <<~CLIENT_PROPERTIES
@@ -88,10 +96,10 @@ module ManageIQ
         messaging_yaml["production"].delete("password")
 
         messaging_yaml["production"]["hostname"]          = server_hostname
-        messaging_yaml["production"]["port"]              = 9093
-        messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
-        messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
-        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
+        messaging_yaml["production"]["port"]              = server_port
+        messaging_yaml["production"]["security.protocol"] = "SASL_SSL" if secure?
+        messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path if secure?
+        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN" if secure?
         messaging_yaml["production"]["sasl.username"]     = username
         messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(password)
 
@@ -164,6 +172,10 @@ module ManageIQ
         say("Restart evmserverd if it is running...")
         evmserverd_service = LinuxAdmin::Service.new("evmserverd")
         evmserverd_service.restart if evmserverd_service.running?
+      end
+
+      def secure?
+        server_port == 9093
       end
     end
   end

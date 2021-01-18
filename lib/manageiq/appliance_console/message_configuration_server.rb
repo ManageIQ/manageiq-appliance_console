@@ -6,7 +6,7 @@ require "manageiq/appliance_console/message_configuration"
 module ManageIQ
   module ApplianceConsole
     class MessageServerConfiguration < MessageConfiguration
-      attr_reader :server_hostname, :jaas_config_path,
+      attr_reader :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
                   :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
                   :keystore_files, :installed_files
