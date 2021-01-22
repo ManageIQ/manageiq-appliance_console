@@ -49,13 +49,13 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
-        @server_hostname = ask_for_string("Message Server Hostname")
-        @server_port     = ask_for_integer("Message Server Port number", (1..65_535), 9_092).to_i
+        @server_hostname = ask_for_string("Message Server Hostname or IP address")
+        @server_port     = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
         @server_username = ask_for_string("Message Server Username", server_username)
         @server_password = ask_for_password("Message Server Password")
 
-        @username  = ask_for_string("Message Key Username", username)
-        @password  = ask_for_password("Message Key Password")
+        @username  = ask_for_string("Message Key Username", username) if secure?
+        @password  = ask_for_password("Message Key Password") if secure?
       end
 
       def show_parameters
