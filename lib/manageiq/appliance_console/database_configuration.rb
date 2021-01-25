@@ -8,7 +8,8 @@ require 'fileutils'
 module ManageIQ
 module ApplianceConsole
   class DatabaseConfiguration
-    attr_accessor :adapter, :host, :username, :database, :password, :port, :region
+    attr_accessor :adapter, :host, :username, :database, :port, :region
+    attr_reader :password
 
     class ModelWithNoBackingTable < ActiveRecord::Base
     end
