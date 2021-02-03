@@ -35,6 +35,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
 
     it "should prompt for Username and Password" do
+      expect(subject).to receive(:ask_for_string).with("Message Server hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
       expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
 

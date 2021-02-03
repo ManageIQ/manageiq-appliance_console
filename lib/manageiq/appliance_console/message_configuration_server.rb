@@ -14,7 +14,7 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_hostname = my_hostname
+        @server_host = my_hostname
 
         @jaas_config_path                  = config_dir_path.join("kafka_server_jaas.conf")
         @server_properties_path            = config_dir_path.join("server.properties")
@@ -65,14 +65,17 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @username  = ask_for_string("Message Key Username", username)
-        @password  = ask_for_password("Message Key Password")
+        @server_host = ask_for_string("Message Server hostname or IP address", server_host)
+        @username    = ask_for_string("Message Key Username", username)
+        @password    = ask_for_password("Message Key Password")
+
+        @server_host_is_ipaddr = server_host =~ Prompts::IP_REGEXP
       end
 
       def show_parameters
         say("\nMessage Server Configuration:\n")
         say("Message Server Details:\n")
-        say("  Message Server Hostname:   #{server_hostname}\n")
+        say("  Message Server Hostname:   #{server_host}\n")
         say("  Message Key Username:      #{username}\n")
       end
 
@@ -110,7 +113,7 @@ module ManageIQ
       def configure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --add-port=9093/tcp --permanent") # secure
+        AwesomeSpawn.run!("firewall-cmd --add-port=#{server_port}/tcp --permanent")
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
 
@@ -120,7 +123,11 @@ module ManageIQ
         return if files_found?(keystore_files)
 
         # Generte a Java keystore and key pair, creating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_hostname}"})
+        if server_host_is_ipaddr?
+          AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:#{server_host}"})
+        else
+          AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => server_host, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_host}", "-ext" => "san=dns:#{server_host}"})
+        end
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
         AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
@@ -144,9 +151,10 @@ module ManageIQ
       def create_server_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
-        content = <<~SERVER_PROPERTIES
+        # JJV TODO Fix this
+        jjv_content = <<~SERVER_PROPERTIES
 
-          listeners=SASL_SSL://:9093
+          listeners=SASL_SSL://:#{server_port}
 
           ssl.keystore.location=#{keystore_path}
           ssl.keystore.password=#{password}
@@ -163,6 +171,26 @@ module ManageIQ
           security.inter.broker.protocol=SASL_SSL
         SERVER_PROPERTIES
 
+        content = <<~SERVER_PROPERTIES
+
+          listeners=SASL_SSL://:#{server_port}
+
+          ssl.endpoint.identification.algorithm=
+          ssl.keystore.location=#{keystore_path}
+          ssl.keystore.password=#{password}
+          ssl.key.password=#{password}
+
+          ssl.truststore.location=#{truststore_path}
+          ssl.truststore.password=#{password}
+
+          ssl.client.auth=none
+
+          sasl.enabled.mechanisms=PLAIN
+          sasl.mechanism.inter.broker.protocol=PLAIN
+
+          security.inter.broker.protocol=SASL_SSL
+        SERVER_PROPERTIES
+
         return if file_contains?(server_properties_path, content)
 
         FileUtils.cp(server_properties_sample_path, server_properties_path)
@@ -170,9 +198,8 @@ module ManageIQ
       end
 
       def deactivate
-        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
-        restart_evmserverd
-        remove_installed_files
+        super
+
         unconfigure_firewall
         deactivate_services
       end
@@ -180,7 +207,7 @@ module ManageIQ
       def unconfigure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --remove-port=9093/tcp --permanent") # secure
+        AwesomeSpawn.run!("firewall-cmd --remove-port=#{server_port}/tcp --permanent") # secure
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
 

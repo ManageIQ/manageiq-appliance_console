@@ -4,8 +4,8 @@ require 'pathname'
 module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
-      attr_reader :username, :password,
-                  :server_hostname, :server_port,
+      attr_reader :username, :password, :secure,
+                  :server_host, :server_port, :server_host_is_ipaddr,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -55,7 +55,7 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_reachable?(server_hostname, "Message Server Hostname:")
+        return false unless host_reachable?(server_host, "Message Server Host:")
 
         true
       end
@@ -67,8 +67,6 @@ module ManageIQ
       end
 
       def create_client_properties_secure
-        say(__method__.to_s.tr("_", " ").titleize)
-
         return if file_found?(client_properties_path)
 
         content = <<~CLIENT_PROPERTIES
@@ -95,7 +93,7 @@ module ManageIQ
         messaging_yaml["production"].delete("username")
         messaging_yaml["production"].delete("password")
 
-        messaging_yaml["production"]["hostname"]          = server_hostname
+        messaging_yaml["production"]["hostname"]          = server_host
         messaging_yaml["production"]["port"]              = server_port
         messaging_yaml["production"]["security.protocol"] = "SASL_SSL" if secure?
         messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path if secure?
@@ -114,9 +112,7 @@ module ManageIQ
 
       def valid_environment?
         if already_configured?
-          return false unless agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
-
-          deactivate
+          deactivate if agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
           return false unless agree("\nProceed with Configuration? (Y/N): ")
         end
         true
@@ -174,8 +170,20 @@ module ManageIQ
         evmserverd_service.restart if evmserverd_service.running?
       end
 
+      def deactivate
+        @secure = nil
+        @server_host_is_ipaddr = nil
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
+        restart_evmserverd
+        remove_installed_files
+      end
+
       def secure?
-        server_port == 9093
+        @secure ||= server_port == 9_093
+      end
+
+      def server_host_is_ipaddr?
+        @server_host_is_ipaddr ||= server_host =~ IP_REGEXP
       end
     end
   end

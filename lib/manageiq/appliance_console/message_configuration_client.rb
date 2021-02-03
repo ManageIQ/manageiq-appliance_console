@@ -19,7 +19,7 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_hostname = options[:server_hostname]
+        @server_host     = options[:server_host]
         @server_username = options[:server_usernamed] || "root"
         @server_password = options[:server_password]
 
@@ -49,7 +49,7 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
-        @server_hostname = ask_for_string("Message Server Hostname or IP address")
+        @server_host     = ask_for_string("Message Server Hostname or IP address")
         @server_port     = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
         @server_username = ask_for_string("Message Server Username", server_username)
         @server_password = ask_for_password("Message Server Password")
@@ -61,7 +61,7 @@ module ManageIQ
       def show_parameters
         say("\nMessage Client Configuration:\n")
         say("Message Client Details:\n")
-        say("  Message Server Hostname:   #{server_hostname}\n")
+        say("  Message Server Hostname:   #{server_host}\n")
         say("  Message Server Username:   #{server_username}\n")
         say("  Message Key Username:      #{username}\n")
       end
@@ -73,7 +73,7 @@ module ManageIQ
 
         return if file_found?(truststore_path)
 
-        Net::SCP.start(server_hostname, server_username, :password => server_password) do |scp|
+        Net::SCP.start(server_host, server_username, :password => server_password) do |scp|
           scp.download!(truststore_path, truststore_path)
         end
 
@@ -81,12 +81,6 @@ module ManageIQ
       rescue => e
         say("Failed to fetch server truststore: #{e.message}")
         false
-      end
-
-      def deactivate
-        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
-        restart_evmserverd
-        remove_installed_files
       end
     end
   end
