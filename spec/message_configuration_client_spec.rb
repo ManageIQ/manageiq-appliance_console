@@ -1,13 +1,13 @@
 require 'tempfile'
 
 describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
-  let(:server_hostname) { "my-kafka-server.example.com" }
+  let(:server_host) { "my-kafka-server.example.com" }
   let(:server_username) { "root" }
   let(:server_password) { "server_super_secret" }
   let(:username) { "admin" }
   let(:password) { "super_secret" }
   subject do
-    described_class.new(:server_hostname => server_hostname,
+    described_class.new(:server_host     => server_host,
                         :server_username => server_username,
                         :server_password => server_password,
                         :username        => username,
@@ -40,11 +40,12 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       allow(subject).to receive(:message_client_configured?).and_return(false)
     end
 
-    it "should prompt for Username and Password" do
+    it "should prompt for username and password" do
+      expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-host-name.example.com")
+      expect(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
 
-      expect(subject).to receive(:ask_for_string).with("Message Server Hostname").and_return(server_hostname)
       expect(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       expect(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
 
@@ -54,10 +55,11 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     it "should display Server Hostname and Key Username" do
+      allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-kafka-server.example.com")
+      allow(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
 
-      allow(subject).to receive(:ask_for_string).with("Message Server Hostname").and_return(server_hostname)
       allow(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       allow(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
 
@@ -183,7 +185,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     it "fetches the truststore from the server" do
       scp = double('scp')
       expect(scp).to receive(:download!).with(subject.truststore_path, subject.truststore_path).and_return(:result)
-      expect(Net::SCP).to receive(:start).with(server_hostname, server_username, :password => server_password).and_yield(scp).and_return(true)
+      expect(Net::SCP).to receive(:start).with(server_host, server_username, :password => server_password).and_yield(scp).and_return(true)
       subject.send(:fetch_truststore_from_server)
     end
 
