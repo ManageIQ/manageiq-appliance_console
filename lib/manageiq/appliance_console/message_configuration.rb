@@ -95,11 +95,16 @@ module ManageIQ
 
         messaging_yaml["production"]["hostname"]          = server_host
         messaging_yaml["production"]["port"]              = server_port
-        messaging_yaml["production"]["security.protocol"] = "SASL_SSL" if secure?
-        messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path if secure?
-        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN" if secure?
+        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
         messaging_yaml["production"]["sasl.username"]     = username
         messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(password)
+
+        if secure?
+          messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
+          messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
+        else
+          messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
+        end
 
         File.write(messaging_yaml_path, messaging_yaml.to_yaml)
       end

@@ -6,6 +6,14 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
   let(:server_password) { "server_super_secret" }
   let(:username) { "admin" }
   let(:password) { "super_secret" }
+  let(:subject_unsecure) do
+    described_class.new(:server_host     => server_host,
+                        :server_port     => 9_092,
+                        :server_username => server_username,
+                        :server_password => server_password,
+                        :username        => username,
+                        :password        => password)
+  end
   subject do
     described_class.new(:server_host     => server_host,
                         :server_username => server_username,
@@ -110,7 +118,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
   describe "#configure_messaging_yaml" do
     before do
-      content = <<~MESSAGING_KAFKA_YML
+      @messagine_kafka_yml_content = <<~MESSAGING_KAFKA_YML
         ---
         base: &base
           hostname: localhost
@@ -128,52 +136,95 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           <<: *base
       MESSAGING_KAFKA_YML
 
-      File.write(subject.messaging_yaml_sample_path, content)
-      expect(subject).to receive(:say).with("Configure Messaging Yaml")
+      File.write(subject.messaging_yaml_sample_path, @messagine_kafka_yml_content)
+      File.write(subject_unsecure.messaging_yaml_sample_path, @messagine_kafka_yml_content)
     end
 
-    it "creates the messaging yaml file" do
-      expect(subject.send(:configure_messaging_yaml)).to be_positive
-      expect(subject.messaging_yaml_path).to exist
+    context "when using secure port 9093" do
+      before do
+        expect(subject).to receive(:say).with("Configure Messaging Yaml")
+      end
+
+      it "creates the messaging yaml file" do
+        expect(subject.send(:configure_messaging_yaml)).to be_positive
+        expect(subject.messaging_yaml_path).to exist
+      end
+
+      it "correctly populates the messaging yaml file" do
+        content = <<~MESSAGING_YML
+          ---
+          base:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+          development:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+          production:
+            hostname: my-kafka-server.example.com
+            port: 9093
+            sasl.mechanism: PLAIN
+            sasl.username: admin
+            sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
+            security.protocol: SASL_SSL
+            ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          test:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+        MESSAGING_YML
+  
+        expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
+        expect(subject.send(:configure_messaging_yaml)).to be_nil
+      end
+
+      it "does not recreate the messaging yaml file it already exists" do
+        expect(subject).to receive(:say)
+        FileUtils.touch(subject.messaging_yaml_path)
+        expect(YAML).not_to receive(:load_file)
+        expect(subject.send(:configure_messaging_yaml)).to be_nil
+      end
     end
 
-    it "correctly populates the messaging yaml file" do
-      content = <<~MESSAGING_YML
-        ---
-        base:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-        development:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-        production:
-          hostname: my-kafka-server.example.com
-          port: 9093
-          security.protocol: SASL_SSL
-          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
-          sasl.mechanism: PLAIN
-          sasl.username: admin
-          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
-        test:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-      MESSAGING_YML
+    context "when using unsecure port 9092" do
+      before do
+        expect(subject_unsecure).to receive(:say).with("Configure Messaging Yaml")
+      end
 
-      expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
-      expect(subject.send(:configure_messaging_yaml)).to be_nil
-    end
-
-    it "does not recreate the messaging yaml file it already exists" do
-      expect(subject).to receive(:say)
-      FileUtils.touch(subject.messaging_yaml_path)
-      expect(YAML).not_to receive(:load_file)
-      expect(subject.send(:configure_messaging_yaml)).to be_nil
+      it "correctly populates the messaging yaml file" do
+        content = <<~MESSAGING_YML
+          ---
+          base:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+          development:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+          production:
+            hostname: my-kafka-server.example.com
+            port: 9092
+            sasl.mechanism: PLAIN
+            sasl.username: admin
+            sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
+            security.protocol: PLAINTEXT
+          test:
+            hostname: localhost
+            port: 9092
+            username: admin
+            password: smartvm
+        MESSAGING_YML
+  
+        expect(File).to receive(:write).with(subject_unsecure.messaging_yaml_path, content)
+        expect(subject_unsecure.send(:configure_messaging_yaml)).to be_nil
+      end
     end
   end
 
