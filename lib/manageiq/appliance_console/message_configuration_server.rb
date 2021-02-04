@@ -149,11 +149,19 @@ module ManageIQ
       def create_server_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
-        # JJV TODO Fix this
+        if server_host_is_ipaddr?
+          ident_algorithm = ""
+          client_auth = "none"
+        else
+          ident_algorithm = "HTTPS"
+          client_auth = "required"
+        end
+
         content = <<~SERVER_PROPERTIES
 
           listeners=SASL_SSL://:#{server_port}
 
+          ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
           ssl.keystore.password=#{password}
           ssl.key.password=#{password}
@@ -161,27 +169,7 @@ module ManageIQ
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
 
-          ssl.client.auth=required
-
-          sasl.enabled.mechanisms=PLAIN
-          sasl.mechanism.inter.broker.protocol=PLAIN
-
-          security.inter.broker.protocol=SASL_SSL
-        SERVER_PROPERTIES
-
-        jjv_content = <<~SERVER_PROPERTIES
-
-          listeners=SASL_SSL://:#{server_port}
-
-          ssl.endpoint.identification.algorithm=
-          ssl.keystore.location=#{keystore_path}
-          ssl.keystore.password=#{password}
-          ssl.key.password=#{password}
-
-          ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{password}
-
-          ssl.client.auth=none
+          ssl.client.auth=#{client_auth}
 
           sasl.enabled.mechanisms=PLAIN
           sasl.mechanism.inter.broker.protocol=PLAIN
