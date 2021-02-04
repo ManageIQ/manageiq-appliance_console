@@ -183,7 +183,7 @@ module ManageIQ
       end
 
       def server_host_is_ipaddr?
-        @server_host_is_ipaddr ||= server_host =~ IP_REGEXP
+        @server_host_is_ipaddr ||= server_host =~ Prompts::IP_REGEXP
       end
     end
   end

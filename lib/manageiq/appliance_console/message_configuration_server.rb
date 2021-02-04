@@ -14,7 +14,7 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_host = my_hostname
+        @server_host = options[:server_host] || my_hostname
 
         @jaas_config_path                  = config_dir_path.join("kafka_server_jaas.conf")
         @server_properties_path            = config_dir_path.join("server.properties")
@@ -68,8 +68,6 @@ module ManageIQ
         @server_host = ask_for_string("Message Server hostname or IP address", server_host)
         @username    = ask_for_string("Message Key Username", username)
         @password    = ask_for_password("Message Key Password")
-
-        @server_host_is_ipaddr = server_host =~ Prompts::IP_REGEXP
       end
 
       def show_parameters
@@ -124,9 +122,9 @@ module ManageIQ
 
         # Generte a Java keystore and key pair, creating keystore.jks
         if server_host_is_ipaddr?
-          AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:#{server_host}"})
+          AwesomeSpawn.run!("keytool", :params => {"-keystore" => "#{keystore_path}", "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:#{server_host}"})
         else
-          AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => server_host, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_host}", "-ext" => "san=dns:#{server_host}"})
+          AwesomeSpawn.run!("keytool", :params => {"-keystore" => "#{keystore_path}", "-alias" => server_host, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_host}", "-ext" => "san=dns:#{server_host}"})
         end
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
@@ -152,7 +150,7 @@ module ManageIQ
         say(__method__.to_s.tr("_", " ").titleize)
 
         # JJV TODO Fix this
-        jjv_content = <<~SERVER_PROPERTIES
+        content = <<~SERVER_PROPERTIES
 
           listeners=SASL_SSL://:#{server_port}
 
@@ -171,7 +169,7 @@ module ManageIQ
           security.inter.broker.protocol=SASL_SSL
         SERVER_PROPERTIES
 
-        content = <<~SERVER_PROPERTIES
+        jjv_content = <<~SERVER_PROPERTIES
 
           listeners=SASL_SSL://:#{server_port}
 

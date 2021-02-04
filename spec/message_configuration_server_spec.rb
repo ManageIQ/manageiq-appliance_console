@@ -4,6 +4,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   let(:username) { "admin" }
   let(:password) { "super_secret" }
   subject { described_class.new(:username => username, :password => password) }
+  let(:subject_ip) { described_class.new(:username => username, :password => password, :server_host => "192.0.2.0") }
 
   before do
     @spec_name = File.basename(__FILE__).split(".rb").first.freeze
@@ -45,6 +46,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
 
     it "should display Server Hostname and Key Username" do
+      allow(subject).to receive(:ask_for_string).with("Message Server hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
       allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
 
@@ -156,22 +158,39 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   end
 
   describe "#configure_keystore" do
-    before do
-      expect(subject).to receive(:say).with("Configure Keystore")
+    context "with IP address" do
+      before do
+        expect(subject_ip).to receive(:say).with("Configure Keystore")
+      end
+
+      it "creates and populates the keystore directory" do
+        allow(AwesomeSpawn).to receive(:run!).exactly(7).times
+
+        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks" , "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:192.0.2.0"})
+        expect(subject_ip.send(:configure_keystore)).to be_nil
+        expect(File.directory?(subject_ip.keystore_dir_path)).to be_truthy
+      end
     end
 
-    it "creates and populates the keystore directory" do
-      expect(AwesomeSpawn).to receive(:run!).exactly(7).times
+    context "with DNS hostname" do
+      before do
+        expect(subject).to receive(:say).with("Configure Keystore")
+      end
 
-      expect(subject.send(:configure_keystore)).to be_nil
-      expect(File.directory?(subject.keystore_dir_path)).to be_truthy
-    end
+      it "creates and populates the keystore directory" do
+        allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
-    it "does not recreate the keystore files if they already exists" do
-      subject.keystore_files.each { |f| FileUtils.touch(f) }
-      expect(AwesomeSpawn).not_to receive(:run!)
-      expect(subject).to receive(:say).exactly(7).times
-      expect(subject.send(:configure_keystore)).to be_nil
+        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks" , "-alias" => "my-host-name.example.com", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=my-host-name.example.com", "-ext" => "san=dns:my-host-name.example.com"})
+        expect(subject.send(:configure_keystore)).to be_nil
+        expect(File.directory?(subject.keystore_dir_path)).to be_truthy
+      end
+
+      it "does not recreate the keystore files if they already exists" do
+        subject.keystore_files.each { |f| FileUtils.touch(f) }
+        expect(AwesomeSpawn).not_to receive(:run!)
+        expect(subject).to receive(:say).exactly(7).times
+        expect(subject.send(:configure_keystore)).to be_nil
+      end
     end
   end
 
