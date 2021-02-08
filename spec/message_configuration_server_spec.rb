@@ -104,6 +104,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
     it "correctly populates the client properties config file" do
       content = <<~CLIENT_PROPERTIES
+        ssl.endpoint.identification.algorithm=HTTPS
         ssl.truststore.location=#{subject.truststore_path}
         ssl.truststore.password=#{password}
 
@@ -166,13 +167,13 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       it "creates and populates the keystore directory" do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
-        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks" , "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:192.0.2.0"})
+        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks", "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:192.0.2.0"})
         expect(subject_ip.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject_ip.keystore_dir_path)).to be_truthy
       end
     end
 
-    context "with DNS hostname" do
+    context "with hostname" do
       before do
         expect(subject).to receive(:say).with("Configure Keystore")
       end
@@ -180,7 +181,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       it "creates and populates the keystore directory" do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
-        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks" , "-alias" => "my-host-name.example.com", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=my-host-name.example.com", "-ext" => "san=dns:my-host-name.example.com"})
+        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks", "-alias" => "my-host-name.example.com", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=my-host-name.example.com", "-ext" => "san=dns:my-host-name.example.com"})
         expect(subject.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
       end
@@ -244,7 +245,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
     end
 
-    context "with DNS hostname" do
+    context "with hostname" do
       before do
         @ident_algorithm = "HTTPS"
         @client_auth = "required"
@@ -274,7 +275,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
         expect(subject).to receive(:say).with("Create Server Properties")
       end
-
 
       it "creates the service properties config file" do
         expect(subject.send(:create_server_properties)).to be_positive

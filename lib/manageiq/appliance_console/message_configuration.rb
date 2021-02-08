@@ -63,18 +63,38 @@ module ManageIQ
       def create_client_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
-        create_client_properties_secure if secure?
+        secure? ? create_client_properties_secure : create_client_properties_unsecure
       end
 
       def create_client_properties_secure
         return if file_found?(client_properties_path)
 
+        server_host_is_ipaddr? ? ident_algorithm = "" : ident_algorithm = "HTTPS"
+
         content = <<~CLIENT_PROPERTIES
+          ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
 
           sasl.mechanism=PLAIN
           security.protocol=SASL_SSL
+          sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
+            username=#{username} \\
+            password=#{password} ;
+        CLIENT_PROPERTIES
+
+        File.write(client_properties_path, content)
+      end
+
+      def create_client_properties_unsecure
+        return if file_found?(client_properties_path)
+
+        server_host_is_ipaddr? ? ident_algorithm = "" : ident_algorithm = "HTTPS"
+
+        content = <<~CLIENT_PROPERTIES
+          ssl.endpoint.identification.algorithm=#{ident_algorithm}
+          sasl.mechanism=PLAIN
+          security.protocol=PLAINTEXT
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
             username=#{username} \\
             password=#{password} ;
