@@ -46,6 +46,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      expect(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
+      expect(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path )
 
       expect(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       expect(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
@@ -60,6 +62,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       allow(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      allow(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
+      allow(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path )
 
       allow(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       allow(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")

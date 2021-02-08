@@ -9,13 +9,6 @@ module ManageIQ
     class MessageClientConfiguration < MessageConfiguration
       attr_reader :server_password, :server_username, :installed_files
 
-      # JJV 1  - add prompt for server_port. default server_port shold be 9093 (secure)
-      # JJV 2a - if server_port is secure
-      # JJV 2b -   prompt for truststore_path use default
-      # JJV 2b -   fetch_truststore_from_server
-      # withe m
-                            
-
       def initialize(options = {})
         super(options)
 
@@ -24,6 +17,7 @@ module ManageIQ
         @server_password = options[:server_password]
 
         @installed_files = [client_properties_path, messaging_yaml_path, truststore_path]
+
       end
 
       def activate
@@ -49,10 +43,12 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
-        @server_host     = ask_for_string("Message Server Hostname or IP address")
-        @server_port     = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
-        @server_username = ask_for_string("Message Server Username", server_username)
-        @server_password = ask_for_password("Message Server Password")
+        @server_host         = ask_for_string("Message Server Hostname or IP address")
+        @server_port         = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
+        @server_username     = ask_for_string("Message Server Username", server_username)
+        @server_password     = ask_for_password("Message Server Password")
+        @truststore_path_src = ask_for_string("Message Server Truststore Path", truststore_path)
+        @ca_cert_path_src    = ask_for_string("Message Server CA Cert Path", ca_cert_path )
 
         @username  = ask_for_string("Message Key Username", username) if secure?
         @password  = ask_for_password("Message Key Password") if secure?
@@ -66,20 +62,30 @@ module ManageIQ
         say("  Message Key Username:      #{username}\n")
       end
 
-      private
-
       def fetch_truststore_from_server
         say(__method__.to_s.tr("_", " ").titleize)
 
-        return if file_found?(truststore_path)
+        fetch_from_server(truststore_path, truststore_path)
+      end
+
+      def fetch_ca_cert_from_server
+        say(__method__.to_s.tr("_", " ").titleize)
+
+        fetch_from_server(ca_cert_path_src, ca_cert_path)
+      end
+
+      private
+
+      def fetch_from_server(src_file, dst_file)
+        return if file_found?(dst_file)
 
         Net::SCP.start(server_host, server_username, :password => server_password) do |scp|
-          scp.download!(truststore_path, truststore_path)
+          scp.download!(src_file, dst_file)
         end
 
-        File.exist?(truststore_path)
+        File.exist?(dst_file)
       rescue => e
-        say("Failed to fetch server truststore: #{e.message}")
+        say("Failed to fetch #{src_file} from server: #{e.message}")
         false
       end
     end
