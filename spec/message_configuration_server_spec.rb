@@ -195,40 +195,86 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   end
 
   describe "#create_server_properties" do
-    before do
-      let(:ident_algorithm) { "HTTPS" }
-      let(:client_auth) { "required" }
+    context "with IP address" do
+      before do
+        @ident_algorithm = ""
+        @client_auth = "none"
 
-      @content = <<~SERVER_PROPERTIES
+        @content = <<~SERVER_PROPERTIES
 
-        listeners=SASL_SSL://:9093
+          listeners=SASL_SSL://:9093
 
-        ssl.endpoint.identification.algorithm=#{ident_algorithm}
-        ssl.keystore.location=#{subject.keystore_path}
-        ssl.keystore.password=#{password}
-        ssl.key.password=#{password}
+          ssl.endpoint.identification.algorithm=#{@ident_algorithm}
+          ssl.keystore.location=#{subject.keystore_path}
+          ssl.keystore.password=#{password}
+          ssl.key.password=#{password}
 
-        ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{password}
+          ssl.truststore.location=#{subject.truststore_path}
+          ssl.truststore.password=#{password}
 
-        ssl.client.auth=#{client_auth}
+          ssl.client.auth=#{@client_auth}
 
-        sasl.enabled.mechanisms=PLAIN
-        sasl.mechanism.inter.broker.protocol=PLAIN
+          sasl.enabled.mechanisms=PLAIN
+          sasl.mechanism.inter.broker.protocol=PLAIN
 
-        security.inter.broker.protocol=SASL_SSL
-      SERVER_PROPERTIES
+          security.inter.broker.protocol=SASL_SSL
+        SERVER_PROPERTIES
 
-      FileUtils.touch(subject.server_properties_sample_path)
-      FileUtils.touch(subject.server_properties_path)
+        FileUtils.touch(subject_ip.server_properties_sample_path)
+        FileUtils.touch(subject_ip.server_properties_path)
+
+        expect(subject_ip).to receive(:say).with("Create Server Properties")
+      end
+
+      it "creates the service properties config file" do
+        expect(subject_ip.send(:create_server_properties)).to be_positive
+        expect(subject_ip.server_properties_path).to exist
+      end
+
+      it "correctly populates the server properties config file" do
+        expect(File).to receive(:write).with(subject_ip.server_properties_path, @content, :mode => "a")
+        expect(subject_ip.send(:create_server_properties)).to be_nil
+      end
+
+      it "does not recreate the server properties config file if it already exists" do
+        expect(subject_ip).to receive(:say)
+        File.write(subject_ip.server_properties_path, @content, :mode => "a")
+        expect(File).not_to receive(:write)
+        expect(subject_ip.send(:create_server_properties)).to be_nil
+      end
     end
 
     context "with DNS hostname" do
       before do
+        @ident_algorithm = "HTTPS"
+        @client_auth = "required"
+
+        @content = <<~SERVER_PROPERTIES
+
+          listeners=SASL_SSL://:9093
+
+          ssl.endpoint.identification.algorithm=#{@ident_algorithm}
+          ssl.keystore.location=#{subject.keystore_path}
+          ssl.keystore.password=#{password}
+          ssl.key.password=#{password}
+
+          ssl.truststore.location=#{subject.truststore_path}
+          ssl.truststore.password=#{password}
+
+          ssl.client.auth=#{@client_auth}
+
+          sasl.enabled.mechanisms=PLAIN
+          sasl.mechanism.inter.broker.protocol=PLAIN
+
+          security.inter.broker.protocol=SASL_SSL
+        SERVER_PROPERTIES
+
+        FileUtils.touch(subject.server_properties_sample_path)
+        FileUtils.touch(subject.server_properties_path)
+
         expect(subject).to receive(:say).with("Create Server Properties")
-        let(:ident_algorithm) { "HTTPS" }
-        let(:client_auth) { "required" }
       end
+
 
       it "creates the service properties config file" do
         expect(subject.send(:create_server_properties)).to be_positive
