@@ -120,12 +120,10 @@ module ManageIQ
 
         return if files_found?(keystore_files)
 
+        ks_alias, ks_params = assemble_ks_params
+
         # Generte a Java keystore and key pair, creating keystore.jks
-        if server_host_is_ipaddr?
-          AwesomeSpawn.run!("keytool", :params => {"-keystore" => "#{keystore_path}", "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:#{server_host}"})
-        else
-          AwesomeSpawn.run!("keytool", :params => {"-keystore" => "#{keystore_path}", "-alias" => server_host, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_host}", "-ext" => "san=dns:#{server_host}"})
-        end
+        AwesomeSpawn.run!("keytool", :params => ks_params)
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
         AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
@@ -134,7 +132,7 @@ module ManageIQ
         AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => ks_alias, "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
         AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
@@ -143,7 +141,7 @@ module ManageIQ
         AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => ks_alias, "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
       end
 
       def create_server_properties
@@ -202,6 +200,24 @@ module ManageIQ
 
         LinuxAdmin::Service.new("zookeeper").stop
         LinuxAdmin::Service.new("kafka").stop
+      end
+
+      private
+
+      def assemble_ks_params
+        ks_params =  {"-keystore" => keystore_path, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password}
+
+        if server_host_is_ipaddr?
+          ks_alias = "localhost"
+          ks_params.merge!("-ext" => "san=ip:#{server_host}") 
+        else
+          ks_alias = server_host
+          ks_params.merge!("-ext" => "san=dns:#{server_host}")
+        end
+
+        ks_params.merge!("-alias" => ks_alias, "-dname" => "cn=#{ks_alias}")
+
+        [ks_alias, ks_params]
       end
     end
   end

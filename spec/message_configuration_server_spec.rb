@@ -11,6 +11,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     @tmp_base_dir = Pathname.new(Dir.mktmpdir)
     @tmp_miq_config_dir = Pathname.new(Dir.mktmpdir)
     @this = ManageIQ::ApplianceConsole::MessageConfiguration
+    @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.jks")
     stub_const("#{@this}::BASE_DIR", @tmp_base_dir)
     stub_const("#{@this}::LOGS_DIR", "#{@tmp_base_dir}/logs")
     stub_const("#{@this}::CONFIG_DIR", "#{@tmp_base_dir}/config")
@@ -92,41 +93,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
   end
 
-  describe "#create_client_properties" do
-    before do
-      expect(subject).to receive(:say).with("Create Client Properties")
-    end
-
-    it "creates the client properties config file" do
-      expect(subject.send(:create_client_properties)).to be_positive
-      expect(subject.client_properties_path).to exist
-    end
-
-    it "correctly populates the client properties config file" do
-      content = <<~CLIENT_PROPERTIES
-        ssl.endpoint.identification.algorithm=HTTPS
-        ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{password}
-
-        sasl.mechanism=PLAIN
-        security.protocol=SASL_SSL
-        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-          username=#{username} \\
-          password=#{password} ;
-      CLIENT_PROPERTIES
-
-      expect(File).to receive(:write).with(subject.client_properties_path, content)
-      expect(subject.send(:create_client_properties)).to be_nil
-    end
-
-    it "does not recreate the client properties config file if it already exists" do
-      expect(subject).to receive(:say)
-      FileUtils.touch(subject.client_properties_path)
-      expect(File).not_to receive(:write)
-      expect(subject.send(:create_client_properties)).to be_nil
-    end
-  end
-
   describe "#create_logs_directory" do
     before do
       expect(subject).to receive(:say).with("Create Logs Directory")
@@ -159,29 +125,23 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   end
 
   describe "#configure_keystore" do
-    context "with IP address" do
-      before do
-        expect(subject_ip).to receive(:say).with("Configure Keystore")
-      end
+    subject { described_class.new(:username => username, :password => password, :server_host => server_host) }
 
+    shared_examples "configure keystore" do
       it "creates and populates the keystore directory" do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
-        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks", "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=localhost", "-ext" => "san=ip:192.0.2.0"})
-        expect(subject_ip.send(:configure_keystore)).to be_nil
-        expect(File.directory?(subject_ip.keystore_dir_path)).to be_truthy
-      end
-    end
-
-    context "with hostname" do
-      before do
-        expect(subject).to receive(:say).with("Configure Keystore")
-      end
-
-      it "creates and populates the keystore directory" do
-        allow(AwesomeSpawn).to receive(:run!).exactly(7).times
-
-        expect(AwesomeSpawn).to receive(:run!).with("keytool", :params => {"-keystore" => "#{@tmp_base_dir}/config/keystore/keystore.jks", "-alias" => "my-host-name.example.com", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=my-host-name.example.com", "-ext" => "san=dns:my-host-name.example.com"})
+        expect(AwesomeSpawn).to receive(:run!)
+          .with("keytool",
+                :params => {"-keystore"  => @keystore_path,
+                            "-validity"  => 10_000,
+                            "-genkey"    => nil,
+                            "-keyalg"    => "RSA",
+                            "-storepass" => password,
+                            "-keypass"   => password,
+                            "-alias"     => ks_alias,
+                            "-dname"     => "cn=#{ks_alias}",
+                            "-ext"       => ext})
         expect(subject.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
       end
@@ -193,184 +153,98 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         expect(subject.send(:configure_keystore)).to be_nil
       end
     end
-  end
 
-  describe "#create_server_properties" do
+    before do
+      expect(subject).to receive(:say).with("Configure Keystore")
+    end
+
     context "with IP address" do
-      before do
-        @ident_algorithm = ""
-        @client_auth = "none"
+      let(:ks_alias) { "localhost" }
+      let(:server_host) { "192.0.2.0" }
+      let(:ext) { "san=ip:#{server_host}" }
 
-        @content = <<~SERVER_PROPERTIES
-
-          listeners=SASL_SSL://:9093
-
-          ssl.endpoint.identification.algorithm=#{@ident_algorithm}
-          ssl.keystore.location=#{subject.keystore_path}
-          ssl.keystore.password=#{password}
-          ssl.key.password=#{password}
-
-          ssl.truststore.location=#{subject.truststore_path}
-          ssl.truststore.password=#{password}
-
-          ssl.client.auth=#{@client_auth}
-
-          sasl.enabled.mechanisms=PLAIN
-          sasl.mechanism.inter.broker.protocol=PLAIN
-
-          security.inter.broker.protocol=SASL_SSL
-        SERVER_PROPERTIES
-
-        FileUtils.touch(subject_ip.server_properties_sample_path)
-        FileUtils.touch(subject_ip.server_properties_path)
-
-        expect(subject_ip).to receive(:say).with("Create Server Properties")
-      end
-
-      it "creates the service properties config file" do
-        expect(subject_ip.send(:create_server_properties)).to be_positive
-        expect(subject_ip.server_properties_path).to exist
-      end
-
-      it "correctly populates the server properties config file" do
-        expect(File).to receive(:write).with(subject_ip.server_properties_path, @content, :mode => "a")
-        expect(subject_ip.send(:create_server_properties)).to be_nil
-      end
-
-      it "does not recreate the server properties config file if it already exists" do
-        expect(subject_ip).to receive(:say)
-        File.write(subject_ip.server_properties_path, @content, :mode => "a")
-        expect(File).not_to receive(:write)
-        expect(subject_ip.send(:create_server_properties)).to be_nil
-      end
+      include_examples "configure keystore"
     end
 
     context "with hostname" do
-      before do
-        @ident_algorithm = "HTTPS"
-        @client_auth = "required"
+      let(:ks_alias) { "my-host-name.example.com" }
+      let(:server_host) { ks_alias }
+      let(:ext) { "san=dns:my-host-name.example.com" }
 
-        @content = <<~SERVER_PROPERTIES
+      include_examples "configure keystore"
+    end
+  end
 
-          listeners=SASL_SSL://:9093
+  describe "#create_server_properties" do
+    subject { described_class.new(:username => username, :password => password, :server_host => server_host) }
 
-          ssl.endpoint.identification.algorithm=#{@ident_algorithm}
-          ssl.keystore.location=#{subject.keystore_path}
-          ssl.keystore.password=#{password}
-          ssl.key.password=#{password}
+    let(:content) do
+      <<~SERVER_PROPERTIES
 
-          ssl.truststore.location=#{subject.truststore_path}
-          ssl.truststore.password=#{password}
+        listeners=SASL_SSL://:9093
 
-          ssl.client.auth=#{@client_auth}
+        ssl.endpoint.identification.algorithm=#{ident_algorithm}
+        ssl.keystore.location=#{subject.keystore_path}
+        ssl.keystore.password=#{password}
+        ssl.key.password=#{password}
 
-          sasl.enabled.mechanisms=PLAIN
-          sasl.mechanism.inter.broker.protocol=PLAIN
+        ssl.truststore.location=#{subject.truststore_path}
+        ssl.truststore.password=#{password}
 
-          security.inter.broker.protocol=SASL_SSL
-        SERVER_PROPERTIES
+        ssl.client.auth=#{client_auth}
 
-        FileUtils.touch(subject.server_properties_sample_path)
-        FileUtils.touch(subject.server_properties_path)
+        sasl.enabled.mechanisms=PLAIN
+        sasl.mechanism.inter.broker.protocol=PLAIN
 
-        expect(subject).to receive(:say).with("Create Server Properties")
-      end
+        security.inter.broker.protocol=SASL_SSL
+      SERVER_PROPERTIES
+    end
 
+    before do
+      FileUtils.touch(subject.server_properties_sample_path)
+      FileUtils.touch(subject.server_properties_path)
+
+      expect(subject).to receive(:say).with("Create Server Properties")
+    end
+
+    shared_examples "service properties file" do
       it "creates the service properties config file" do
         expect(subject.send(:create_server_properties)).to be_positive
         expect(subject.server_properties_path).to exist
       end
 
       it "correctly populates the server properties config file" do
-        expect(File).to receive(:write).with(subject.server_properties_path, @content, :mode => "a")
+        expect(File).to receive(:write).with(subject.server_properties_path, content, :mode => "a")
         expect(subject.send(:create_server_properties)).to be_nil
       end
 
       it "does not recreate the server properties config file if it already exists" do
         expect(subject).to receive(:say)
-        File.write(subject.server_properties_path, @content, :mode => "a")
+        File.write(subject.server_properties_path, content, :mode => "a")
         expect(File).not_to receive(:write)
         expect(subject.send(:create_server_properties)).to be_nil
       end
     end
-  end
 
-  describe "#configure_messaging_yaml" do
-    before do
-      content = <<~MESSAGING_KAFKA_YML
-        ---
-        base: &base
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-
-        development:
-          <<: *base
-
-        production:
-          <<: *base
-
-        test:
-          <<: *base
-      MESSAGING_KAFKA_YML
-
-      File.write(subject.messaging_yaml_sample_path, content)
-      expect(subject).to receive(:say).with("Configure Messaging Yaml")
+    context "with IP address" do
+      let(:ident_algorithm) { "" }
+      let(:client_auth) { "none" }
+      let(:server_host) { "192.0.2.0" }
+      include_examples "service properties file"
     end
 
-    it "creates the messaging yaml file" do
-      expect(subject.send(:configure_messaging_yaml)).to be_positive
-      expect(subject.messaging_yaml_path).to exist
-    end
-
-    it "correctly populates the messaging yaml file" do
-      content = <<~MESSAGING_YML
-        ---
-        base:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-        development:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-        production:
-          hostname: my-host-name.example.com
-          port: 9093
-          sasl.mechanism: PLAIN
-          sasl.username: admin
-          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
-          security.protocol: SASL_SSL
-          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
-        test:
-          hostname: localhost
-          port: 9092
-          username: admin
-          password: smartvm
-      MESSAGING_YML
-
-      expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
-      expect(subject.send(:configure_messaging_yaml)).to be_nil
-    end
-
-    it "does not recreate the messaging yaml file it already exists" do
-      expect(subject).to receive(:say)
-      FileUtils.touch(subject.messaging_yaml_path)
-      expect(YAML).not_to receive(:load_file)
-      expect(subject.send(:configure_messaging_yaml)).to be_nil
+    context "with hostname" do
+      let(:ident_algorithm) { "HTTPS" }
+      let(:client_auth) { "required" }
+      let(:server_host) { "my-kafka-server.example.com" }
+      include_examples "service properties file"
     end
   end
 
   describe "#post_activation" do
-    it "starts the needed services" do
+    before do
       expect(subject).to receive(:say).exactly(3).times
-
-      evmserverd = LinuxAdmin::Service.new("evmserverd")
-      expect(evmserverd).to receive(:running?).and_return(true)
-      expect(evmserverd).to receive(:restart)
+      @evmserverd = LinuxAdmin::Service.new("evmserverd")
 
       zookeeper = LinuxAdmin::Service.new("zookeeper")
       expect(zookeeper).to receive(:start).and_return(zookeeper)
@@ -382,30 +256,21 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
       expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
-      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(@evmserverd)
+    end
 
-      expect(subject.send(:post_activation)).to be_nil
+    it "starts the needed services" do
+      expect(@evmserverd).to receive(:running?).and_return(true)
+      expect(@evmserverd).to receive(:restart)
+
+      subject.send(:post_activation)
     end
 
     it "does not restart evmserverd if it is not running" do
-      expect(subject).to receive(:say).exactly(3).times
+      expect(@evmserverd).to receive(:running?).and_return(false)
+      expect(@evmserverd).to_not receive(:restart)
 
-      evmserverd = LinuxAdmin::Service.new("evmserverd")
-      expect(evmserverd).to receive(:running?).and_return(false)
-      expect(evmserverd).to_not receive(:restart)
-
-      zookeeper = LinuxAdmin::Service.new("zookeeper")
-      expect(zookeeper).to receive(:start).and_return(zookeeper)
-      expect(zookeeper).to receive(:enable)
-
-      kafka = LinuxAdmin::Service.new("kafka")
-      expect(kafka).to receive(:start).and_return(kafka)
-      expect(kafka).to receive(:enable)
-
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
-      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
-      expect(subject.send(:post_activation)).to be_nil
+      subject.send(:post_activation)
     end
   end
 end

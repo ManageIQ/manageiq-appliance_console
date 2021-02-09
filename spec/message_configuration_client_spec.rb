@@ -47,7 +47,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
       expect(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
-      expect(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path )
+      expect(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
 
       expect(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       expect(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
@@ -63,7 +63,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
       allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
       allow(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
-      allow(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path )
+      allow(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
 
       allow(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
       allow(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
@@ -91,26 +91,26 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     let(:secure_content) do
       <<~CLIENT_PROPERTIES
-          ssl.endpoint.identification.algorithm=#{ident_algorithm}
-          ssl.truststore.location=#{subject.truststore_path}
-          ssl.truststore.password=#{password}
+        ssl.endpoint.identification.algorithm=#{ident_algorithm}
+        ssl.truststore.location=#{subject.truststore_path}
+        ssl.truststore.password=#{password}
 
-          sasl.mechanism=PLAIN
-          security.protocol=#{security_protocol}
-          sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-            username=#{username} \\
-            password=#{password} ;
+        sasl.mechanism=PLAIN
+        security.protocol=#{security_protocol}
+        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
+          username=#{username} \\
+          password=#{password} ;
       CLIENT_PROPERTIES
     end
 
     let(:unsecure_content) do
       <<~CLIENT_PROPERTIES
-          ssl.endpoint.identification.algorithm=#{ident_algorithm}
-          sasl.mechanism=PLAIN
-          security.protocol=#{security_protocol}
-          sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-            username=#{username} \\
-            password=#{password} ;
+        ssl.endpoint.identification.algorithm=#{ident_algorithm}
+        sasl.mechanism=PLAIN
+        security.protocol=#{security_protocol}
+        sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
+          username=#{username} \\
+          password=#{password} ;
       CLIENT_PROPERTIES
     end
 
@@ -236,7 +236,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           password: smartvm
       SECURE_MESSAGING_YML
     end
-      
+
     let(:unsecure_messagine_yml_content) do
       <<~UNSECURE_MESSAGING_YML
         ---
@@ -264,7 +264,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           password: smartvm
       UNSECURE_MESSAGING_YML
     end
-      
+
     shared_examples "messaging yaml file" do
       it "creates the messaging yaml file" do
         expect(subject.send(:configure_messaging_yaml)).to be_positive
