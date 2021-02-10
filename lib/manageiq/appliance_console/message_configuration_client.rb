@@ -17,7 +17,6 @@ module ManageIQ
         @server_password = options[:server_password]
 
         @installed_files = [client_properties_path, messaging_yaml_path, truststore_path]
-
       end
 
       def activate
@@ -48,7 +47,7 @@ module ManageIQ
         @server_username     = ask_for_string("Message Server Username", server_username)
         @server_password     = ask_for_password("Message Server Password")
         @truststore_path_src = ask_for_string("Message Server Truststore Path", truststore_path)
-        @ca_cert_path_src    = ask_for_string("Message Server CA Cert Path", ca_cert_path )
+        @ca_cert_path_src    = ask_for_string("Message Server CA Cert Path", ca_cert_path)
 
         @username  = ask_for_string("Message Key Username", username) if secure?
         @password  = ask_for_password("Message Key Password") if secure?

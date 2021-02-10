@@ -202,20 +202,19 @@ module ManageIQ
         LinuxAdmin::Service.new("kafka").stop
       end
 
-      private
-
       def assemble_ks_params
-        ks_params =  {"-keystore" => keystore_path, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password}
+        ks_params = {"-keystore" => keystore_path, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password}
 
         if server_host_is_ipaddr?
           ks_alias = "localhost"
-          ks_params.merge!("-ext" => "san=ip:#{server_host}") 
+          ks_params["-ext"] = "san=ip:#{server_host}"
         else
           ks_alias = server_host
-          ks_params.merge!("-ext" => "san=dns:#{server_host}")
+          ks_params["-ext"] = "san=dns:#{server_host}"
         end
 
-        ks_params.merge!("-alias" => ks_alias, "-dname" => "cn=#{ks_alias}")
+        ks_params["-alias"] = ks_alias
+        ks_params["-dname"] = "cn=#{ks_alias}"
 
         [ks_alias, ks_params]
       end
