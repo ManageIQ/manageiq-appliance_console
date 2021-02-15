@@ -25,6 +25,11 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     describe "#ask_questions" do
       it "asks for file location" do
         expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
+
+        evmserverd = LinuxAdmin::Service.new("evmserverd")
+        expect(evmserverd).to receive(:running?).and_return(false)
+        expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
         expect(subject).to receive(:ask_to_split_up_output)
