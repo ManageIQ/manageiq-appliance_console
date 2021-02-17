@@ -22,7 +22,7 @@ module ManageIQ
         @installed_files = [client_properties_path, messaging_yaml_path, truststore_path]
       end
 
-      def activate
+      def configure
         begin
           configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
           create_client_properties          # Create the client.properties configuration fle

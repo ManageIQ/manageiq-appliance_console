@@ -216,7 +216,7 @@ module ApplianceConsole
                               saml_config? || saml_unconfig? ||
                               oidc_config? || oidc_unconfig? ||
                               message_server_config? || message_server_unconfig? ||
-                              message_client_config? || message_client_config?
+                              message_client_config? || message_client_unconfig?
 
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
@@ -240,10 +240,10 @@ module ApplianceConsole
       oidc_unconfig if oidc_unconfig?
       set_server_state if set_server_state?
       openscap if openscap?
-      message_server_config if  message_server_config?
-      message_server_unconfig if  message_server_unconfig?
-      message_client_config if  message_client_config?
-      message_client_config if  message_client_config?
+      message_server_config if message_server_config?
+      message_server_unconfig if message_server_unconfig?
+      message_client_config if message_client_config?
+      message_client_unconfig if message_client_unconfig?
     rescue CliError => e
       say(e.message)
       say("")
@@ -446,19 +446,19 @@ module ApplianceConsole
     end
 
     def message_server_config
-      MessageServerConfiguration.new(options).activate
+      MessageServerConfiguration.new(options).configure
     end
 
     def message_server_unconfig
-      MessageServerConfiguration.new(options).deactivate
+      MessageServerConfiguration.new(options).unconfigure
     end
 
     def message_client_config
-      MessageClientConfiguration.new(options).activate
+      MessageClientConfiguration.new(options).configure
     end
 
-    def message_client_config
-      MessageClientConfiguration.new(options).deactivate
+    def message_client_unconfig
+      MessageClientConfiguration.new(options).unconfigure
     end
 
     def set_server_state

@@ -704,14 +704,51 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
-  context "Configuring Message Server" do
-    it "should pass the arguments to and activate the hconfigure Message Server" do
+  context "#message_server_config" do
+    it "should initiate Message Server config" do
       message_server = double
-      expect(message_server).to receive(:activate)
+      expect(message_server).to receive(:configure)
       expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
         .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
         .and_return(message_server)
       subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+    end
+  end
+
+  context "#message_server_unconfig" do
+    it "should initiate Message Server unconfig" do
+      message_server = double
+      expect(message_server).to receive(:unconfigure)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new).and_return(message_server)
+      subject.parse(%w[--message-server-unconfig]).run
+    end
+  end
+
+  context "#message_client_config" do
+    it "should initiate Message Client config" do
+      message_client = double
+      expect(message_client).to receive(:configure)
+      expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new)
+        .with(hash_including(:message_server_host       => "server.example.com",
+                             :message_server_username   => "root",
+                             :message_server_password   => "smartvm",
+                             :message_keystore_username => "user",
+                             :message_keystore_password => "pass")).and_return(message_client)
+      subject.parse(%w[--message-client-config
+                       --message-server-host server.example.com
+                       --message-server-username root
+                       --message-server-password smartvm
+                       --message-keystore-username user
+                       --message-keystore-password pass]).run
+    end
+  end
+
+  context "#message_client_unconfig" do
+    it "should initiate Message Client unconfig" do
+      message_client = double
+      expect(message_client).to receive(:unconfigure)
+      expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new).and_return(message_client)
+      subject.parse(%w[--message-client-unconfig]).run
     end
   end
 

@@ -29,7 +29,7 @@ module ManageIQ
         @installed_files = [jaas_config_path, client_properties_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
       end
 
-      def activate
+      def configure
         begin
           create_jaas_config                # Create the message server jaas config file
           create_client_properties          # Create the client.properties config
@@ -39,6 +39,7 @@ module ManageIQ
           create_server_properties          # Update the /opt/message/config/server.properties
           configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
           configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
+          restart_services
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)
@@ -52,7 +53,7 @@ module ManageIQ
         true
       end
 
-      def post_activation
+      def restart_services
         say("Starting zookeeper and configure it to start on reboots ...")
         LinuxAdmin::Service.new("zookeeper").start.enable
 
@@ -180,7 +181,7 @@ module ManageIQ
         File.write(server_properties_path, content, :mode => "a")
       end
 
-      def deactivate
+      def unconfigure
         super
 
         unconfigure_firewall

@@ -126,7 +126,7 @@ module ManageIQ
 
       def valid_environment?
         if already_configured?
-          deactivate if agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
+          unconfigure if agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
           return false unless agree("\nProceed with Configuration? (Y/N): ")
         end
         true
@@ -184,7 +184,7 @@ module ManageIQ
         evmserverd_service.restart if evmserverd_service.running?
       end
 
-      def deactivate
+      def unconfigure
         configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
         restart_evmserverd
         remove_installed_files
