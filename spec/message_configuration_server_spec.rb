@@ -1,10 +1,10 @@
 require 'tempfile'
 
 describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
-  let(:username) { "admin" }
-  let(:password) { "super_secret" }
-  subject { described_class.new(:username => username, :password => password) }
-  let(:subject_ip) { described_class.new(:username => username, :password => password, :server_host => "192.0.2.0") }
+  let(:message_keystore_username) { "admin" }
+  let(:message_keystore_password) { "super_secret" }
+  subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password) }
+  let(:subject_ip) { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.0") }
 
   before do
     @spec_name = File.basename(__FILE__).split(".rb").first.freeze
@@ -36,26 +36,26 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       allow(subject).to receive(:message_server_configured?).and_return(false)
     end
 
-    it "should prompt for Username and Password" do
+    it "should prompt for message_keystore_Username and message_keystore_Password" do
       expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
-      expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
-      expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
 
       allow(subject).to receive(:say).at_least(5).times
 
       expect(subject.send(:ask_questions)).to be_truthy
     end
 
-    it "should display Server Hostname and Key Username" do
+    it "should display Server Hostname and Keystore Username" do
       allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
-      allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
-      allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      allow(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
 
       expect(subject).to receive(:say).with("\nMessage Server Parameters:\n\n")
       expect(subject).to receive(:say).with("\nMessage Server Configuration:\n")
       expect(subject).to receive(:say).with("Message Server Details:\n")
       expect(subject).to receive(:say).with("  Message Server Hostname:   my-host-name.example.com\n")
-      expect(subject).to receive(:say).with("  Message Key Username:      admin\n")
+      expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
 
       expect(subject.send(:ask_questions)).to be_truthy
     end
@@ -75,9 +75,9 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       content = <<~JAAS
         KafkaServer {
           org.apache.kafka.common.security.plain.PlainLoginModule required
-          username=#{username}
-          password=#{password}
-          user_admin=#{password} ;
+          username=#{message_keystore_username}
+          password=#{message_keystore_password}
+          user_admin=#{message_keystore_password} ;
         };
       JAAS
 
@@ -126,7 +126,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   end
 
   describe "#configure_keystore" do
-    subject { described_class.new(:username => username, :password => password, :server_host => server_host) }
+    subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => message_server_host) }
 
     shared_examples "configure keystore" do
       it "creates and populates the keystore directory" do
@@ -138,8 +138,8 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
                             "-validity"  => 10_000,
                             "-genkey"    => nil,
                             "-keyalg"    => "RSA",
-                            "-storepass" => password,
-                            "-keypass"   => password,
+                            "-storepass" => message_keystore_password,
+                            "-keypass"   => message_keystore_password,
                             "-alias"     => ks_alias,
                             "-dname"     => "cn=#{ks_alias}",
                             "-ext"       => ext})
@@ -161,15 +161,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
     context "with IP address" do
       let(:ks_alias) { "localhost" }
-      let(:server_host) { "192.0.2.0" }
-      let(:ext) { "san=ip:#{server_host}" }
+      let(:message_server_host) { "192.0.2.0" }
+      let(:ext) { "san=ip:#{message_server_host}" }
 
       include_examples "configure keystore"
     end
 
     context "with hostname" do
       let(:ks_alias) { "my-host-name.example.com" }
-      let(:server_host) { ks_alias }
+      let(:message_server_host) { ks_alias }
       let(:ext) { "san=dns:my-host-name.example.com" }
 
       include_examples "configure keystore"
@@ -177,7 +177,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   end
 
   describe "#create_server_properties" do
-    subject { described_class.new(:username => username, :password => password, :server_host => server_host) }
+    subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => message_server_host) }
 
     let(:content) do
       <<~SERVER_PROPERTIES
@@ -186,11 +186,11 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
         ssl.keystore.location=#{subject.keystore_path}
-        ssl.keystore.password=#{password}
-        ssl.key.password=#{password}
+        ssl.keystore.password=#{message_keystore_password}
+        ssl.key.password=#{message_keystore_password}
 
         ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{password}
+        ssl.truststore.password=#{message_keystore_password}
 
         ssl.client.auth=#{client_auth}
 
@@ -230,19 +230,19 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     context "with IP address" do
       let(:ident_algorithm) { "" }
       let(:client_auth) { "none" }
-      let(:server_host) { "192.0.2.0" }
+      let(:message_server_host) { "192.0.2.0" }
       include_examples "service properties file"
     end
 
     context "with hostname" do
       let(:ident_algorithm) { "HTTPS" }
       let(:client_auth) { "required" }
-      let(:server_host) { "my-kafka-server.example.com" }
+      let(:message_server_host) { "my-kafka-server.example.com" }
       include_examples "service properties file"
     end
   end
 
-  describe "#post_activation" do
+  describe "#restart_services" do
     before do
       expect(subject).to receive(:say).exactly(3).times
       @evmserverd = LinuxAdmin::Service.new("evmserverd")
@@ -264,14 +264,14 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(@evmserverd).to receive(:running?).and_return(true)
       expect(@evmserverd).to receive(:restart)
 
-      subject.send(:post_activation)
+      subject.send(:restart_services)
     end
 
     it "does not restart evmserverd if it is not running" do
       expect(@evmserverd).to receive(:running?).and_return(false)
       expect(@evmserverd).to_not receive(:restart)
 
-      subject.send(:post_activation)
+      subject.send(:restart_services)
     end
   end
 end

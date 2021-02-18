@@ -191,7 +191,7 @@ module ManageIQ
       end
 
       def secure?
-        server_port == 9_093
+        message_server_port == 9_093
       end
     end
   end

@@ -7,7 +7,8 @@ require "manageiq/appliance_console/message_configuration"
 module ManageIQ
   module ApplianceConsole
     class MessageClientConfiguration < MessageConfiguration
-      attr_reader :message_server_password, :message_server_username, :installed_files
+      attr_reader :message_server_password, :message_server_username, :installed_files,
+                  :message_truststore_path_src, :message_ca_cert_path_src
 
       def initialize(options = {})
         super(options)
