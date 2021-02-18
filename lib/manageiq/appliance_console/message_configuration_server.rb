@@ -111,7 +111,7 @@ module ManageIQ
       def configure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --add-port=#{server_port}/tcp --permanent")
+        AwesomeSpawn.run!("firewall-cmd", :params => {:add_port => "#{server_port}/tcp", :permanent => nil})
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
 
@@ -191,7 +191,7 @@ module ManageIQ
       def unconfigure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --remove-port=#{server_port}/tcp --permanent") # secure
+        AwesomeSpawn.run!("firewall-cmd", :params => {:remove_port => "#{server_port}/tcp", :permanent => nil}) # secure
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
 
