@@ -14,16 +14,16 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_host = options[:server_host] || my_hostname
+        @message_server_host = options[:message_server_host] || my_hostname
 
-        @jaas_config_path                  = config_dir_path.join("kafka_server_jaas.conf")
-        @server_properties_path            = config_dir_path.join("server.properties")
-        @server_properties_sample_path     = sample_config_dir_path.join("server.properties")
+        @jaas_config_path              = config_dir_path.join("kafka_server_jaas.conf")
+        @server_properties_path        = config_dir_path.join("server.properties")
+        @server_properties_sample_path = sample_config_dir_path.join("server.properties")
 
-        @ca_cert_srl_path                  = keystore_dir_path.join("ca-cert.srl")
-        @ca_key_path                       = keystore_dir_path.join("ca-key")
-        @cert_file_path                    = keystore_dir_path.join("cert-file")
-        @cert_signed_path                  = keystore_dir_path.join("cert-signed")
+        @ca_cert_srl_path              = keystore_dir_path.join("ca-cert.srl")
+        @ca_key_path                   = keystore_dir_path.join("ca-key")
+        @cert_file_path                = keystore_dir_path.join("cert-file")
+        @cert_signed_path              = keystore_dir_path.join("cert-signed")
 
         @keystore_files  = [ca_cert_path, ca_cert_srl_path, ca_key_path, cert_file_path, cert_signed_path, truststore_path, keystore_path]
         @installed_files = [jaas_config_path, client_properties_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
@@ -65,16 +65,16 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @server_host = ask_for_string("Message Server Hostname or IP address", server_host)
-        @username    = ask_for_string("Message Key Username", username)
-        @password    = ask_for_password("Message Key Password")
+        @message_server_host       = ask_for_string("Message Server Hostname or IP address", message_server_host)
+        @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
+        @message_keystore_password = ask_for_password("Message Keystore Password")
       end
 
       def show_parameters
         say("\nMessage Server Configuration:\n")
         say("Message Server Details:\n")
-        say("  Message Server Hostname:   #{server_host}\n")
-        say("  Message Key Username:      #{username}\n")
+        say("  Message Server Hostname:   #{message_server_host}\n")
+        say("  Message Keystore Username: #{message_keystore_username}\n")
       end
 
       private
@@ -89,9 +89,9 @@ module ManageIQ
         content = <<~JAAS
           KafkaServer {
             org.apache.kafka.common.security.plain.PlainLoginModule required
-            username=#{username}
-            password=#{password}
-            user_admin=#{password} ;
+            username=#{message_keystore_username}
+            password=#{message_keystore_password}
+            user_admin=#{message_keystore_password} ;
           };
         JAAS
 
@@ -125,28 +125,28 @@ module ManageIQ
         AwesomeSpawn.run!("keytool", :params => keystore_params)
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
-        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
+        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => message_keystore_password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
 
         # Import the CA cert into the trust store, creating truststore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-certreq" => nil, "-file" => cert_file_path, "-storepass" => message_keystore_password})
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
-        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
+        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => message_keystore_password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
 
         # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-import" => nil, "-file" => cert_signed_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
       end
 
       def create_server_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
-        if server_host.ipaddress?
+        if message_server_host.ipaddress?
           ident_algorithm = ""
           client_auth = "none"
         else
@@ -156,15 +156,15 @@ module ManageIQ
 
         content = <<~SERVER_PROPERTIES
 
-          listeners=SASL_SSL://:#{server_port}
+          listeners=SASL_SSL://:#{message_server_port}
 
           ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
-          ssl.keystore.password=#{password}
-          ssl.key.password=#{password}
+          ssl.keystore.password=#{message_keystore_password}
+          ssl.key.password=#{message_keystore_password}
 
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{password}
+          ssl.truststore.password=#{message_keystore_password}
 
           ssl.client.auth=#{client_auth}
 
@@ -205,15 +205,15 @@ module ManageIQ
                            "-validity"  => 10_000,
                            "-genkey"    => nil,
                            "-keyalg"    => "RSA",
-                           "-storepass" => password,
-                           "-keypass"   => password}
+                           "-storepass" => message_keystore_password,
+                           "-keypass"   => message_keystore_password}
 
-        if server_host.ipaddress?
+        if message_server_host.ipaddress?
           keystore_params["-alias"] = "localhost"
-          keystore_params["-ext"] = "san=ip:#{server_host}"
+          keystore_params["-ext"] = "san=ip:#{message_server_host}"
         else
-          keystore_params["-alias"] = server_host
-          keystore_params["-ext"] = "san=dns:#{server_host}"
+          keystore_params["-alias"] = message_server_host
+          keystore_params["-ext"] = "san=dns:#{message_server_host}"
         end
 
         keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
@@ -222,7 +222,7 @@ module ManageIQ
       end
 
       def modify_firewall(action)
-        AwesomeSpawn.run!("firewall-cmd", :params => {action => "#{server_port}/tcp", :permanent => nil})
+        AwesomeSpawn.run!("firewall-cmd", :params => {action => "#{message_server_port}/tcp", :permanent => nil})
         AwesomeSpawn.run!("firewall-cmd --reload")
       end
     end

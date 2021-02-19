@@ -4,8 +4,8 @@ require 'pathname'
 module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
-      attr_reader :username, :password,
-                  :server_host, :server_port,
+      attr_reader :message_keystore_username, :message_keystore_password,
+                  :message_server_host, :message_server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -19,22 +19,22 @@ module ManageIQ
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def initialize(options = {})
-        @server_port = options[:server_port] || 9093
-        @username = options[:username] || "admin"
-        @password = options[:password]
+        @message_server_port        = options[:message_server_port] || 9093
+        @message_keystore_username  = options[:message_keystore_username] || "admin"
+        @message_keystore_password  = options[:message_keystore_password]
 
-        @miq_config_dir_path               = Pathname.new(MIQ_CONFIG_DIR)
-        @config_dir_path                   = Pathname.new(CONFIG_DIR)
-        @sample_config_dir_path            = Pathname.new(SAMPLE_CONFIG_DIR)
+        @miq_config_dir_path        = Pathname.new(MIQ_CONFIG_DIR)
+        @config_dir_path            = Pathname.new(CONFIG_DIR)
+        @sample_config_dir_path     = Pathname.new(SAMPLE_CONFIG_DIR)
 
-        @client_properties_path            = config_dir_path.join("client.properties")
-        @keystore_dir_path                 = config_dir_path.join("keystore")
-        @truststore_path                   = keystore_dir_path.join("truststore.jks")
-        @keystore_path                     = keystore_dir_path.join("keystore.jks")
+        @client_properties_path     = config_dir_path.join("client.properties")
+        @keystore_dir_path          = config_dir_path.join("keystore")
+        @truststore_path            = keystore_dir_path.join("truststore.jks")
+        @keystore_path              = keystore_dir_path.join("keystore.jks")
 
-        @messaging_yaml_sample_path        = miq_config_dir_path.join("messaging.kafka.yml")
-        @messaging_yaml_path               = miq_config_dir_path.join("messaging.yml")
-        @ca_cert_path                      = keystore_dir_path.join("ca-cert")
+        @messaging_yaml_sample_path = miq_config_dir_path.join("messaging.kafka.yml")
+        @messaging_yaml_path        = miq_config_dir_path.join("messaging.yml")
+        @ca_cert_path               = keystore_dir_path.join("ca-cert")
       end
 
       def already_configured?
@@ -55,7 +55,7 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_reachable?(server_host, "Message Server Host:")
+        return false unless host_reachable?(message_server_host, "Message Server Host:")
 
         true
       end
@@ -65,7 +65,7 @@ module ManageIQ
 
         return if file_found?(client_properties_path)
 
-        algorithm = server_host.ipaddress? ? "" : "HTTPS"
+        algorithm = message_server_host.ipaddress? ? "" : "HTTPS"
         protocol = secure? ? "SASL_SSL" : "PLAINTEXT"
         content = secure? ? secure_client_properties_content(algorithm, protocol) : unsecure_client_properties_content(algorithm, protocol)
 
@@ -75,7 +75,7 @@ module ManageIQ
       def secure_client_properties_content(algorithm, protocol)
         secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{password}
+          ssl.truststore.password=#{message_keystore_password}
         CLIENT_PROPERTIES
 
         unsecure_client_properties_content(algorithm, protocol) + secure_content
@@ -87,8 +87,8 @@ module ManageIQ
           sasl.mechanism=PLAIN
           security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-            username=#{username} \\
-            password=#{password} ;
+            username=#{message_keystore_username} \\
+            password=#{message_keystore_password} ;
         CLIENT_PROPERTIES
       end
 
@@ -102,11 +102,11 @@ module ManageIQ
         messaging_yaml["production"].delete("username")
         messaging_yaml["production"].delete("password")
 
-        messaging_yaml["production"]["hostname"]          = server_host
-        messaging_yaml["production"]["port"]              = server_port
+        messaging_yaml["production"]["hostname"]          = message_server_host
+        messaging_yaml["production"]["port"]              = message_server_port
         messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
-        messaging_yaml["production"]["sasl.username"]     = username
-        messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(password)
+        messaging_yaml["production"]["sasl.username"]     = message_keystore_username
+        messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(message_keystore_password)
 
         if secure?
           messaging_yaml["production"]["security.protocol"] = "SASL_SSL"

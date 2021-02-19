@@ -704,6 +704,17 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
   end
 
+  context "Configuring Message Server" do
+    it "should pass the arguments to and activate the hconfigure Message Server" do
+      message_server = double
+      expect(message_server).to receive(:activate)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+        .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
+        .and_return(message_server)
+      subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+    end
+  end
+
   private
 
   def expect_v2_key(exists = true)
