@@ -111,8 +111,7 @@ module ManageIQ
       def configure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd", :params => {:add_port => "#{server_port}/tcp", :permanent => nil})
-        AwesomeSpawn.run!("firewall-cmd --reload")
+        modify_firewall(:add_port)
       end
 
       def configure_keystore
@@ -191,8 +190,7 @@ module ManageIQ
       def unconfigure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd", :params => {:remove_port => "#{server_port}/tcp", :permanent => nil}) # secure
-        AwesomeSpawn.run!("firewall-cmd --reload")
+        modify_firewall(:remove_port)
       end
 
       def deactivate_services
@@ -216,6 +214,11 @@ module ManageIQ
         keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
 
         keystore_params
+      end
+
+      def modify_firewall(action)
+        AwesomeSpawn.run!("firewall-cmd", :params => {action => "#{server_port}/tcp", :permanent => nil})
+        AwesomeSpawn.run!("firewall-cmd --reload")
       end
     end
   end
