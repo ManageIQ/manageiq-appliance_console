@@ -78,6 +78,13 @@ module ManageIQ
         say("  Message Keystore Username: #{message_keystore_username}\n")
       end
 
+      def unconfigure
+        super
+
+        unconfigure_firewall
+        deactivate_services
+      end
+
       private
 
       def my_hostname
@@ -179,13 +186,6 @@ module ManageIQ
 
         FileUtils.cp(server_properties_sample_path, server_properties_path)
         File.write(server_properties_path, content, :mode => "a")
-      end
-
-      def unconfigure
-        super
-
-        unconfigure_firewall
-        deactivate_services
       end
 
       def unconfigure_firewall
