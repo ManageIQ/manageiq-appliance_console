@@ -201,7 +201,12 @@ module ManageIQ
       end
 
       def assemble_keystore_params
-        keystore_params = {"-keystore" => keystore_path, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password}
+        keystore_params = {"-keystore"  => keystore_path,
+                           "-validity"  => 10_000,
+                           "-genkey"    => nil,
+                           "-keyalg"    => "RSA",
+                           "-storepass" => password,
+                           "-keypass"   => password}
 
         if server_host.ipaddress?
           keystore_params["-alias"] = "localhost"
