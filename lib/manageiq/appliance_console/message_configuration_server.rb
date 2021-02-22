@@ -146,7 +146,7 @@ module ManageIQ
       def create_server_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
-        if server_host_is_ipaddr?
+        if server_host.ipaddress?
           ident_algorithm = ""
           client_auth = "none"
         else
@@ -203,7 +203,7 @@ module ManageIQ
       def assemble_keystore_params
         keystore_params = {"-keystore" => keystore_path, "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password}
 
-        if server_host_is_ipaddr?
+        if server_host.ipaddress?
           keystore_params["-alias"] = "localhost"
           keystore_params["-ext"] = "san=ip:#{server_host}"
         else

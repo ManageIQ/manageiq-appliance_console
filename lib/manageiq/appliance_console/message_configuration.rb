@@ -4,8 +4,8 @@ require 'pathname'
 module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
-      attr_reader :username, :password, :secure,
-                  :server_host, :server_port, :server_host_is_ipaddr,
+      attr_reader :username, :password,
+                  :server_host, :server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -65,7 +65,7 @@ module ManageIQ
 
         return if file_found?(client_properties_path)
 
-        algorithm = server_host_is_ipaddr? ? "" : "HTTPS"
+        algorithm = server_host.ipaddress? ? "" : "HTTPS"
         protocol = secure? ? "SASL_SSL" : "PLAINTEXT"
         content = secure? ? secure_client_properties_content(algorithm, protocol) : unsecure_client_properties_content(algorithm, protocol)
 
@@ -185,19 +185,13 @@ module ManageIQ
       end
 
       def deactivate
-        @secure = nil
-        @server_host_is_ipaddr = nil
         configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
         restart_evmserverd
         remove_installed_files
       end
 
       def secure?
-        @secure ||= server_port == 9_093
-      end
-
-      def server_host_is_ipaddr?
-        @server_host_is_ipaddr ||= server_host.ipaddress?
+        server_port == 9_093
       end
     end
   end
