@@ -92,14 +92,13 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     let(:secure_content) do
       <<~CLIENT_PROPERTIES
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
-        ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{password}
-
         sasl.mechanism=PLAIN
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
           username=#{username} \\
           password=#{password} ;
+        ssl.truststore.location=#{subject.truststore_path}
+        ssl.truststore.password=#{password}
       CLIENT_PROPERTIES
     end
 

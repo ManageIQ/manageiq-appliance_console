@@ -66,30 +66,26 @@ module ManageIQ
         return if file_found?(client_properties_path)
 
         algorithm = server_host_is_ipaddr? ? "" : "HTTPS"
-        content = secure? ? secure_client_properties_content(algorithm) : unsecure_client_properties_content(algorithm)
+        protocol = secure? ? "SASL_SSL" : "PLAINTEXT"
+        content = secure? ? secure_client_properties_content(algorithm, protocol) : unsecure_client_properties_content(algorithm, protocol)
 
         File.write(client_properties_path, content)
       end
 
-      def secure_client_properties_content(algorithm)
-        <<~CLIENT_PROPERTIES
-          ssl.endpoint.identification.algorithm=#{algorithm}
+      def secure_client_properties_content(algorithm, protocol)
+        secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
-
-          sasl.mechanism=PLAIN
-          security.protocol=SASL_SSL
-          sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-            username=#{username} \\
-            password=#{password} ;
         CLIENT_PROPERTIES
+
+        unsecure_client_properties_content(algorithm, protocol) + secure_content
       end
 
-      def unsecure_client_properties_content(algorithm)
+      def unsecure_client_properties_content(algorithm, protocol)
         <<~CLIENT_PROPERTIES
           ssl.endpoint.identification.algorithm=#{algorithm}
           sasl.mechanism=PLAIN
-          security.protocol=PLAINTEXT
+          security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
             username=#{username} \\
             password=#{password} ;
