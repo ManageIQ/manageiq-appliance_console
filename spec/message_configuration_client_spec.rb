@@ -92,6 +92,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     let(:secure_content) do
       <<~CLIENT_PROPERTIES
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
+
         sasl.mechanism=PLAIN
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
@@ -105,6 +106,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     let(:unsecure_content) do
       <<~CLIENT_PROPERTIES
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
+
         sasl.mechanism=PLAIN
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\

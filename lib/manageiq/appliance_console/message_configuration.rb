@@ -84,6 +84,7 @@ module ManageIQ
       def unsecure_client_properties_content(algorithm, protocol)
         <<~CLIENT_PROPERTIES
           ssl.endpoint.identification.algorithm=#{algorithm}
+
           sasl.mechanism=PLAIN
           security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
