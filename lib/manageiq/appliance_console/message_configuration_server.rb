@@ -130,25 +130,58 @@ module ManageIQ
         keystore_params = assemble_keystore_params
 
         # Generte a Java keystore and key pair, creating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => keystore_params)
+        # :stdin_data provides the -storepass twice to confirm and an extra CR to accept the same password for -keypass
+        AwesomeSpawn.run!("keytool", :params => keystore_params, :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
-        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => message_keystore_password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
+        AwesomeSpawn.run!("openssl", :env    => {"PASSWORD" => message_keystore_password},
+                                     :params => ["req", "-new", "-x509", {"-keyout"  => ca_key_path,
+                                                                          "-out"     => ca_cert_path,
+                                                                          "-days"    => 10_000,
+                                                                          "-passout" => "env:PASSWORD",
+                                                                          "-subj"    => '/CN=something'}])
 
         # Import the CA cert into the trust store, creating truststore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
+        # :stdin_data provides the -storepass argument and yes to confirm
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => truststore_path,
+                                                     "-alias"    => "CARoot",
+                                                     "-import"   => nil,
+                                                     "-file"     => ca_cert_path},
+                                     :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\nyes\n")
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-certreq" => nil, "-file" => cert_file_path, "-storepass" => message_keystore_password})
+        # :stdin_data provides the -storepass argument
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
+                                                     "-alias"    => keystore_params["-alias"],
+                                                     "-certreq"  => nil,
+                                                     "-file"     => cert_file_path},
+                                     :stdin_data => "#{message_keystore_password}\n")
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
-        AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => message_keystore_password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
+        AwesomeSpawn.run!("openssl", :env    => {"PASSWORD" => message_keystore_password},
+                                     :params => ["x509", "-req", {"-CA"             => ca_cert_path,
+                                                                  "-CAkey"          => ca_key_path,
+                                                                  "-in"             => cert_file_path,
+                                                                  "-out"            => cert_signed_path,
+                                                                  "-days"           => 10_000,
+                                                                  "-CAcreateserial" => nil,
+                                                                  "-passin"         => "env:PASSWORD"}])
 
         # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
+        # :stdin_data provides the -storepass argument and yes to confirm
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
+                                                     "-alias"    => "CARoot",
+                                                     "-import"   => nil,
+                                                     "-file"     => ca_cert_path},
+                                     :stdin_data => "#{message_keystore_password}\nyes\n")
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-import" => nil, "-file" => cert_signed_path, "-storepass" => message_keystore_password, "-noprompt" => nil})
+        # :stdin_data provides the -storepass argument
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
+                                                     "-alias"    => keystore_params["-alias"],
+                                                     "-import"   => nil,
+                                                     "-file"     => cert_signed_path},
+                                     :stdin_data => "#{message_keystore_password}\n")
       end
 
       def create_server_properties
@@ -202,12 +235,10 @@ module ManageIQ
       end
 
       def assemble_keystore_params
-        keystore_params = {"-keystore"  => keystore_path,
-                           "-validity"  => 10_000,
-                           "-genkey"    => nil,
-                           "-keyalg"    => "RSA",
-                           "-storepass" => message_keystore_password,
-                           "-keypass"   => message_keystore_password}
+        keystore_params = {"-keystore" => keystore_path,
+                           "-validity" => 10_000,
+                           "-genkey"   => nil,
+                           "-keyalg"   => "RSA"}
 
         if message_server_host.ipaddress?
           keystore_params["-alias"] = "localhost"

@@ -133,16 +133,14 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
         expect(AwesomeSpawn).to receive(:run!)
-          .with("keytool",
-                :params => {"-keystore"  => @keystore_path,
-                            "-validity"  => 10_000,
-                            "-genkey"    => nil,
-                            "-keyalg"    => "RSA",
-                            "-storepass" => message_keystore_password,
-                            "-keypass"   => message_keystore_password,
-                            "-alias"     => ks_alias,
-                            "-dname"     => "cn=#{ks_alias}",
-                            "-ext"       => ext})
+          .with("keytool", :params     => {"-keystore" => @keystore_path,
+                                           "-validity" => 10_000,
+                                           "-genkey"   => nil,
+                                           "-keyalg"   => "RSA",
+                                           "-alias"    => ks_alias,
+                                           "-dname"    => "cn=#{ks_alias}",
+                                           "-ext"      => ext},
+                           :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")
         expect(subject.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
       end
