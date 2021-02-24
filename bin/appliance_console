@@ -389,10 +389,9 @@ Static Network Configuration
         database_action = ask_with_menu("Database Operation", options)
 
         messaging_options = {
-          "Configure this appliance as a messaging server"           => "message_server",
-          "Connect to an appliance configured as a messaging server" => "message_client",
-          "Connect to an external messaging system"                  => "external_messaging",
-          "Make No messaging changes"                                => "no_changes"
+          "Configure this appliance as a messaging server" => "message_server",
+          "Connect to an external messaging system"        => "message_client",
+          "Make No messaging changes"                      => "no_changes"
         }
 
         messaging_action = ask_with_menu("Configure Messaging", messaging_options)
@@ -448,9 +447,6 @@ Static Network Configuration
             press_any_key
             raise MiqSignalError
           end
-
-        when "external_messaging"
-          ManageIQ::ApplianceConsole::MessagingConfiguration.new.run_interactive
         end
 
         press_any_key

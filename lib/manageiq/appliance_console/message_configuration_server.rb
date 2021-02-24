@@ -6,7 +6,7 @@ require "manageiq/appliance_console/message_configuration"
 module ManageIQ
   module ApplianceConsole
     class MessageServerConfiguration < MessageConfiguration
-      attr_reader :server_hostname, :jaas_config_path,
+      attr_reader :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
                   :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
                   :keystore_files, :installed_files
@@ -14,7 +14,7 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @server_hostname = my_hostname
+        @server_host = options[:server_host] || my_hostname
 
         @jaas_config_path                  = config_dir_path.join("kafka_server_jaas.conf")
         @server_properties_path            = config_dir_path.join("server.properties")
@@ -65,14 +65,15 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @username  = ask_for_string("Message Key Username", username)
-        @password  = ask_for_password("Message Key Password")
+        @server_host = ask_for_string("Message Server Hostname or IP address", server_host)
+        @username    = ask_for_string("Message Key Username", username)
+        @password    = ask_for_password("Message Key Password")
       end
 
       def show_parameters
         say("\nMessage Server Configuration:\n")
         say("Message Server Details:\n")
-        say("  Message Server Hostname:   #{server_hostname}\n")
+        say("  Message Server Hostname:   #{server_host}\n")
         say("  Message Key Username:      #{username}\n")
       end
 
@@ -110,8 +111,7 @@ module ManageIQ
       def configure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --add-port=9093/tcp --permanent") # secure
-        AwesomeSpawn.run!("firewall-cmd --reload")
+        modify_firewall(:add_port)
       end
 
       def configure_keystore
@@ -119,8 +119,10 @@ module ManageIQ
 
         return if files_found?(keystore_files)
 
+        keystore_params = assemble_keystore_params
+
         # Generte a Java keystore and key pair, creating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-validity" => 10_000, "-genkey" => nil, "-keyalg" => "RSA", "-storepass" => password, "-keypass" => password, "-dname" => "cn=#{server_hostname}"})
+        AwesomeSpawn.run!("keytool", :params => keystore_params)
 
         # Use openssl to create a new CA cert, creating ca-cert and ca-key
         AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["req", "-new", "-x509", {"-keyout" => ca_key_path, "-out" => ca_cert_path, "-days" => 10_000, "-passout" => "env:PASSWORD", "-subj" => '/CN=something'}])
@@ -129,7 +131,7 @@ module ManageIQ
         AwesomeSpawn.run!("keytool", :params => {"-keystore" => truststore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-certreq" => nil, "-file" => cert_file_path, "-storepass" => password})
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
         AwesomeSpawn.run!("openssl", :env => {"PASSWORD" => password}, :params => ["x509", "-req", {"-CA" => ca_cert_path, "-CAkey" => ca_key_path, "-in" => cert_file_path, "-out" => cert_signed_path, "-days" => 10_000, "-CAcreateserial" => nil, "-passin" => "env:PASSWORD"}])
@@ -138,16 +140,25 @@ module ManageIQ
         AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "CARoot", "-import" => nil, "-file" => ca_cert_path, "-storepass" => password, "-noprompt" => nil})
 
         # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
-        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => "localhost", "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
+        AwesomeSpawn.run!("keytool", :params => {"-keystore" => keystore_path, "-alias" => keystore_params["-alias"], "-import" => nil, "-file" => cert_signed_path, "-storepass" => password, "-noprompt" => nil})
       end
 
       def create_server_properties
         say(__method__.to_s.tr("_", " ").titleize)
 
+        if server_host.ipaddress?
+          ident_algorithm = ""
+          client_auth = "none"
+        else
+          ident_algorithm = "HTTPS"
+          client_auth = "required"
+        end
+
         content = <<~SERVER_PROPERTIES
 
-          listeners=SASL_SSL://:9093
+          listeners=SASL_SSL://:#{server_port}
 
+          ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
           ssl.keystore.password=#{password}
           ssl.key.password=#{password}
@@ -155,7 +166,7 @@ module ManageIQ
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
 
-          ssl.client.auth=required
+          ssl.client.auth=#{client_auth}
 
           sasl.enabled.mechanisms=PLAIN
           sasl.mechanism.inter.broker.protocol=PLAIN
@@ -170,9 +181,8 @@ module ManageIQ
       end
 
       def deactivate
-        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
-        restart_evmserverd
-        remove_installed_files
+        super
+
         unconfigure_firewall
         deactivate_services
       end
@@ -180,8 +190,7 @@ module ManageIQ
       def unconfigure_firewall
         say(__method__.to_s.tr("_", " ").titleize)
 
-        AwesomeSpawn.run!("firewall-cmd --remove-port=9093/tcp --permanent") # secure
-        AwesomeSpawn.run!("firewall-cmd --reload")
+        modify_firewall(:remove_port)
       end
 
       def deactivate_services
@@ -189,6 +198,32 @@ module ManageIQ
 
         LinuxAdmin::Service.new("zookeeper").stop
         LinuxAdmin::Service.new("kafka").stop
+      end
+
+      def assemble_keystore_params
+        keystore_params = {"-keystore"  => keystore_path,
+                           "-validity"  => 10_000,
+                           "-genkey"    => nil,
+                           "-keyalg"    => "RSA",
+                           "-storepass" => password,
+                           "-keypass"   => password}
+
+        if server_host.ipaddress?
+          keystore_params["-alias"] = "localhost"
+          keystore_params["-ext"] = "san=ip:#{server_host}"
+        else
+          keystore_params["-alias"] = server_host
+          keystore_params["-ext"] = "san=dns:#{server_host}"
+        end
+
+        keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
+
+        keystore_params
+      end
+
+      def modify_firewall(action)
+        AwesomeSpawn.run!("firewall-cmd", :params => {action => "#{server_port}/tcp", :permanent => nil})
+        AwesomeSpawn.run!("firewall-cmd --reload")
       end
     end
   end

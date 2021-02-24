@@ -5,6 +5,7 @@ module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
       attr_reader :username, :password,
+                  :server_host, :server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -18,6 +19,7 @@ module ManageIQ
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def initialize(options = {})
+        @server_port = options[:server_port] || 9093
         @username = options[:username] || "admin"
         @password = options[:password]
 
@@ -53,7 +55,7 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_reachable?(server_hostname, "Message Server Hostname:")
+        return false unless host_reachable?(server_host, "Message Server Host:")
 
         true
       end
@@ -63,18 +65,31 @@ module ManageIQ
 
         return if file_found?(client_properties_path)
 
-        content = <<~CLIENT_PROPERTIES
+        algorithm = server_host.ipaddress? ? "" : "HTTPS"
+        protocol = secure? ? "SASL_SSL" : "PLAINTEXT"
+        content = secure? ? secure_client_properties_content(algorithm, protocol) : unsecure_client_properties_content(algorithm, protocol)
+
+        File.write(client_properties_path, content)
+      end
+
+      def secure_client_properties_content(algorithm, protocol)
+        secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{password}
+        CLIENT_PROPERTIES
 
+        unsecure_client_properties_content(algorithm, protocol) + secure_content
+      end
+
+      def unsecure_client_properties_content(algorithm, protocol)
+        <<~CLIENT_PROPERTIES
+          ssl.endpoint.identification.algorithm=#{algorithm}
           sasl.mechanism=PLAIN
-          security.protocol=SASL_SSL
+          security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
             username=#{username} \\
             password=#{password} ;
         CLIENT_PROPERTIES
-
-        File.write(client_properties_path, content)
       end
 
       def configure_messaging_yaml
@@ -87,13 +102,18 @@ module ManageIQ
         messaging_yaml["production"].delete("username")
         messaging_yaml["production"].delete("password")
 
-        messaging_yaml["production"]["hostname"]          = server_hostname
-        messaging_yaml["production"]["port"]              = 9093
-        messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
-        messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
+        messaging_yaml["production"]["hostname"]          = server_host
+        messaging_yaml["production"]["port"]              = server_port
         messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
         messaging_yaml["production"]["sasl.username"]     = username
         messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(password)
+
+        if secure?
+          messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
+          messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
+        else
+          messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
+        end
 
         File.write(messaging_yaml_path, messaging_yaml.to_yaml)
       end
@@ -106,9 +126,7 @@ module ManageIQ
 
       def valid_environment?
         if already_configured?
-          return false unless agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
-
-          deactivate
+          deactivate if agree("\nAlready configured on this Appliance, Un-Configure first? (Y/N): ")
           return false unless agree("\nProceed with Configuration? (Y/N): ")
         end
         true
@@ -164,6 +182,16 @@ module ManageIQ
         say("Restart evmserverd if it is running...")
         evmserverd_service = LinuxAdmin::Service.new("evmserverd")
         evmserverd_service.restart if evmserverd_service.running?
+      end
+
+      def deactivate
+        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
+        restart_evmserverd
+        remove_installed_files
+      end
+
+      def secure?
+        server_port == 9_093
       end
     end
   end
