@@ -187,21 +187,27 @@ module ApplianceConsole
         opt :oidc_unconfig,        "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
         opt :openscap,             "Setup OpenScap", :type => :boolean, :default => false
-        opt :message_server_config,       "Configure Appliance as a Kafka Message Server",               :type => :boolean, :default => false
-        opt :message_server_unconfig,     "Unconfigure Appliance as a Kafka Message Server",             :type => :boolean, :default => false
-        opt :message_client_config,       "Configure Appliance as a Kafka Message Client",               :type => :boolean, :default => false
-        opt :message_client_unconfig,     "Unconfigure Appliance as a Kafka Message Client",             :type => :boolean, :default => false
-        opt :message_keystore_username,   "Message Server Keystore Username",                            :type => :string
-        opt :message_keystore_password,   "Message Server Keystore Password",                            :type => :string
-        opt :message_server_username,     "Message Server Username",                                     :type => :string
-        opt :message_server_password,     "Message Server password",                                     :type => :string
-        opt :message_server_port,         "Message Server Port",                                         :type => :integer
-        opt :message_server_host,         "Message Server Hostname or IP Address",                       :type => :string
-        opt :message_truststore_path_src, "Message Server Truststore Path",                              :type => :string
-        opt :message_ca_cert_path_src,    "Message Server CA Cert Path",                                 :type => :string
+        opt :message_server_config,       "Subcommand to   Configure Appliance as a Kafka Message Server", :type => :boolean, :default => false
+        opt :message_server_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Server", :type => :boolean, :default => false
+        opt :message_client_config,       "Subcommand to   Configure Appliance as a Kafka Message Client", :type => :boolean, :default => false
+        opt :message_client_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Client", :type => :boolean, :default => false
+        opt :message_keystore_username,   "Message Server Keystore Username",                              :type => :string
+        opt :message_keystore_password,   "Message Server Keystore Password",                              :type => :string
+        opt :message_server_username,     "Message Server Username",                                       :type => :string
+        opt :message_server_password,     "Message Server password",                                       :type => :string
+        opt :message_server_port,         "Message Server Port",                                           :type => :integer
+        opt :message_server_host,         "Message Server Hostname or IP Address",                         :type => :string
+        opt :message_truststore_path_src, "Message Server Truststore Path",                                :type => :string
+        opt :message_ca_cert_path_src,    "Message Server CA Cert Path",                                   :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
+      Optimist.die "Supply only one of --message-server-config, --message-server-unconfig, --message-client-config or --message-client-unconfig" if multiple_message_subcommands?
       self
+    end
+
+    def multiple_message_subcommands?
+      a = [options[:message_server_config], options[:message_server_unconfig], options[:message_client_config], options[:message_client_unconfig]]
+      a.each_with_object(Hash.new(0)) { |o, h| h[o] += 1 }[true] > 1
     end
 
     def region_number_required?

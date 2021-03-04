@@ -5,6 +5,22 @@ describe ManageIQ::ApplianceConsole::Cli do
     it "fails if a region is not specified for a local database" do
       expect { subject.parse(%w(--internal)) }.to raise_error(OptimistDieSpecError)
     end
+
+    it "fails if multiple message subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-client-config]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if message server config and unconfig subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-server-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if message client config and unconfig subcommands are specified" do
+      expect { subject.parse(%w[--message-client-config --message-client-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if all message subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-server-unconfig --message-client-config --message-client-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
   end
 
   describe "#run" do
