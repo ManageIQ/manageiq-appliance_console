@@ -5,6 +5,22 @@ describe ManageIQ::ApplianceConsole::Cli do
     it "fails if a region is not specified for a local database" do
       expect { subject.parse(%w(--internal)) }.to raise_error(OptimistDieSpecError)
     end
+
+    it "fails if multiple message subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-client-config]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if message server config and unconfig subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-server-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if message client config and unconfig subcommands are specified" do
+      expect { subject.parse(%w[--message-client-config --message-client-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
+
+    it "fails if all message subcommands are specified" do
+      expect { subject.parse(%w[--message-server-config --message-server-unconfig --message-client-config --message-client-unconfig]) }.to raise_error(OptimistDieSpecError)
+    end
   end
 
   describe "#run" do
@@ -701,6 +717,54 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect do
         subject.parse(%w(--extauth-opts invalid_auth_option=true)).run
       end.to raise_error(/Must specify at least one/)
+    end
+  end
+
+  context "#message_server_config" do
+    it "should initiate Message Server config" do
+      message_server = double
+      expect(message_server).to receive(:configure)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+        .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
+        .and_return(message_server)
+      subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+    end
+  end
+
+  context "#message_server_unconfig" do
+    it "should initiate Message Server unconfig" do
+      message_server = double
+      expect(message_server).to receive(:unconfigure)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new).and_return(message_server)
+      subject.parse(%w[--message-server-unconfig]).run
+    end
+  end
+
+  context "#message_client_config" do
+    it "should initiate Message Client config" do
+      message_client = double
+      expect(message_client).to receive(:configure)
+      expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new)
+        .with(hash_including(:message_server_host       => "server.example.com",
+                             :message_server_username   => "root",
+                             :message_server_password   => "smartvm",
+                             :message_keystore_username => "user",
+                             :message_keystore_password => "pass")).and_return(message_client)
+      subject.parse(%w[--message-client-config
+                       --message-server-host server.example.com
+                       --message-server-username root
+                       --message-server-password smartvm
+                       --message-keystore-username user
+                       --message-keystore-password pass]).run
+    end
+  end
+
+  context "#message_client_unconfig" do
+    it "should initiate Message Client unconfig" do
+      message_client = double
+      expect(message_client).to receive(:unconfigure)
+      expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new).and_return(message_client)
+      subject.parse(%w[--message-client-unconfig]).run
     end
   end
 

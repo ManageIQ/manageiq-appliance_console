@@ -1,18 +1,18 @@
 require 'tempfile'
 
 describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
-  let(:server_host) { "my-kafka-server.example.com" }
-  let(:server_username) { "root" }
-  let(:server_password) { "server_super_secret" }
-  let(:username) { "admin" }
-  let(:password) { "super_secret" }
+  let(:message_server_host) { "my-kafka-server.example.com" }
+  let(:message_server_username) { "root" }
+  let(:message_server_password) { "server_super_secret" }
+  let(:message_keystore_username) { "admin" }
+  let(:message_keystore_password) { "super_secret" }
   subject do
-    described_class.new(:server_host     => server_host,
-                        :server_port     => 9_093,
-                        :server_username => server_username,
-                        :server_password => server_password,
-                        :username        => username,
-                        :password        => password)
+    described_class.new(:message_server_host       => message_server_host,
+                        :message_server_port       => 9_093,
+                        :message_server_username   => message_server_username,
+                        :message_server_password   => message_server_password,
+                        :message_keystore_username => message_keystore_username,
+                        :message_keystore_password => message_keystore_password)
   end
 
   before do
@@ -41,15 +41,15 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       allow(subject).to receive(:message_client_configured?).and_return(false)
     end
 
-    it "should prompt for username and password" do
+    it "should prompt for message_keystore_username and message_keystore_password" do
       expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-host-name.example.com")
       expect(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
-      expect(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
-      expect(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
       expect(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
       expect(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
 
-      expect(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
+      expect(subject).to receive(:ask_for_string).with("Message Server Username", message_server_username).and_return("root")
       expect(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
 
       expect(subject).to receive(:say).at_least(5).times
@@ -60,12 +60,12 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     it "should display Server Hostname and Key Username" do
       allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-kafka-server.example.com")
       allow(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
-      allow(subject).to receive(:ask_for_string).with("Message Key Username", username).and_return("admin")
-      allow(subject).to receive(:ask_for_password).with("Message Key Password").and_return("top_secret")
+      allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      allow(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
       allow(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
       allow(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
 
-      allow(subject).to receive(:ask_for_string).with("Message Server Username", server_username).and_return("root")
+      allow(subject).to receive(:ask_for_string).with("Message Server Username", message_server_username).and_return("root")
       allow(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
 
       expect(subject).to receive(:say).with("\nMessage Client Parameters:\n\n")
@@ -73,7 +73,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject).to receive(:say).with("Message Client Details:\n")
       expect(subject).to receive(:say).with("  Message Server Hostname:   my-kafka-server.example.com\n")
       expect(subject).to receive(:say).with("  Message Server Username:   root\n")
-      expect(subject).to receive(:say).with("  Message Key Username:      admin\n")
+      expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
 
       expect(subject.send(:ask_questions)).to be_truthy
     end
@@ -81,35 +81,37 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
   describe "#create_client_properties" do
     subject do
-      described_class.new(:server_host     => server_host,
-                          :server_port     => server_port,
-                          :server_username => server_username,
-                          :server_password => server_password,
-                          :username        => username,
-                          :password        => password)
+      described_class.new(:message_server_host       => message_server_host,
+                          :message_server_port       => message_server_port,
+                          :message_server_username   => message_server_username,
+                          :message_server_password   => message_server_password,
+                          :message_keystore_username => message_keystore_username,
+                          :message_keystore_password => message_keystore_password)
     end
 
     let(:secure_content) do
       <<~CLIENT_PROPERTIES
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
+
         sasl.mechanism=PLAIN
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-          username=#{username} \\
-          password=#{password} ;
+          username=#{message_keystore_username} \\
+          password=#{message_keystore_password} ;
         ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{password}
+        ssl.truststore.password=#{message_keystore_password}
       CLIENT_PROPERTIES
     end
 
     let(:unsecure_content) do
       <<~CLIENT_PROPERTIES
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
+
         sasl.mechanism=PLAIN
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
-          username=#{username} \\
-          password=#{password} ;
+          username=#{message_keystore_username} \\
+          password=#{message_keystore_password} ;
       CLIENT_PROPERTIES
     end
 
@@ -137,8 +139,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     context "secure with hostname" do
-      let(:server_port) { 9_093 }
-      let(:server_host) { "my-kafka-server.example.com" }
+      let(:message_server_port) { 9_093 }
+      let(:message_server_host) { "my-kafka-server.example.com" }
       let(:ident_algorithm) { "HTTPS" }
       let(:security_protocol) { "SASL_SSL" }
       let(:content) { secure_content }
@@ -147,8 +149,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     context "secure with IP address" do
-      let(:server_port) { 9_093 }
-      let(:server_host) { "192.0.2.0" }
+      let(:message_server_port) { 9_093 }
+      let(:message_server_host) { "192.0.2.0" }
       let(:ident_algorithm) { "" }
       let(:security_protocol) { "SASL_SSL" }
       let(:content) { secure_content }
@@ -157,8 +159,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     context "unsecure with hostname" do
-      let(:server_port) { 9_092 }
-      let(:server_host) { "my-kafka-server.example.com" }
+      let(:message_server_port) { 9_092 }
+      let(:message_server_host) { "my-kafka-server.example.com" }
       let(:ident_algorithm) { "HTTPS" }
       let(:security_protocol) { "PLAINTEXT" }
       let(:content) { unsecure_content }
@@ -167,8 +169,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     context "unsecure with IP address" do
-      let(:server_port) { 9_092 }
-      let(:server_host) { "192.0.2.0" }
+      let(:message_server_port) { 9_092 }
+      let(:message_server_host) { "192.0.2.0" }
       let(:ident_algorithm) { "" }
       let(:security_protocol) { "PLAINTEXT" }
       let(:content) { unsecure_content }
@@ -179,12 +181,12 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
   describe "#configure_messaging_yaml" do
     subject do
-      described_class.new(:server_host     => server_host,
-                          :server_port     => server_port,
-                          :server_username => server_username,
-                          :server_password => server_password,
-                          :username        => username,
-                          :password        => password)
+      described_class.new(:message_server_host       => message_server_host,
+                          :message_server_port       => message_server_port,
+                          :message_server_username   => message_server_username,
+                          :message_server_password   => message_server_password,
+                          :message_keystore_username => message_keystore_username,
+                          :message_keystore_password => message_keystore_password)
     end
 
     let(:messagine_kafka_yml_content) do
@@ -290,13 +292,13 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     context "when using secure port 9093" do
       let(:content) { secure_messagine_yml_content }
-      let(:server_port) { 9_093 }
+      let(:message_server_port) { 9_093 }
       include_examples "messaging yaml file"
     end
 
     context "when using unsecure port 9092" do
       let(:content) { unsecure_messagine_yml_content }
-      let(:server_port) { 9_092 }
+      let(:message_server_port) { 9_092 }
       include_examples "messaging yaml file"
     end
   end
@@ -309,7 +311,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     it "fetches the truststore from the server" do
       scp = double('scp')
       expect(scp).to receive(:download!).with(subject.truststore_path, subject.truststore_path).and_return(:result)
-      expect(Net::SCP).to receive(:start).with(server_host, server_username, :password => server_password).and_yield(scp).and_return(true)
+      expect(Net::SCP).to receive(:start).with(message_server_host, message_server_username, :password => message_server_password).and_yield(scp).and_return(true)
       subject.send(:fetch_truststore_from_server)
     end
 

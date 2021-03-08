@@ -77,6 +77,22 @@ module ApplianceConsole
       options[:saml_unconfig]
     end
 
+    def message_server_config?
+      options[:message_server_config]
+    end
+
+    def message_server_unconfig?
+      options[:message_server_unconfig]
+    end
+
+    def message_client_config?
+      options[:message_client_config]
+    end
+
+    def message_client_unconfig?
+      options[:message_client_unconfig]
+    end
+
     def oidc_config?
       options[:oidc_config]
     end
@@ -99,10 +115,6 @@ module ApplianceConsole
 
     def openscap?
       options[:openscap]
-    end
-
-    def configure_messaging?
-      options[:messaging_hostname] && options[:messaging_password] && options[:messaging_port] && options[:messaging_username]
     end
 
     def initialize(options = {})
@@ -175,13 +187,27 @@ module ApplianceConsole
         opt :oidc_unconfig,        "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
         opt :server,               "{start|stop|restart} actions on evmserverd Server",   :type => :string
         opt :openscap,             "Setup OpenScap", :type => :boolean, :default => false
-        opt :messaging_hostname, "Messaging Hostname", :type => :string
-        opt :messaging_username, "Messaging Username", :type => :string
-        opt :messaging_password, "Messaging Password", :type => :string
-        opt :messaging_port,     "Messaging Port",     :type => :integer
+        opt :message_server_config,       "Subcommand to   Configure Appliance as a Kafka Message Server", :type => :boolean, :default => false
+        opt :message_server_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Server", :type => :boolean, :default => false
+        opt :message_client_config,       "Subcommand to   Configure Appliance as a Kafka Message Client", :type => :boolean, :default => false
+        opt :message_client_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Client", :type => :boolean, :default => false
+        opt :message_keystore_username,   "Message Server Keystore Username",                              :type => :string
+        opt :message_keystore_password,   "Message Server Keystore Password",                              :type => :string
+        opt :message_server_username,     "Message Server Username",                                       :type => :string
+        opt :message_server_password,     "Message Server password",                                       :type => :string
+        opt :message_server_port,         "Message Server Port",                                           :type => :integer
+        opt :message_server_host,         "Message Server Hostname or IP Address",                         :type => :string
+        opt :message_truststore_path_src, "Message Server Truststore Path",                                :type => :string
+        opt :message_ca_cert_path_src,    "Message Server CA Cert Path",                                   :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
+      Optimist.die "Supply only one of --message-server-config, --message-server-unconfig, --message-client-config or --message-client-unconfig" if multiple_message_subcommands?
       self
+    end
+
+    def multiple_message_subcommands?
+      a = [options[:message_server_config], options[:message_server_unconfig], options[:message_client_config], options[:message_client_unconfig]]
+      a.each_with_object(Hash.new(0)) { |o, h| h[o] += 1 }[true] > 1
     end
 
     def region_number_required?
@@ -193,7 +219,9 @@ module ApplianceConsole
                               uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
                               set_server_state? || set_replication? || openscap? ||
                               saml_config? || saml_unconfig? ||
-                              oidc_config? || oidc_unconfig? || configure_messaging?
+                              oidc_config? || oidc_unconfig? ||
+                              message_server_config? || message_server_unconfig? ||
+                              message_client_config? || message_client_unconfig?
 
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
@@ -217,7 +245,10 @@ module ApplianceConsole
       oidc_unconfig if oidc_unconfig?
       set_server_state if set_server_state?
       openscap if openscap?
-      configure_messaging if configure_messaging?
+      message_server_config if message_server_config?
+      message_server_unconfig if message_server_unconfig?
+      message_client_config if message_client_config?
+      message_client_unconfig if message_client_unconfig?
     rescue CliError => e
       say(e.message)
       say("")
@@ -419,6 +450,22 @@ module ApplianceConsole
       OIDCAuthentication.new(options).unconfigure
     end
 
+    def message_server_config
+      MessageServerConfiguration.new(options).configure
+    end
+
+    def message_server_unconfig
+      MessageServerConfiguration.new(options).unconfigure
+    end
+
+    def message_client_config
+      MessageClientConfiguration.new(options).configure
+    end
+
+    def message_client_unconfig
+      MessageClientConfiguration.new(options).unconfigure
+    end
+
     def set_server_state
       service = LinuxAdmin::Service.new("evmserverd")
       service_running = service.running?
@@ -436,16 +483,6 @@ module ApplianceConsole
 
     def self.parse(args)
       new.parse(args).run
-    end
-
-    def configure_messaging
-      say("configuring messaging")
-      ManageIQ::ApplianceConsole::MessagingConfiguration.new.save(
-        "hostname" => options[:messaging_hostname],
-        "password" => options[:messaging_password],
-        "port"     => options[:messaging_port],
-        "username" => options[:messaging_username]
-      )
     end
   end
 end
