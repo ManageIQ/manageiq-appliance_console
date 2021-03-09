@@ -85,6 +85,11 @@ module ManageIQ
         deactivate_services
       end
 
+      def self.configured?
+        LinuxAdmin::Service.new("kafka").running? ||
+          LinuxAdmin::Service.new("zookeeper").running?
+      end
+
       private
 
       def my_hostname

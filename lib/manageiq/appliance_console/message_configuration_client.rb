@@ -25,6 +25,7 @@ module ManageIQ
 
       def configure
         begin
+          MessageServerConfiguration.new.unconfigure if MessageServerConfiguration.configured?
           configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
           create_client_properties          # Create the client.properties configuration fle
           fetch_truststore_from_server      # Fetch the Java Keystore from the Kafka Server

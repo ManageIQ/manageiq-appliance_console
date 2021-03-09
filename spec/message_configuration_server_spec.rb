@@ -272,4 +272,27 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       subject.send(:restart_services)
     end
   end
+
+  describe "#configured?" do
+    it "returns true if the kafka service is running" do
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:running?).and_return(true)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
+
+      expect(described_class.configured?).to be_truthy
+    end
+
+    it "returns true if the zookeeper service is running even if kafka is not" do
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:running?).and_return(false)
+
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:running?).and_return(true)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
+
+      expect(described_class.configured?).to be_truthy
+    end
+  end
 end
