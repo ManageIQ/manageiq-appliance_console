@@ -1,5 +1,5 @@
 require "pathname"
-require "util/postgres_admin"
+require "manageiq/appliance_console/postgres_admin"
 require "pg"
 require "linux_admin"
 

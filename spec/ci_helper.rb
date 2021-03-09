@@ -31,7 +31,7 @@ end
 # service_name is the configured postgresql service name
 module LinuxAdmin
   def Service.new(service_name)
-    if PostgresAdmin.service_name == service_name
+    if ManageIQ::ApplianceConsole::PostgresAdmin.service_name == service_name
       CiPostgresRunner
     else
       super

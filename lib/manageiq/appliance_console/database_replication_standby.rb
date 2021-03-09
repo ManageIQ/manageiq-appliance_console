@@ -1,4 +1,4 @@
-require 'util/postgres_admin'
+require 'manageiq/appliance_console/postgres_admin'
 require 'fileutils'
 require 'linux_admin'
 

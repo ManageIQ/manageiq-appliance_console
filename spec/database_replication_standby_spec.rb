@@ -121,7 +121,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
     it "cleans the data directory if resync_data is set" do
       subject.run_repmgrd_configuration = false
       subject.resync_data = true
-      expect(PostgresAdmin).to receive(:prep_data_directory)
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:prep_data_directory)
       expect(subject.activate).to be true
     end
 
@@ -143,7 +143,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
       expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new)
         .with(hash_including(:disk => "/dev/sdd")).and_return(lvm)
       expect(lvm).to receive(:setup)
-      expect(PostgresAdmin).to receive(:prep_data_directory)
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:prep_data_directory)
       expect(subject.activate).to be true
     end
 
@@ -348,7 +348,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
 
   def with_empty_data_directory
     Dir.mktmpdir do |dir|
-      allow(PostgresAdmin).to receive(:data_directory).and_return(Pathname.new(dir))
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:data_directory).and_return(Pathname.new(dir))
       yield
     end
   end
@@ -356,7 +356,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
   def with_non_empty_data_directory
     Dir.mktmpdir do |dir|
       open("#{dir}/this_directory_is_not_empty", "w")
-      allow(PostgresAdmin).to receive(:data_directory).and_return(Pathname.new(dir))
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:data_directory).and_return(Pathname.new(dir))
       yield
     end
   end

@@ -60,9 +60,9 @@ shared_context "Database Restore Validation Helpers" do
   def set_spec_env_for_postgres_admin_basebackup_restore
     if defined?(PostgresRunner)
       PostgresRunner.set_env # can be reset by other specs
-      allow(PostgresAdmin).to receive(:user).and_return(PostgresRunner.user)
-      allow(PostgresAdmin).to receive(:group).and_return(PostgresRunner.group)
-      allow(LinuxAdmin::Service).to receive(:new).with(PostgresAdmin.service_name)
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:user).and_return(PostgresRunner.user)
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:group).and_return(PostgresRunner.group)
+      allow(LinuxAdmin::Service).to receive(:new).with(ManageIQ::ApplianceConsole::PostgresAdmin.service_name)
                                                  .and_return(PostgresRunner)
     elsif ENV["CI"]
       # Travis uses systemd for our current 'xenial' instance, so this will
@@ -92,10 +92,10 @@ shared_context "Database Restore Validation Helpers" do
         "APPLIANCE_PG_SERVICE" => "ci_pg_instance"
       }
 
-      allow(PostgresAdmin).to receive(:restore) do |opts|
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:restore) do |opts|
         dir_opts     = "-I #{RestoreHelper::SPEC_DIR} -I #{RestoreHelper::LIB_DIR}"
-        require_opts = "-r linux_admin -r ci_helper -r gems/pending/util/postgres_admin"
-        ruby_eval    = "-e 'PostgresAdmin.restore(#{opts.inspect})'"
+        require_opts = "-r linux_admin -r ci_helper -r manageiq/appliance_console/postgres_admin"
+        ruby_eval    = "-e 'ManageIQ::ApplianceConsole::PostgresAdmin.restore(#{opts.inspect})'"
         cmd          = "sudo #{Gem.ruby} #{dir_opts} #{require_opts} #{ruby_eval}"
 
         system(env, cmd)

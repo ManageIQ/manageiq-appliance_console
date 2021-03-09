@@ -15,7 +15,7 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
   context "postgresql service" do
     it "#start_postgres (private)" do
       allow(LinuxAdmin::Service).to receive(:new).and_return(double(:service).as_null_object)
-      allow(PostgresAdmin).to receive_messages(:service_name => 'postgresql')
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive_messages(:service_name => 'postgresql')
       expect(@config).to receive(:block_until_postgres_accepts_connections)
       @config.send(:start_postgres)
     end
@@ -49,8 +49,8 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
   end
 
   it ".postgresql_template" do
-    allow(PostgresAdmin).to receive_messages(:data_directory     => Pathname.new("/var/lib/pgsql/data"))
-    allow(PostgresAdmin).to receive_messages(:template_directory => Pathname.new("/opt/manageiq/manageiq-appliance/TEMPLATE"))
+    allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive_messages(:data_directory     => Pathname.new("/var/lib/pgsql/data"))
+    allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive_messages(:template_directory => Pathname.new("/opt/manageiq/manageiq-appliance/TEMPLATE"))
     expect(described_class.postgresql_template.to_s).to end_with("TEMPLATE/var/lib/pgsql/data")
   end
 
@@ -76,7 +76,7 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
 
     it "resets the permissions on the postgres users home directory if we mount on top of it" do
       allow(@config).to receive(:mount_point).and_return(Pathname.new("/var/lib/pgsql"))
-      expect(FileUtils).to receive(:chown).with(PostgresAdmin.user, PostgresAdmin.group, "/var/lib/pgsql")
+      expect(FileUtils).to receive(:chown).with(ManageIQ::ApplianceConsole::PostgresAdmin.user, ManageIQ::ApplianceConsole::PostgresAdmin.group, "/var/lib/pgsql")
       expect(FileUtils).to receive(:chmod).with(0o700, "/var/lib/pgsql")
 
       @config.initialize_postgresql_disk
