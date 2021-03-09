@@ -102,7 +102,7 @@ class PostgresRunner
   end
 
   def initdb
-    dirname = Dir::Tmpname.make_tmpname("postgres_admin", "data")
+    dirname = File.basename(Dir::Tmpname.create(["postgres_admin", "-data"], '') { })
     @db_dir = File.expand_path(dirname, __dir__)
 
     system("#{pg_ctl} init -D #{db_dir} -o '-A trust'", :out => File::NULL)
