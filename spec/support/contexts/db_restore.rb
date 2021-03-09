@@ -7,8 +7,8 @@ require 'more_core_extensions/core_ext/hash'
 class RestoreHelper
   SPEC_DIR      = File.expand_path(File.join("..", ".."), __dir__)
   LIB_DIR       = File.expand_path(File.join("..", "lib"), SPEC_DIR)
-  PG_DUMPFILE   = File.join(SPEC_DIR, "util", "data", "pg_dump.gz")
-  PG_BACKUPFILE = File.join(SPEC_DIR, "util", "data", "pg_backup.tar.gz")
+  PG_DUMPFILE   = File.join(SPEC_DIR, "data", "pg_dump.gz")
+  PG_BACKUPFILE = File.join(SPEC_DIR, "data", "pg_backup.tar.gz")
 
   def self.pg_port
     @pg_port ||= defined?(PostgresRunner) ? PostgresRunner.port : nil
