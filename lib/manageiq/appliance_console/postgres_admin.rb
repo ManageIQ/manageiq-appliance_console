@@ -158,7 +158,7 @@ module ApplianceConsole
       # Build commandline from AwesomeSpawn
       args = {:z => nil, :format => "t", :wal_method => "fetch", :pgdata => "-"}
       cmd  = AwesomeSpawn.build_command_line("pg_basebackup", combine_command_args(opts, args))
-      $log.info("MIQ(#{name}.#{__method__}) Running command... #{cmd}")
+      logger.info("MIQ(#{name}.#{__method__}) Running command... #{cmd}")
 
       # Run command in a separate thread
       read, write    = IO.pipe
@@ -193,7 +193,7 @@ module ApplianceConsole
         error_path = Dir::Tmpname.create("") { |tmpname| tmpname }
         spawn_args = { :err => error_path, :in => [opts[:local_file].to_s, "rb"] }
 
-        $log.info("MIQ(#{name}.#{__method__}) Running command... #{cmd}")
+        logger.info("MIQ(#{name}.#{__method__}) Running command... #{cmd}")
         process_thread = Process.detach(Kernel.spawn(pg_env(opts), cmd, spawn_args))
         process_status = process_thread.value
 
@@ -229,11 +229,11 @@ module ApplianceConsole
       options = (options[:aggressive] ? GC_AGGRESSIVE_DEFAULTS : GC_DEFAULTS).merge(options)
 
       result = vacuum(options)
-      $log.info("MIQ(#{name}.#{__method__}) Output... #{result}") if result.to_s.length > 0
+      logger.info("MIQ(#{name}.#{__method__}) Output... #{result}") if result.to_s.length > 0
 
       if options[:reindex]
         result = reindex(options)
-        $log.info("MIQ(#{name}.#{__method__}) Output... #{result}") if result.to_s.length > 0
+        logger.info("MIQ(#{name}.#{__method__}) Output... #{result}") if result.to_s.length > 0
       end
     end
 
@@ -260,7 +260,7 @@ module ApplianceConsole
     end
 
     def self.run_command_with_logging(cmd_str, opts, params = {})
-      $log.info("MIQ(#{name}.#{__method__}) Running command... #{AwesomeSpawn.build_command_line(cmd_str, params)}")
+      logger.info("MIQ(#{name}.#{__method__}) Running command... #{AwesomeSpawn.build_command_line(cmd_str, params)}")
       AwesomeSpawn.run!(cmd_str, :params => params, :env => pg_env(opts)).output
     end
 
@@ -276,6 +276,10 @@ module ApplianceConsole
       default_args[:host]     = opts[:hostname] if opts[:hostname]
       default_args[:port]     = opts[:port]     if opts[:port]
       default_args.merge(args)
+    end
+
+    private_class_method def self.logger
+      ManageIQ::ApplianceConsole.logger
     end
 
     private_class_method def self.pg_env(opts)
@@ -309,8 +313,8 @@ module ApplianceConsole
       if exit_status != 0
         result = AwesomeSpawn::CommandResult.new(cmd, "", File.read(error_path), exit_status)
         message = AwesomeSpawn::CommandResultError.default_message(cmd, exit_status)
-        $log.error("AwesomeSpawn: #{message}")
-        $log.error("AwesomeSpawn: #{result.error}")
+        logger.error("AwesomeSpawn: #{message}")
+        logger.error("AwesomeSpawn: #{result.error}")
         raise AwesomeSpawn::CommandResultError.new(message, result)
       end
     ensure
