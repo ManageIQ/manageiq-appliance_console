@@ -294,5 +294,18 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       expect(described_class.configured?).to be_truthy
     end
+
+    it "returns false if neither the zookeeper service or the kafka service are running" do
+      kafka = LinuxAdmin::Service.new("kafka")
+      expect(kafka).to receive(:running?).and_return(false)
+
+      zookeeper = LinuxAdmin::Service.new("zookeeper")
+      expect(zookeeper).to receive(:running?).and_return(false)
+
+      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
+      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
+
+      expect(described_class.configured?).not_to be_truthy
+    end
   end
 end
