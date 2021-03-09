@@ -30,4 +30,8 @@ RSpec.configure do |config|
   config.after do
     ManageIQ::Password.key_root = @old_key_root
   end
+
+  unless config.respond_to?(:with_postgres_specs)
+    config.add_setting :with_postgres_specs, :default => false
+  end
 end
