@@ -62,6 +62,50 @@ module ApplianceConsole
         say("  " + h + ': ' + (Net::Ping::External.new(h).ping ? 'Success!' : 'Failure, Check network settings and IP address or hostname provided.'))
       end
     end
+
+    def self.disk_usage(file = nil)
+      file_arg = file
+      file_arg = "-l" if file.nil? || file == ""
+
+      unless file_arg == "-l" || File.exist?(file)
+        raise "file #{file} does not exist"
+      end
+
+      # Collect bytes
+      result = AwesomeSpawn.run!("df", :params => ["-T", "-P", file_arg]).output.lines.each_with_object([]) do |line, array|
+        lArray = line.strip.split(" ")
+        next if lArray.length != 7
+        fsname, type, total, used, free, used_percentage, mount_point = lArray
+        next unless total =~ /[0-9]+/
+        next if array.detect { |hh| hh[:filesystem] == fsname }
+
+        array << {
+          :filesystem         => fsname,
+          :type               => type,
+          :total_bytes        => total.to_i * 1024,
+          :used_bytes         => used.to_i * 1024,
+          :available_bytes    => free.to_i * 1024,
+          :used_bytes_percent => used_percentage.chomp("%").to_i,
+          :mount_point        => mount_point,
+        }
+      end
+
+      # Collect inodes
+      AwesomeSpawn.run!("df", :params => ["-T", "-P", "-i", file_arg]).output.lines.each do |line|
+        lArray = line.strip.split(" ")
+        next if lArray.length != 7
+        fsname, _type, total, used, free, used_percentage, _mount_point = lArray
+        next unless total =~ /[0-9]+/
+        h = result.detect { |hh| hh[:filesystem] == fsname }
+        next if h.nil?
+
+        h[:total_inodes]        = total.to_i
+        h[:used_inodes]         = used.to_i
+        h[:available_inodes]    = free.to_i
+        h[:used_inodes_percent] = used_percentage.chomp("%").to_i
+      end
+      result
+    end
   end
 end
 end

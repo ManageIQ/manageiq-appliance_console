@@ -1,7 +1,7 @@
+require "manageiq/appliance_console/utilities"
 require 'linux_admin'
 require 'pathname'
 require 'fileutils'
-require 'util/miq-system.rb'
 
 module ManageIQ
 module ApplianceConsole
@@ -18,7 +18,7 @@ module ApplianceConsole
       self.disk                = config[:disk]
       self.new_logrotate_count = nil
 
-      self.size = MiqSystem.disk_usage(LOGFILE_DIRECTORY)[0][:total_bytes]
+      self.size = Utilities.disk_usage(LOGFILE_DIRECTORY)[0][:total_bytes]
       self.current_logrotate_count = /rotate\s+(\d+)/.match(File.read(MIQ_LOGS_CONF))[1]
       self.evm_was_running = LinuxAdmin::Service.new("evmserverd").running?
     end

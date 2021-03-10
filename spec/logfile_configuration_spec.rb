@@ -28,7 +28,7 @@ describe ManageIQ::ApplianceConsole::LogfileConfiguration do
     miq_logs_conf.write(original_miq_logs_conf)
     miq_logs_conf.close
 
-    allow(MiqSystem).to receive(:disk_usage).and_return([{:total_bytes => "4"}])
+    allow(ManageIQ::ApplianceConsole::Utilities).to receive(:disk_usage).and_return([{:total_bytes => "4"}])
     allow(subject).to receive(:clear_screen)
     allow(subject).to receive(:say)
   end
