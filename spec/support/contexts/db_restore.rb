@@ -87,18 +87,12 @@ shared_context "Database Restore Validation Helpers" do
       # The command below basically runs the the PostgresAdmin command in a
       # subprocess with elevated privleges, instead of trying to stub
       # everything and correct it in a case by case basis.
-      env = {
-        "APPLIANCE_PG_DATA"    => "/var/ramfs/postgresql/10/main",
-        "APPLIANCE_PG_SERVICE" => "ci_pg_instance"
-      }
-
       allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:restore) do |opts|
         dir_opts     = "-I #{RestoreHelper::SPEC_DIR} -I #{RestoreHelper::LIB_DIR}"
         require_opts = "-r linux_admin -r ci_helper -r manageiq/appliance_console/postgres_admin"
         ruby_eval    = "-e 'ManageIQ::ApplianceConsole::PostgresAdmin.restore(#{opts.inspect})'"
-        cmd          = "sudo #{Gem.ruby} #{dir_opts} #{require_opts} #{ruby_eval}"
 
-        system(env, cmd)
+        system("sudo #{Gem.ruby} #{dir_opts} #{require_opts} #{ruby_eval}")
       end
     end
   end

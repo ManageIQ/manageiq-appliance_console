@@ -47,6 +47,9 @@ if defined?(RSpec)
     config.add_setting :with_postgres_specs, :default => true
 
     config.before(:suite) do
+      ENV["APPLIANCE_PG_DATA"]    = CiPostgresRunner::PGDATADIR
+      ENV["APPLIANCE_PG_SERVICE"] = "ci_pg_instance"
+
       PgEnvironmentUpdater.create_root_role
       PgEnvironmentUpdater.create_stub_manageiq_configs_on_ci
     end
