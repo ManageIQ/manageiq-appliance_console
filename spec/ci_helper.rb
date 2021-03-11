@@ -30,11 +30,16 @@ end
 # Override LinuxAdmin::Service.new to return CiPostgresRunner if the
 # service_name is the configured postgresql service name
 module LinuxAdmin
-  def Service.new(service_name)
-    if ManageIQ::ApplianceConsole::PostgresAdmin.service_name == service_name
+  def Service.new(*args)
+    if ManageIQ::ApplianceConsole::PostgresAdmin.service_name == args.first
       CiPostgresRunner
     else
-      super
+      # original new implementation (super didn't work properly...)
+      if self == LinuxAdmin::Service
+        service_type.new(*args)
+      else
+        orig_new(*args)
+      end
     end
   end
 end
