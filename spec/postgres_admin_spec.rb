@@ -274,10 +274,6 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
   end
 
   context "ENV dependent" do
-    after do
-      ENV.delete_if { |k, _| k.start_with?("APPLIANCE") }
-    end
-
     [%w(data_directory     APPLIANCE_PG_DATA            /some/path      true),
      %w(service_name       APPLIANCE_PG_SERVICE         postgresql          ),
      %w(package_name       APPLIANCE_PG_PACKAGE_NAME    postgresql-server   ),
@@ -285,12 +281,17 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
      %w(mount_point        APPLIANCE_PG_MOUNT_POINT     /mount/point    true)
     ].each do |method, var, value, pathname_required|
       it method.to_s do
-        ENV[var] = value
-        result = described_class.public_send(method)
-        if pathname_required
-          expect(result.join("abc/def").to_s).to eql "#{value}/abc/def"
-        else
-          expect(result).to eql value
+        begin
+          old_var = ENV[var]
+          ENV[var] = value
+          result = described_class.public_send(method)
+          if pathname_required
+            expect(result.join("abc/def").to_s).to eql "#{value}/abc/def"
+          else
+            expect(result).to eql value
+          end
+        ensure
+          ENV[var] = old_var
         end
       end
     end
@@ -301,9 +302,14 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
 
     context "with a data directory" do
       around do |example|
-        Dir.mktmpdir do |dir|
-          ENV["APPLIANCE_PG_DATA"] = dir
-          example.run
+        begin
+          old_appliance_pg_data = ENV["APPLIANCE_PG_DATA"]
+          Dir.mktmpdir do |dir|
+            ENV["APPLIANCE_PG_DATA"] = dir
+            example.run
+          end
+        ensure
+          ENV["APPLIANCE_PG_DATA"] = old_appliance_pg_data
         end
       end
 

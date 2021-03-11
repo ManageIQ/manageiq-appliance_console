@@ -77,13 +77,15 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
     end
 
     before do
-      ENV["APPLIANCE_PG_DATA"] = "/var/lib/pgsql"
+      @appliance_pg_data_old      = ENV["APPLIANCE_PG_DATA"]
+      @appliance_pg_service_old   = ENV["APPLIANCE_PG_DATA"]
+      ENV["APPLIANCE_PG_DATA"]    = "/var/lib/pgsql"
       ENV["APPLIANCE_PG_SERVICE"] = "postgresql-9.5"
     end
 
     after do
-      ENV.delete("APPLIANCE_PG_DATA")
-      ENV.delete("APPLIANCE_PG_SERVICE")
+      ENV["APPLIANCE_PG_DATA"]    = @appliance_pg_data_old
+      ENV["APPLIANCE_PG_SERVICE"] = @appliance_pg_service_old
     end
 
     it "returns the correct contents" do
