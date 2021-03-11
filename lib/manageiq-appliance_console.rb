@@ -20,7 +20,6 @@ require 'manageiq/appliance_console/logger'
 require 'manageiq/appliance_console/logging'
 require 'manageiq/appliance_console/prompts'
 
-require 'manageiq-gems-pending'
 require 'highline'
 
 require 'manageiq/appliance_console/auth_utilities'
