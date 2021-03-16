@@ -1,6 +1,7 @@
 require 'awesome_spawn'
 require 'pathname'
 require 'linux_admin'
+require 'pg'
 
 module ManageIQ
 module ApplianceConsole
@@ -44,6 +45,13 @@ module ApplianceConsole
 
     def self.database_disk_filesystem
       "xfs".freeze
+    end
+
+    def self.with_pg_connection(db_opts = {:user = user, :dbname = user})
+      conn = PG.connect(db_opts)
+      yield conn
+    ensure
+      conn.close
     end
 
     def self.initialized?
