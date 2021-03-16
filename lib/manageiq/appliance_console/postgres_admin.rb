@@ -47,7 +47,7 @@ module ApplianceConsole
       "xfs".freeze
     end
 
-    def self.with_pg_connection(db_opts = {:user = user, :dbname = user})
+    def self.with_pg_connection(db_opts = {:user => user, :dbname => user})
       conn = PG.connect(db_opts)
       yield conn
     ensure

@@ -7,15 +7,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
   let(:signal_error)           { ManageIQ::ApplianceConsole::MiqSignalError }
   let(:default_table_excludes) { "metrics_* vim_performance_states event_streams" }
 
+  before do
+    allow(ManageIQ::ApplianceConsole::DatabaseConfiguration).to receive(:database_name).and_return("vmdb_production")
+  end
+
   describe "#initialize" do
-    it "defaults @action, @backup_type, @task, @task_params, @delete_agree, and @uri" do
+    it "defaults @action, @backup_type, @database_opts, @delete_agree, and @uri" do
       miq_dba = described_class.new
-      expect(miq_dba.action).to       eq(:restore)
-      expect(miq_dba.backup_type).to  eq(nil)
-      expect(miq_dba.task).to         eq(nil)
-      expect(miq_dba.task_params).to  eq([])
-      expect(miq_dba.delete_agree).to eq(nil)
-      expect(miq_dba.uri).to          eq(nil)
+      expect(miq_dba.action).to         eq(:restore)
+      expect(miq_dba.backup_type).to    eq(nil)
+      expect(miq_dba.database_opts).to  eq({:dbname => "vmdb_production"})
+      expect(miq_dba.delete_agree).to   eq(nil)
+      expect(miq_dba.uri).to            eq(nil)
     end
   end
 
@@ -32,7 +35,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
-        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -77,7 +79,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @uri to the default filename" do
-          expect(subject.uri).to eq(default)
+          expect(subject.database_opts[:local_file]).to eq(default)
         end
       end
 
@@ -88,15 +90,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(file.path)
-        end
-
-        it "sets @task to point to 'evm:db:restore:local'" do
-          expect(subject.task).to eq("evm:db:restore:local")
-        end
-
-        it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.database_opts[:local_file]).to eq(file.path)
         end
       end
 
@@ -110,9 +104,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           error = "Please provide #{errmsg}"
           expect_heard ["Enter the #{prmpt}: ", error, prompt]
 
-          expect(subject.uri).to         eq(file.path)
-          expect(subject.task).to        eq("evm:db:restore:local")
-          expect(subject.task_params).to eq(["--", {:local_file => file.path}])
+          expect(subject.database_opts[:local_file]).to eq(file.path)
         end
       end
     end
@@ -121,7 +113,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:uri) { "/tmp/my_db.dump" }
 
       before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
       end
 
       it "no-ops" do
@@ -130,42 +122,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
-      it "does not modify the @task_params" do
+      it "does not modify the @database_opts" do
         expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
-        expect(subject.task_params).to eq(["--", {:uri => uri}])
-      end
-    end
-
-    describe "#ask_to_split_up_output" do
-      let(:uri)               { "/tmp/my_db.dump" }
-      let(:yn_prompt)         { "Would you like to split the restore output into multiple parts" }
-      let(:byte_count_prompt) { "byte size to split by" }
-
-      before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
-      end
-
-      it "no-ops" do
-        expect(subject).to receive(:ask_yn?).with(yn_prompt).never
-        expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
-        expect(subject.ask_to_split_up_output).to be_truthy
-      end
-
-      it "does not modify the @task_params" do
-        expect(subject.ask_to_split_up_output).to be_truthy
-        expect(subject.task_params).to eq(["--", {:uri => uri}])
+        expect(subject.database_opts).to eq({:local_file => uri})
       end
     end
 
     describe "#confirm_and_execute" do
-      let(:uri)             { "/tmp/my_db.backup" }
-      let(:agree)           { "y" }
-      let(:task)            { "evm:db:restore:local" }
-      let(:task_params)     { ["--", { :uri => uri }] }
-      let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+      let(:uri)   { "/tmp/my_db.backup" }
+      let(:agree) { "y" }
 
       before do
-        subject.instance_variable_set(:@uri, uri)
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
         expect(STDIN).to receive(:getc)
         allow(File).to receive(:delete)
@@ -177,7 +145,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is successful" do
-        before { expect(utils).to receive(:rake).and_return(true) }
+        before { expect(subject).to receive(:restore).and_return(true) }
 
         it "deletes the backup file" do
           expect(File).to receive(:delete).with(uri).once
@@ -223,7 +191,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is not successful" do
-        before { expect(utils).to receive(:rake).and_return(false) }
+        before { expect(subject).to receive(:restore).and_return(false) }
 
         it "does not delete the backup file" do
           expect(File).to receive(:delete).with(uri).never
@@ -275,7 +243,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
         it "does not delete the backup file" do
           expect(File).to  receive(:delete).with(uri).never
-          expect(utils).to receive(:rake).never
+          expect(subject).to receive(:restore).never
           confirm_and_execute
         end
 
@@ -300,7 +268,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with("Create Database Backup\n\n")
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
-        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -327,7 +294,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         it "sets @uri to the default filename" do
           say ""
           expect(subject.ask_file_location).to be_truthy
-          expect(subject.uri).to eq(default)
+          expect(subject.database_opts[:local_file]).to eq(default)
         end
       end
 
@@ -338,15 +305,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(filepath)
-        end
-
-        it "sets @task to point to 'evm:db:backup:local'" do
-          expect(subject.task).to eq("evm:db:backup:local")
-        end
-
-        it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
+          expect(subject.database_opts[:local_file]).to eq(filepath)
         end
       end
     end
@@ -356,7 +315,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:uri) { described_class::DB_RESTORE_FILE }
 
         before do
-          subject.instance_variable_set(:@uri, uri)
+          subject.instance_variable_set(:@database_opts, {:local_file => uri})
           subject.instance_variable_set(:@backup_type, "local")
         end
 
@@ -370,7 +329,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         let(:uri) { described_class::DB_RESTORE_FILE }
 
         before do
-          subject.instance_variable_set(:@uri, uri)
+          subject.instance_variable_set(:@database_opts, {:local_file => uri})
           subject.instance_variable_set(:@backup_type, "nfs")
         end
 
@@ -385,7 +344,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:uri) { "/tmp/my_db.dump" }
 
       before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
       end
 
       it "no-ops" do
@@ -394,42 +353,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
       end
 
-      it "does not modify the @task_params" do
+      it "does not modify the @database_opts" do
         expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
-        expect(subject.task_params).to eq(["--", {:uri => uri}])
-      end
-    end
-
-    describe "#ask_to_split_up_output" do
-      let(:uri)               { "/tmp/my_db.dump" }
-      let(:yn_prompt)         { "Would you like to split the restore output into multiple parts" }
-      let(:byte_count_prompt) { "byte size to split by" }
-
-      before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
-      end
-
-      it "no-ops" do
-        expect(subject).to receive(:ask_yn?).with(yn_prompt).never
-        expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
-        expect(subject.ask_to_split_up_output).to be_truthy
-      end
-
-      it "does not modify the @task_params" do
-        expect(subject.ask_to_split_up_output).to be_truthy
-        expect(subject.task_params).to eq(["--", {:uri => uri}])
+        expect(subject.database_opts).to eq({:local_file => uri})
       end
     end
 
     describe "#confirm_and_execute" do
-      let(:uri)             { "/tmp/my_db.backup" }
-      let(:agree)           { "y" }
-      let(:task)            { "evm:db:backup:local" }
-      let(:task_params)     { ["--", { :uri => uri }] }
-      let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+      let(:uri)   { "/tmp/my_db.backup" }
+      let(:agree) { "y" }
 
       before do
-        subject.instance_variable_set(:@uri, uri)
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
         expect(STDIN).to receive(:getc)
         allow(File).to receive(:delete)
@@ -441,7 +376,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is successful" do
-        before { expect(utils).to receive(:rake).and_return(true) }
+        before { expect(subject).to receive(:backup).and_return(true) }
 
         it "does not delete the backup file" do
           expect(File).to receive(:delete).with(uri).never
@@ -481,7 +416,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is not successful" do
-        before { expect(utils).to receive(:rake).and_return(false) }
+        before { expect(subject).to receive(:backup).and_return(false) }
 
         it "does not delete the backup file" do
           expect(File).to receive(:delete).with(uri).never
@@ -545,7 +480,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         expect(subject).to receive(:say).with(pg_dump_warning)
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
-        expect(subject).to receive(:ask_to_split_up_output)
 
         subject.ask_questions
       end
@@ -553,7 +487,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "has proper formatting for the pg_dump warning" do
         allow(subject).to receive(:ask_file_location)
         allow(subject).to receive(:ask_for_tables_to_exclude_in_dump)
-        allow(subject).to receive(:ask_to_split_up_output)
         subject.ask_questions
 
         expect_output <<-PROMPT.strip_heredoc
@@ -589,7 +522,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         it "sets @uri to the default filename" do
           say ""
           expect(subject.ask_file_location).to be_truthy
-          expect(subject.uri).to eq(default)
+          expect(subject.database_opts[:local_file]).to eq(default)
         end
       end
 
@@ -600,15 +533,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
         end
 
         it "sets @uri to point to the local file" do
-          expect(subject.uri).to eq(filepath)
-        end
-
-        it "sets @task to point to 'evm:db:dump:local'" do
-          expect(subject.task).to eq("evm:db:dump:local")
-        end
-
-        it "sets @task_params to point to the local file" do
-          expect(subject.task_params).to eq(["--", {:local_file => filepath}])
+          expect(subject.database_opts[:local_file]).to eq(filepath)
         end
       end
     end
@@ -617,18 +542,18 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       let(:uri) { "/tmp/my_db.dump" }
 
       before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
       end
 
       context "when not excluding tables" do
-        it "does not add :exclude-table-data to @task_params" do
+        it "does not add :exclude_table_data to @database_opts" do
           expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).never
 
           say "n"
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
 
-          expect(subject.task_params).to eq(["--", {:uri => uri}])
+          expect(subject.database_opts).to eq({:local_file => uri})
         end
       end
 
@@ -650,82 +575,30 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           PROMPT
         end
 
-        it "adds `:exclude-table-data => ['metrics_*', 'vms']` to @task_params" do
+        it "adds `:exclude_table_data => ['metrics_*', 'vms']` to @database_opts" do
           expect(subject).to receive(:ask_yn?).with("Would you like to exclude tables in the dump").once.and_call_original
           expect(subject).to receive(:ask_for_many).with("table", "tables to exclude", default_table_excludes, 255, Float::INFINITY).once.and_call_original
           say ["y", "metrics_* vms"]
 
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
-          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vms"]}])
+          expect(subject.database_opts).to eq({:local_file => uri, :exclude_table_data => ["metrics_*", "vms"]})
         end
 
         it "defaults to 'metrics_* vim_performance_states event_streams'" do
           say ["y", ""]
 
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
-          expect(subject.task_params).to eq(["--", {:uri => uri, :"exclude-table-data" => ["metrics_*", "vim_performance_states", "event_streams"]}])
-        end
-      end
-    end
-
-    describe "#ask_to_split_up_output" do
-      let(:uri)               { "/tmp/my_db.dump" }
-      let(:yn_prompt)         { "Would you like to split the dump output into multiple parts" }
-      let(:byte_count_prompt) { "byte size to split by" }
-
-      before do
-        subject.instance_variable_set(:@task_params, ["--", { :uri => uri }])
-      end
-
-      context "when not splitting output" do
-        it "does not add :byte_count to @task_params" do
-          expect(subject).to receive(:ask_yn?).with(yn_prompt).once.and_call_original
-          expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").never
-
-          say "n"
-          expect(subject.ask_to_split_up_output).to be_truthy
-
-          expect(subject.task_params).to eq(["--", {:uri => uri}])
-        end
-      end
-
-      context "when splitting output" do
-        it "prompts the user" do
-          say ["y", "750M"]
-          expect(subject.ask_to_split_up_output).to be_truthy
-          expect_readline_question_asked <<-PROMPT.strip_heredoc.chomp
-            Would you like to split the dump output into multiple parts? (Y/N): y
-            Enter the byte size to split by: |500M| 750M
-          PROMPT
-        end
-
-        it "adds `:byte_count => '250M'` to @task_params" do
-          expect(subject).to receive(:ask_yn?).with(yn_prompt).once.and_call_original
-          expect(subject).to receive(:ask_for_string).with(byte_count_prompt, "500M").once.and_call_original
-          say ["y", "250M"]
-
-          expect(subject.ask_to_split_up_output).to be_truthy
-          expect(subject.task_params).to eq(["--", {:uri => uri, :byte_count => "250M"}])
-        end
-
-        it "defaults to '500M'" do
-          say ["y", ""]
-
-          expect(subject.ask_to_split_up_output).to be_truthy
-          expect(subject.task_params).to eq(["--", {:uri => uri, :byte_count => "500M"}])
+          expect(subject.database_opts).to eq({:local_file => uri, :exclude_table_data => ["metrics_*", "vim_performance_states", "event_streams"]})
         end
       end
     end
 
     describe "#confirm_and_execute" do
-      let(:uri)             { "/tmp/my_db.dump" }
-      let(:agree)           { "y" }
-      let(:task)            { "evm:db:dump:local" }
-      let(:task_params)     { ["--", { :uri => uri }] }
-      let(:utils)           { ManageIQ::ApplianceConsole::Utilities }
+      let(:uri)   { "/tmp/my_db.dump" }
+      let(:agree) { "y" }
 
       before do
-        subject.instance_variable_set(:@uri, uri)
+        subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
         expect(STDIN).to receive(:getc)
         allow(File).to receive(:delete)
@@ -737,7 +610,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is successful" do
-        before { expect(utils).to receive(:rake).and_return(true) }
+        before { expect(subject).to receive(:dump).and_return(true) }
 
         it "does not delete the dump file" do
           expect(File).to receive(:delete).with(uri).never
@@ -777,7 +650,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       context "when it is not successful" do
-        before { expect(utils).to receive(:rake).and_return(false) }
+        before { expect(subject).to receive(:dump).and_return(false) }
 
         it "does not delete the dump file" do
           expect(File).to receive(:delete).with(uri).never

@@ -23,14 +23,17 @@ module ManageIQ
 
       WARN
 
-      attr_accessor :uri
-      attr_reader :action, :backup_type, :task, :task_params, :delete_agree, :filename
+      attr_reader :action, :backup_type, :database_opts, :delete_agree, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
         super(input, output)
 
-        @action      = action
-        @task_params = []
+        @action        = action
+        @database_opts = {:dbname => DatabaseConfiguration.database_name}
+      end
+
+      def uri
+        @database_opts[:local_file]
       end
 
       def ask_questions
@@ -43,7 +46,6 @@ module ManageIQ
         say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
         ask_for_tables_to_exclude_in_dump
-        ask_to_split_up_output
       end
 
       def activate
@@ -55,9 +57,7 @@ module ManageIQ
       end
 
       def ask_file_location
-        @uri         = just_ask(*filename_prompt_args)
-        @task        = "evm:db:#{action}:local"
-        @task_params = ["--", {:local_file => uri}]
+        @database_opts[:local_file] = just_ask(*filename_prompt_args)
       end
 
       def ask_to_delete_backup_after_restore
@@ -83,20 +83,14 @@ module ManageIQ
                                         255,
                                         Float::INFINITY)
 
-          @task_params.last[:"exclude-table-data"] = table_excludes
-        end || true
-      end
-
-      def ask_to_split_up_output
-        if action == :dump && should_split_output?
-          @task_params.last[:byte_count] = ask_for_string("byte size to split by", "500M")
+          @database_opts[:exclude_table_data] = table_excludes
         end || true
       end
 
       def confirm_and_execute
         if allowed_to_execute?
           processing_message
-          run_rake
+          run_action
         end
         press_any_key
       end
@@ -106,6 +100,18 @@ module ManageIQ
 
         say("\nNote: A database restore cannot be undone.  The restore will use the file: #{uri}.\n")
         agree("Are you sure you would like to restore the database? (Y/N): ")
+      end
+
+      def file_options
+        @file_options ||= I18n.t("database_admin.menu_order").each_with_object({}) do |file_option, h|
+          # special anonymous ftp sites are defined by uri
+          uri = URI(file_option)
+          if uri.scheme
+            h["#{uri.scheme} to #{uri.host}"] = file_option unless skip_file_location?(uri.host)
+          else
+            h[I18n.t("database_admin.#{file_option}")] = file_option
+          end
+        end
       end
 
       def setting_header
@@ -169,13 +175,79 @@ module ManageIQ
         say(msg)
       end
 
-      def run_rake
-        rake_success = ManageIQ::ApplianceConsole::Utilities.rake(task, task_params)
-        if rake_success && action == :restore && delete_agree
+      def run_action
+        success = send(action)
+        if success && action == :restore && delete_agree
           say("\nRemoving the database restore file #{uri}...")
           File.delete(uri)
-        elsif !rake_success
+        elsif !success
           say("\nDatabase #{action} failed. Check the logs for more information")
+        end
+      end
+
+      def backup
+        result = PostgresAdmin.backup(database_opts)
+        ManageIQ::ApplianceConsole.logger.info("[#{@database_opts[:dbname]}] database has been backed up to file: [#{uri}]")
+        result
+      end
+
+      def dump
+        result = PostgresAdmin.backup_pg_dump(database_opts)
+        ManageIQ::ApplianceConsole.logger.info("[#{@database_opts[:dbname]}] database has been dumped up to file: [#{uri}]")
+        result
+      end
+
+      def restore
+        backup_type = validate_backup_file_type
+
+        if application_connections?
+          message = "Database restore failed. Shut down all evmserverd processes before attempting a database restore"
+          ManageIQ::ApplianceConsole.logger.error(message)
+          raise message
+        end
+
+        MiqRegion.replication_type = :none
+
+        if connection_count > 1
+          message = "Database restore failed. #{connection_count - 1} connections remain to the database."
+          ManageIQ::ApplianceConsole.logger.error(message)
+          raise message
+        end
+
+        # remove all the connections before we restore; AR will reconnect on the next query
+        # ActiveRecord::Base.connection_pool.disconnect! ??????
+        PostgresAdmin.restore(database_opts.merge(:backup_type => backup_type))
+      end
+
+      def application_connections?
+        result = [{"count" => 0}]
+
+        PostgresAdmin.with_pg_connection do |conn|
+          result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE application_name LIKE '%MIQ%'")
+        end
+
+        result[0]["count"] > 0
+      end
+
+      def connection_count
+        result = nil
+
+        PostgresAdmin.with_pg_connection do |conn|
+          result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE backend_type = 'client backend'")
+        end
+
+        result = conn.result[0]["count"]
+      end
+
+      def validate_backup_file_type
+        if PostgresAdmin.base_backup_file?(uri)
+          :basebackup
+        elsif PostgresAdmin.pg_dump_file?(uri)
+          :pgdump
+        else
+          message = "#{filename} is not in a recognized database backup format"
+          ManageIQ::ApplianceConsole.error(message)
+          raise message
         end
       end
     end
