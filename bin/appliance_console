@@ -13,7 +13,7 @@ require 'highline/system_extensions'
 require 'rubygems'
 require 'bcrypt'
 require 'linux_admin'
-require 'util/postgres_admin'
+require 'manageiq/appliance_console/postgres_admin'
 require 'awesome_spawn'
 include HighLine::SystemExtensions
 

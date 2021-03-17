@@ -1,6 +1,6 @@
 # TODO: add appropriate requires instead of depending on appliance_console.rb.
 # TODO: Further refactor these unrelated methods.
-require "util/postgres_admin"
+require "manageiq/appliance_console/postgres_admin"
 require "awesome_spawn"
 
 module ManageIQ

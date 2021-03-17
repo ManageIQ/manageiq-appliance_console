@@ -1,6 +1,6 @@
 require 'fileutils'
 require 'tempfile'
-require 'util/postgres_admin'
+require 'manageiq/appliance_console/postgres_admin'
 
 module ManageIQ
 module ApplianceConsole

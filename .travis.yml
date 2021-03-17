@@ -4,6 +4,8 @@ rvm:
 - 2.5.8
 - 2.6.6
 cache: bundler
+addons:
+  postgresql: '10'
 env:
   global:
   - RUBY_GC_HEAP_GROWTH_MAX_SLOTS=300000
