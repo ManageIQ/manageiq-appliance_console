@@ -9,12 +9,16 @@ module ManageIQ
       attr_reader :jaas_config_path,
                   :server_properties_path, :server_properties_sample_path,
                   :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
-                  :keystore_files, :installed_files
+                  :keystore_files, :installed_files, :message_persistent_disk
+
+      PERSISTENT_DIRECTORY = Pathname.new("/var/lib/kafka_persistent_data").freeze
+      PERSISTENT_NAME = "kafka_messages".freeze
 
       def initialize(options = {})
         super(options)
 
-        @message_server_host = options[:message_server_host] || my_hostname
+        @message_server_host           = options[:message_server_host] || my_hostname
+        @message_persistent_disk       = LinuxAdmin::Disk.new(:path => options[:message_persistent_disk]) unless options[:message_persistent_disk].nil?
 
         @jaas_config_path              = config_dir_path.join("kafka_server_jaas.conf")
         @server_properties_path        = config_dir_path.join("server.properties")
@@ -31,6 +35,7 @@ module ManageIQ
 
       def configure
         begin
+          configure_persistent_disk         # Configure the persistent message store on a different disk
           create_jaas_config                # Create the message server jaas config file
           create_client_properties          # Create the client.properties config
           create_logs_directory             # Create the logs directory:
@@ -69,13 +74,27 @@ module ManageIQ
         @message_server_host       = ask_for_string("Message Server Hostname or IP address", message_server_host)
         @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
         @message_keystore_password = ask_for_password("Message Keystore Password")
+        @message_persistent_disk   = ask_for_persistent_disk
+      end
+
+      def ask_for_persistent_disk
+        choose_disk if use_new_disk
+      end
+
+      def use_new_disk
+        agree("Configure a new persistent disk volume? (Y/N): ")
+      end
+
+      def choose_disk
+        ask_for_disk("Persistent disk")
       end
 
       def show_parameters
         say("\nMessage Server Configuration:\n")
         say("Message Server Details:\n")
-        say("  Message Server Hostname:   #{message_server_host}\n")
+        say("    Message Server Hostname: #{message_server_host}\n")
         say("  Message Keystore Username: #{message_keystore_username}\n")
+        say("    Persistent message disk: #{message_persistent_disk.path}\n") if message_persistent_disk
       end
 
       def unconfigure
@@ -94,6 +113,33 @@ module ManageIQ
 
       def my_hostname
         LinuxAdmin::Hosts.new.hostname
+      end
+
+      def configure_persistent_disk
+        return true unless message_persistent_disk
+
+        say(__method__.to_s.tr("_", " ").titleize)
+
+        deactivate_services # Just in case they are running.
+
+        FileUtils.mkdir_p(PERSISTENT_DIRECTORY)
+        LogicalVolumeManagement.new(:disk => message_persistent_disk, :mount_point => PERSISTENT_DIRECTORY, :name => PERSISTENT_NAME).setup
+        FileUtils.chmod(0o755, PERSISTENT_DIRECTORY)
+        FileUtils.chown("kafka", "kafka", PERSISTENT_DIRECTORY)
+
+        true
+      end
+
+      def activate_new_persistent_disk
+        return true unless message_persistent_disk
+
+        say(__method__.to_s.tr("_", " ").titleize)
+
+        data = File.read(server_properties_path)
+        data.gsub!(/^log.dirs=.*$/, "log.dirs=#{PERSISTENT_DIRECTORY}")
+        File.write(server_properties_path, data)
+
+        true
       end
 
       def create_jaas_config
@@ -224,6 +270,8 @@ module ManageIQ
 
         FileUtils.cp(server_properties_sample_path, server_properties_path)
         File.write(server_properties_path, content, :mode => "a")
+
+        activate_new_persistent_disk
       end
 
       def unconfigure_firewall
