@@ -729,6 +729,15 @@ describe ManageIQ::ApplianceConsole::Cli do
         .and_return(message_server)
       subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
     end
+
+    it "should initiate Message Server config with persistent disk" do
+      message_server = double
+      expect(message_server).to receive(:configure)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+        .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass", :message_persistent_disk => "/dev/test"))
+        .and_return(message_server)
+      subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass --message-persistent-disk /dev/test]).run
+    end
   end
 
   context "#message_server_unconfig" do
