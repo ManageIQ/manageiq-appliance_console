@@ -11,7 +11,7 @@ module ManageIQ
                   :ca_cert_srl_path, :ca_key_path, :cert_file_path, :cert_signed_path,
                   :keystore_files, :installed_files, :message_persistent_disk
 
-      PERSISTENT_DIRECTORY = Pathname.new("/var/lib/kafka_persistent_data").freeze
+      PERSISTENT_DIRECTORY = Pathname.new("/var/lib/kafka/persistent_data").freeze
       PERSISTENT_NAME = "kafka_messages".freeze
 
       def initialize(options = {})
