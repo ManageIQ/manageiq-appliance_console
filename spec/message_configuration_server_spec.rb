@@ -5,18 +5,21 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   let(:message_keystore_password) { "super_secret" }
   subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password) }
   let(:subject_ip) { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.0") }
+  let(:subject_persistent_disk) { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.0", :message_persistent_disk => "/tmp/disk") }
 
   before do
     @spec_name = File.basename(__FILE__).split(".rb").first.freeze
     @tmp_base_dir = Pathname.new(Dir.mktmpdir)
     @tmp_miq_config_dir = Pathname.new(Dir.mktmpdir)
     @this = ManageIQ::ApplianceConsole::MessageConfiguration
+    @this_server = ManageIQ::ApplianceConsole::MessageServerConfiguration
     @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.jks")
     stub_const("#{@this}::BASE_DIR", @tmp_base_dir)
     stub_const("#{@this}::LOGS_DIR", "#{@tmp_base_dir}/logs")
     stub_const("#{@this}::CONFIG_DIR", "#{@tmp_base_dir}/config")
     stub_const("#{@this}::SAMPLE_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
     stub_const("#{@this}::MIQ_CONFIG_DIR", "#{@tmp_base_dir}/config-sample")
+    stub_const("#{@this_server}::PERSISTENT_DIRECTORY", "#{@tmp_base_dir}/kafka_persistent_data")
 
     FileUtils.mkdir_p("#{@tmp_base_dir}/config/keystore")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
@@ -36,28 +39,71 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       allow(subject).to receive(:message_server_configured?).and_return(false)
     end
 
-    it "should prompt for message_keystore_Username and message_keystore_Password" do
-      expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
-      expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
-      expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+    context "when not using a new persistent disk" do
+      before do
+        expect(subject).to receive(:use_new_disk).and_return(false)
+      end
 
-      allow(subject).to receive(:say).at_least(5).times
+      it "should prompt for message_keystore_username and message_keystore_password" do
+        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+        expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
 
-      expect(subject.send(:ask_questions)).to be_truthy
+        allow(subject).to receive(:say).at_least(5).times
+
+        expect(subject.send(:ask_questions)).to be_truthy
+      end
+
+      it "should display Server Hostname and Keystore Username" do
+        allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+        allow(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+
+        expect(subject).to receive(:say).with("\nMessage Server Parameters:\n\n")
+        expect(subject).to receive(:say).with("\nMessage Server Configuration:\n")
+        expect(subject).to receive(:say).with("Message Server Details:\n")
+        expect(subject).to receive(:say).with("    Message Server Hostname: my-host-name.example.com\n")
+        expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
+
+        expect(subject.send(:ask_questions)).to be_truthy
+      end
     end
 
-    it "should display Server Hostname and Keystore Username" do
-      allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
-      allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
-      allow(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+    context "when using a new persistent disk" do
+      before do
+        expect(subject).to receive(:use_new_disk).and_return(true)
+      end
 
-      expect(subject).to receive(:say).with("\nMessage Server Parameters:\n\n")
-      expect(subject).to receive(:say).with("\nMessage Server Configuration:\n")
-      expect(subject).to receive(:say).with("Message Server Details:\n")
-      expect(subject).to receive(:say).with("  Message Server Hostname:   my-host-name.example.com\n")
-      expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
+      it "should prompt for message_keystore_username, message_keystore_password and persistent disk" do
+        message_persistent_disk = LinuxAdmin::Disk.new(:path => "/tmp/disk")
+        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+        expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+        expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return(message_persistent_disk)
 
-      expect(subject.send(:ask_questions)).to be_truthy
+        allow(subject).to receive(:say).at_least(5).times
+
+        expect(subject.send(:ask_questions)).to be_truthy
+      end
+    end
+  end
+
+  describe "#configure_persistent_disk" do
+    it "configure the new persistent disk" do
+      expect(subject_persistent_disk).to receive(:say).with("Configure Persistent Disk")
+      expect(subject_persistent_disk).to receive(:deactivate_services)
+      expect(FileUtils).to receive(:chown).with("kafka", "kafka", @this_server::PERSISTENT_DIRECTORY)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new).and_return(double(@spec_name, :setup => true))
+      expect(subject_persistent_disk.send(:configure_persistent_disk)).to be_truthy
+      expect(File.directory?(@this_server::PERSISTENT_DIRECTORY)).to be_truthy
+    end
+
+    it "if no persistent disk is specified it will not be configured" do
+      expect(subject).not_to receive(:say)
+      expect(subject).not_to receive(:deactivate_services)
+      expect(FileUtils).not_to receive(:chown)
+      expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).not_to receive(:new)
+      expect(subject.send(:configure_persistent_disk)).to be_truthy
     end
   end
 
@@ -208,13 +254,13 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
     shared_examples "service properties file" do
       it "creates the service properties config file" do
-        expect(subject.send(:create_server_properties)).to be_positive
+        expect(subject.send(:create_server_properties)).to be_truthy
         expect(subject.server_properties_path).to exist
       end
 
       it "correctly populates the server properties config file" do
         expect(File).to receive(:write).with(subject.server_properties_path, content, :mode => "a")
-        expect(subject.send(:create_server_properties)).to be_nil
+        expect(subject.send(:create_server_properties)).to be_truthy
       end
 
       it "does not recreate the server properties config file if it already exists" do
