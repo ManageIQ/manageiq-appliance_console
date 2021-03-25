@@ -354,4 +354,38 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(described_class.configured?).not_to be_truthy
     end
   end
+
+  describe "#initialize" do
+    context "when --message-server-use-ipaddr is specified" do
+      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_use_ipaddr => true) }
+
+      it "sets message_server_host to my ip address" do
+        ip_address = LinuxAdmin::IpAddress.new
+        expect(ip_address).to receive(:address).and_return("192.0.2.0")
+        expect(LinuxAdmin::IpAddress).to receive(:new).and_return(ip_address)
+
+        expect(subject.message_server_host).to eq("192.0.2.0")
+      end
+    end
+
+    context "when neither --message-server-use-ipaddr or --message-server-host are specified" do
+      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password) }
+
+      it "sets message_server_host to my hostname" do
+        hosts = LinuxAdmin::Hosts.new
+        expect(hosts).to receive(:hostname).and_return("my-hostname")
+        expect(LinuxAdmin::Hosts).to receive(:new).and_return(hosts)
+
+        expect(subject.message_server_host).to eq("my-hostname")
+      end
+    end
+
+    context "when --message-server-host is specified" do
+      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.1" ) }
+
+      it "sets message_server_host to the provided value" do
+        expect(subject.message_server_host).to eq("192.0.2.1")
+      end
+    end
+  end
 end

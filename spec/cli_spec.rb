@@ -14,6 +14,10 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect { subject.parse(%w[--message-server-config --message-server-unconfig]) }.to raise_error(OptimistDieSpecError)
     end
 
+    it "fails if both a message server host and use ip addres are specified" do
+      expect { subject.parse(%w[--message-server-config --message-server-host my_host_name --message-server-use-ipaddr]) }.to raise_error(OptimistDieSpecError)
+    end
+
     it "fails if message client config and unconfig subcommands are specified" do
       expect { subject.parse(%w[--message-client-config --message-client-unconfig]) }.to raise_error(OptimistDieSpecError)
     end
@@ -728,6 +732,15 @@ describe ManageIQ::ApplianceConsole::Cli do
         .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
         .and_return(message_server)
       subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+    end
+
+    it "should initiate Message Server config with ip addr" do
+      message_server = double
+      expect(message_server).to receive(:configure)
+      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+        .with(hash_including(:message_server_use_ipaddr => true, :message_keystore_username => "user", :message_keystore_password => "pass"))
+        .and_return(message_server)
+      subject.parse(%w[--message-server-config --message-server-use-ipaddr true --message-keystore-username user --message-keystore-password pass]).run
     end
 
     it "should initiate Message Server config with persistent disk" do
