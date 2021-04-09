@@ -198,57 +198,9 @@ module ManageIQ
       end
 
       def restore
-        backup_type = validate_backup_file_type
-
-        if application_connections?
-          message = "Database restore failed. Shut down all evmserverd processes before attempting a database restore"
-          ManageIQ::ApplianceConsole.logger.error(message)
-          raise message
-        end
-
-        MiqRegion.replication_type = :none
-
-        if connection_count > 1
-          message = "Database restore failed. #{connection_count - 1} connections remain to the database."
-          ManageIQ::ApplianceConsole.logger.error(message)
-          raise message
-        end
-
-        # remove all the connections before we restore; AR will reconnect on the next query
-        # ActiveRecord::Base.connection_pool.disconnect! ??????
-        PostgresAdmin.restore(database_opts.merge(:backup_type => backup_type))
-      end
-
-      def application_connections?
-        result = [{"count" => 0}]
-
-        PostgresAdmin.with_pg_connection do |conn|
-          result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE application_name LIKE '%MIQ%'")
-        end
-
-        result[0]["count"] > 0
-      end
-
-      def connection_count
-        result = nil
-
-        PostgresAdmin.with_pg_connection do |conn|
-          result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE backend_type = 'client backend'")
-        end
-
-        result = conn.result[0]["count"]
-      end
-
-      def validate_backup_file_type
-        if PostgresAdmin.base_backup_file?(uri)
-          :basebackup
-        elsif PostgresAdmin.pg_dump_file?(uri)
-          :pgdump
-        else
-          message = "#{filename} is not in a recognized database backup format"
-          ManageIQ::ApplianceConsole.error(message)
-          raise message
-        end
+        result = PostgresAdmin.restore(database_opts.merge(:backup_type => backup_type))
+        ManageIQ::ApplianceConsole.logger.info("[#{@database_opts[:dbname]}] database has been restored from file: [#{uri}]")
+        result
       end
     end
   end

@@ -108,7 +108,9 @@ module ApplianceConsole
 
     def self.restore(opts)
       file        = opts[:local_file]
-      backup_type = opts.delete(:backup_type)
+      backup_type = opts.delete(:backup_type) || validate_backup_file_type(file)
+
+      prepare_restore(backup_type, opts[:dbname])
 
       case
       when backup_type == :pgdump     then restore_pg_dump(opts)
@@ -327,6 +329,56 @@ module ApplianceConsole
       end
     ensure
       File.delete(error_path) if File.exist?(error_path)
+    end
+
+    private_class_method def self.prepare_restore(backup_type, dbname)
+      if application_connections?
+        message = "Database restore failed. Shut down all evmserverd processes before attempting a database restore"
+        ManageIQ::ApplianceConsole.logger.error(message)
+        raise message
+      end
+
+      conn_count = connection_count(backup_type, dbname)
+      if conn_count > 1
+        message = "Database restore failed. #{conn_count - 1} connections remain to the database."
+        ManageIQ::ApplianceConsole.logger.error(message)
+        raise message
+      end
+    end
+
+    private_class_method def self.application_connections?
+      result = [{"count" => 0}]
+
+      with_pg_connection do |conn|
+        result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE application_name LIKE '%MIQ%'")
+      end
+
+      result[0]["count"].to_i > 0
+    end
+
+    private_class_method def self.connection_count(backup_type, dbname)
+      result = nil
+
+      with_pg_connection do |conn|
+        query  = "SELECT COUNT(pid) FROM pg_stat_activity"
+        query << " WHERE backend_type = 'client backend'" if backup_type == :basebackup
+        query << " WHERE datname = '#{dbname}'"           if backup_type == :pgdump
+        result = conn.exec(query)
+      end
+
+      result[0]["count"].to_i
+    end
+
+    private_class_method def self.validate_backup_file_type(file)
+      if base_backup_file?(file)
+        :basebackup
+      elsif pg_dump_file?(file)
+        :pgdump
+      else
+        message = "#{filename} is not in a recognized database backup format"
+        ManageIQ::ApplianceConsole.error(message)
+        raise message
+      end
     end
   end
 end
