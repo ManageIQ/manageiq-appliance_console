@@ -122,11 +122,13 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
     end
 
     before do
-      expect(subject).to receive(:run_command_with_logging).with("pg_dump", expected_opts, expected_args)
+      allow(FileUtils).to receive(:mkdir_p).with("/some/path/to")
+      expect(subject).to  receive(:run_command_with_logging).with("pg_dump", expected_opts, expected_args)
     end
 
     context "with empty args" do
       it "runs the command and returns the :local_file opt" do
+        allow(FileUtils).to receive(:mkdir_p).with(".")
         expect(subject.backup_pg_dump({})).to eq(local_file)
       end
     end

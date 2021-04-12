@@ -152,6 +152,7 @@ module ApplianceConsole
       args = combine_command_args(opts, :format => "c", :file => opts[:local_file], nil => dbname)
       args = handle_multi_value_pg_dump_args!(opts, args)
 
+      FileUtils.mkdir_p(File.dirname(opts.fetch(:local_file, "")))
       run_command_with_logging("pg_dump", opts, args)
       opts[:local_file]
     end
