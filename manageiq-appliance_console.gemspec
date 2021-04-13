@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "net-scp",                 "~> 1.2.1"
   spec.add_runtime_dependency "optimist",                "~> 3.0"
   spec.add_runtime_dependency "pg"
+  spec.add_runtime_dependency "pg-logical_replication"
   spec.add_runtime_dependency "rbnacl",                  ">= 3.2", "< 5.0"
 
   spec.add_development_dependency "bundler"

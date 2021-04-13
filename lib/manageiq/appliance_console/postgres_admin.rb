@@ -339,6 +339,8 @@ module ApplianceConsole
         raise message
       end
 
+      disable_replication(dbname)
+
       conn_count = connection_count(backup_type, dbname)
       if conn_count > 1
         message = "Database restore failed. #{conn_count - 1} connections remain to the database."
@@ -355,6 +357,32 @@ module ApplianceConsole
       end
 
       result[0]["count"].to_i > 0
+    end
+
+    private_class_method def self.disable_replication(dbname)
+      require 'pg/logical_replication'
+
+      with_pg_connection do |conn|
+        pglogical = PG::LogicalReplication::Client.new(conn)
+
+        if pglogical.subscriber?
+          pglogical.subcriptions(dbname).each do |subscriber|
+            sub_id = subscriber["subscription_name"]
+            begin
+              pglogical.drop_subscription(sub_id, true)
+            rescue PG::InternalError => e
+              raise unless e.message.include?("could not connect to publisher")
+              raise unless e.message.match?(/replication slot .* does not exist/)
+
+              pglogical.disable_subscription(sub_id).check
+              pglogical.alter_subscription_options(sub_id, "slot_name" => "NONE")
+              pglogical.drop_subscription(sub_id, true)
+            end
+          end
+        elsif pglogical.publishes?('miq')
+          pglogical.drop_publication('miq')
+        end
+      end
     end
 
     private_class_method def self.connection_count(backup_type, dbname)
