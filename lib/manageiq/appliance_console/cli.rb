@@ -38,7 +38,23 @@ module ApplianceConsole
     end
 
     def database?
-      options[:standalone] || hostname
+      (options[:standalone] || hostname) && !database_admin?
+    end
+
+    def database_admin?
+      db_dump? || db_backup? || db_restore?
+    end
+
+    def db_dump?
+      options[:dump]
+    end
+
+    def db_backup?
+      options[:backup]
+    end
+
+    def db_restore?
+      options[:restore]
     end
 
     def local_database?
@@ -147,6 +163,10 @@ module ApplianceConsole
         opt :username,                    "Database Username",                                              :type => :string,  :short => 'U', :default => "root"
         opt :password,                    "Database Password",                                              :type => :string,  :short => "p"
         opt :dbname,                      "Database Name",                                                  :type => :string,  :short => "d", :default => "vmdb_production"
+        opt :local_file,                  "Source/Destination file for DB dump/backup/restore",             :type => :string,  :shoft => "l"
+        opt :dump,                        "Perform a pg-dump"
+        opt :backup,                      "Perform a pg-basebackup"
+        opt :restore,                     "Restore a database dump/backup"
         opt :standalone,                  "Run this server as a standalone database server",                :type => :bool,    :short => 'S'
         opt :key,                         "Create encryption key",                                          :type => :boolean, :short => "k"
         opt :fetch_key,                   "SSH host with encryption key",                                   :type => :string,  :short => "K"
@@ -218,11 +238,12 @@ module ApplianceConsole
     end
 
     def region_number_required?
-      !options[:standalone] && local_database?
+      !options[:standalone] && local_database? && !database_admin?
     end
 
     def run
-      Optimist.educate unless set_host? || key? || database? || tmp_disk? || log_disk? ||
+      Optimist.educate unless set_host? || key? || database? || db_dump? || db_backup? ||
+                              db_restore? || tmp_disk? || log_disk? ||
                               uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
                               set_server_state? || set_replication? || openscap? ||
                               saml_config? || saml_unconfig? ||
@@ -240,6 +261,9 @@ module ApplianceConsole
       create_key if key?
       set_db if database?
       set_replication if set_replication?
+      db_dump if db_dump?
+      db_backup if db_backup?
+      db_restore if db_restore?
       config_tmp_disk if tmp_disk?
       config_log_disk if log_disk?
       uninstall_ipa if uninstall_ipa?
@@ -342,6 +366,33 @@ module ApplianceConsole
       db_replication.node_number = options[:cluster_node_number]
       db_replication.database_password = options[:password]
       db_replication.activate
+    end
+
+    def db_dump
+      PostgresAdmin.backup_pg_dump(extract_db_opts(options))
+    end
+
+    def db_backup
+      PostgresAdmin.backup(extract_db_opts(options))
+    end
+
+    def db_restore
+      PostgresAdmin.restore(extract_db_opts(options))
+    end
+
+    DB_OPT_KEYS = %i[dbname username password hostname port local_file].freeze
+    def extract_db_opts(options)
+      require 'manageiq/appliance_console/postgres_admin'
+
+      db_opts = {}
+
+      DB_OPT_KEYS.each { |k| db_opts[k] = options[k] if options[k] }
+
+      if db_dump? && options[:exclude_table_data]
+        db_opts[:exclude_table_data] = options[:exclude_table_data]
+      end
+
+      db_opts
     end
 
     def key_configuration
