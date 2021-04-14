@@ -60,6 +60,10 @@ shared_context "Database Restore Validation Helpers" do
   def set_spec_env_for_postgres_admin_basebackup_restore
     if defined?(PostgresRunner)
       PostgresRunner.set_env # can be reset by other specs
+      allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:with_pg_connection) do |&block|
+        PostgresRunner.with_connection(&block)
+      end
+
       allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:user).and_return(PostgresRunner.user)
       allow(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:group).and_return(PostgresRunner.group)
       allow(LinuxAdmin::Service).to receive(:new).with(ManageIQ::ApplianceConsole::PostgresAdmin.service_name)

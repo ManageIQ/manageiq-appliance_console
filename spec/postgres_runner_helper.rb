@@ -53,6 +53,10 @@ class PostgresRunner
     Etc.getgrgid(Etc.getpwnam(Etc.getlogin).gid).name
   end
 
+  def self.with_connection(&block)
+    instance.send(:with_connection, &block)
+  end
+
   def initialize
     initdb
     set_env
