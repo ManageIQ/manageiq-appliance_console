@@ -51,7 +51,7 @@ module ApplianceConsole
       conn = PG.connect(db_opts)
       yield conn
     ensure
-      conn.close
+      conn.close if conn
     end
 
     def self.initialized?
