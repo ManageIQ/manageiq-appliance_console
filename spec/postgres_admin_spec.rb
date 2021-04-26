@@ -71,15 +71,9 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
       end
     end
 
-    # Note, we aren't actually prefetching the magic here, but this is mean to
-    # simulate that an override works as expected.  We are stubbing the the
-    # restore calls here, so just making sure the logic works.
-    context "'pre-fetching' magic number" do
+    context "when passing in :backup_type" do
       let(:dummy_base_opts) { { :local_file => "foo" } }
 
-      # Please note:  These `.expect` calls are VERY IMPORTANT validations
-      # happening, as we want to prioritize the `:backup_type` option over the
-      # calls the `.pg_dump_file?` and `.base_backup_file?` when possible.
       before do
         set_spec_env_for_postgres_admin_basebackup_restore unless ENV["CI"]
 

@@ -112,11 +112,9 @@ module ApplianceConsole
 
       prepare_restore(backup_type, opts[:dbname])
 
-      case
-      when backup_type == :pgdump     then restore_pg_dump(opts)
-      when backup_type == :basebackup then restore_pg_basebackup(file)
-      when pg_dump_file?(file)        then restore_pg_dump(opts)
-      when base_backup_file?(file)    then restore_pg_basebackup(file)
+      case backup_type
+      when :pgdump     then restore_pg_dump(opts)
+      when :basebackup then restore_pg_basebackup(file)
       else
         raise "#{file} is not a database backup"
       end
