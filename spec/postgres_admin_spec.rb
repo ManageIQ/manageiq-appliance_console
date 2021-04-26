@@ -58,6 +58,15 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
         expect(author_count).to eq(2)
         expect(book_count).to   eq(3)
       end
+
+      after do
+        if defined?(PostgresRunner)
+          PostgresRunner.hard_reset
+        else
+          CiPostgresRunner.stop
+          CiPostgresRunner.start
+        end
+      end
     end
 
     # Note, we aren't actually prefetching the magic here, but this is mean to
