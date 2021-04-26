@@ -12,6 +12,7 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
       let(:dbname) { "pg_dump_restore_of_simple_db" }
 
       it "restores all of the tables to the new database name" do
+        set_spec_env_for_postgres_admin_basebackup_restore unless ENV["CI"]
         restore_opts = RestoreHelper.default_restore_dump_opts.dup
         restore_opts[:dbname] = dbname
         described_class.restore(restore_opts)
@@ -79,8 +80,11 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
       # happening, as we want to prioritize the `:backup_type` option over the
       # calls the `.pg_dump_file?` and `.base_backup_file?` when possible.
       before do
+        set_spec_env_for_postgres_admin_basebackup_restore unless ENV["CI"]
+
         expect(described_class).to receive(:pg_dump_file?).never
         expect(described_class).to receive(:base_backup_file?).never
+        expect(described_class).to receive(:prepare_restore)
       end
 
       it "calls `.restore_pg_dump` with :backup_type => :pgdump" do
