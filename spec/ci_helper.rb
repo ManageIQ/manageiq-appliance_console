@@ -9,10 +9,10 @@ class CiPostgresRunner
 
   def self.start
     # Make sure we have our postgresql.conf in the right spot on Travis
-    system("cp #{PGDATADIR}/postgresql.conf #{PGCONFIGDIR}/postgresql.conf")
+    system("sudo cp #{PGDATADIR}/postgresql.conf #{PGCONFIGDIR}/postgresql.conf")
 
     # Move our configured `pg_hba.conf` to the config dir as well
-    system("cp #{PGDATADIR}/pg_hba.conf #{PGCONFIGDIR}/pg_hba.conf")
+    system("sudo cp #{PGDATADIR}/pg_hba.conf #{PGCONFIGDIR}/pg_hba.conf")
 
     # Make sure directly in the postgresql.conf, the data_directory is set
     # (requirement for pg_wrapper I think...)
