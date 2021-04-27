@@ -16,7 +16,7 @@ class CiPostgresRunner
 
     # Make sure directly in the postgresql.conf, the data_directory is set
     # (requirement for pg_wrapper I think...)
-    system("echo \"data_directory = '#{PGDATADIR}'\" >> #{PGCONFIGDIR}/postgresql.conf")
+    system("sudo sed -i -e \"\\$adata_directory = '#{PGDATADIR}'\" #{PGCONFIGDIR}/postgresql.conf")
 
     # Finally, restart the postgres service
     system("sudo systemctl start postgresql@10-main", :out => File::NULL)
