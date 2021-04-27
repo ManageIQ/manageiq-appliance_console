@@ -59,4 +59,14 @@ if defined?(RSpec)
       PgEnvironmentUpdater.create_stub_manageiq_configs_on_ci
     end
   end
+else
+  # If loaded in a non-rspec context, ensure that logger is setup, without
+  # needing the reset of lib/mangeiq-appliance_console.rb to be loaded.
+  module ManageIQ
+    module ApplianceConsole
+      def self.logger
+        @logger ||= Logger.new(File::NULL)
+      end
+    end
+  end
 end
