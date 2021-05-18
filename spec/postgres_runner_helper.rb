@@ -28,6 +28,10 @@ class PostgresRunner
     instance.stop
   end
 
+  def self.hard_reset
+    instance.hard_reset
+  end
+
   def self.running?
     instance.running?
   end
@@ -53,7 +57,18 @@ class PostgresRunner
     Etc.getgrgid(Etc.getpwnam(Etc.getlogin).gid).name
   end
 
+  def self.with_connection(&block)
+    instance.send(:with_connection, &block)
+  end
+
   def initialize
+    dirname = File.basename(Dir::Tmpname.create(["postgres_admin", "-data"], '') {})
+    @db_dir = File.expand_path(dirname, __dir__)
+
+    initial_setup
+  end
+
+  def initial_setup
     initdb
     set_env
     set_port
@@ -71,6 +86,12 @@ class PostgresRunner
   def stop
     return unless running?
     system("#{pg_ctl} stop -D #{db_dir} -wm fast", :out => File::NULL)
+  end
+
+  def hard_reset
+    stop
+    clean
+    initial_setup
   end
 
   def clean
@@ -94,7 +115,7 @@ class PostgresRunner
   private
 
   def set_port
-    @port = TCPServer.open("127.0.0.1", 0) { |sock| sock.addr[1] }
+    @port ||= TCPServer.open("127.0.0.1", 0) { |sock| sock.addr[1] }
   end
 
   def pid_file
@@ -102,9 +123,6 @@ class PostgresRunner
   end
 
   def initdb
-    dirname = File.basename(Dir::Tmpname.create(["postgres_admin", "-data"], '') { })
-    @db_dir = File.expand_path(dirname, __dir__)
-
     system("#{pg_ctl} init -D #{db_dir} -o '-A trust'", :out => File::NULL)
   end
 

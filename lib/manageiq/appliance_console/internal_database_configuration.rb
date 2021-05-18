@@ -1,6 +1,5 @@
 require "pathname"
 require "manageiq/appliance_console/postgres_admin"
-require "pg"
 require "linux_admin"
 
 module ManageIQ
@@ -149,14 +148,14 @@ module ApplianceConsole
     end
 
     def create_postgres_root_user
-      with_pg_connection do |conn|
+      PostgresAdmin.with_pg_connection do |conn|
         esc_pass = conn.escape_string(password)
         conn.exec("CREATE ROLE #{username} WITH LOGIN CREATEDB SUPERUSER PASSWORD '#{esc_pass}'")
       end
     end
 
     def create_postgres_database
-      with_pg_connection do |conn|
+      PostgresAdmin.with_pg_connection do |conn|
         conn.exec("CREATE DATABASE #{database} OWNER #{username} ENCODING 'utf8'")
       end
     end
@@ -165,16 +164,9 @@ module ApplianceConsole
       AwesomeSpawn.run!("/sbin/restorecon -R -v #{mount_point}")
     end
 
-    def with_pg_connection
-      conn = PG.connect(:user => "postgres", :dbname => "postgres")
-      yield conn
-    ensure
-      conn.close
-    end
-
     def apply_initial_configuration
       shared_buffers = run_as_evm_server ? SHARED_DB_SHARED_BUFFERS : DEDICATED_DB_SHARED_BUFFERS
-      with_pg_connection { |conn| conn.exec("ALTER SYSTEM SET shared_buffers TO #{shared_buffers}") }
+      PostgresAdmin.with_pg_connection { |conn| conn.exec("ALTER SYSTEM SET shared_buffers TO #{shared_buffers}") }
 
       restart_postgres
     end

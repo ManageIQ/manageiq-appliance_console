@@ -9,14 +9,11 @@ class CiPostgresRunner
 
   def self.start
     # Make sure we have our postgresql.conf in the right spot on Travis
-    system("cp #{PGDATADIR}/postgresql.conf #{PGCONFIGDIR}/postgresql.conf")
-
-    # Move our configured `pg_hba.conf` to the config dir as well
-    system("cp #{PGDATADIR}/pg_hba.conf #{PGCONFIGDIR}/pg_hba.conf")
+    system("sudo cp #{PGDATADIR}/postgresql.conf #{PGCONFIGDIR}/postgresql.conf")
 
     # Make sure directly in the postgresql.conf, the data_directory is set
     # (requirement for pg_wrapper I think...)
-    system("echo \"data_directory = '#{PGDATADIR}'\" >> #{PGCONFIGDIR}/postgresql.conf")
+    system("sudo sed -i -e \"\\$adata_directory = '#{PGDATADIR}'\" #{PGCONFIGDIR}/postgresql.conf")
 
     # Finally, restart the postgres service
     system("sudo systemctl start postgresql@10-main", :out => File::NULL)
@@ -57,6 +54,16 @@ if defined?(RSpec)
 
       PgEnvironmentUpdater.create_root_role
       PgEnvironmentUpdater.create_stub_manageiq_configs_on_ci
+    end
+  end
+else
+  # If loaded in a non-rspec context, ensure that logger is setup, without
+  # needing the reset of lib/mangeiq-appliance_console.rb to be loaded.
+  module ManageIQ
+    module ApplianceConsole
+      def self.logger
+        @logger ||= Logger.new(File::NULL)
+      end
     end
   end
 end

@@ -39,22 +39,6 @@ en:
     summary: Summary Information
     quit: Quit
   database_admin:
-    menu_order:
-    - local
-    - nfs
-    - smb
-    - s3
-    - ftp
-    - swift
     local: Local file
-    nfs: Network File System (NFS)
-    smb: Samba (SMB)
-    s3: Amazon S3 (S3)
-    ftp: File Transfer Protocol (FTP)
-    swift: OpenStack Swift (Swift)
     sample_url:
       nfs: nfs://host.mydomain.com/exported/my_exported_folder/db.backup
-      smb: smb://host.mydomain.com/my_share/daily_backup/db.backup
-      s3: s3://mybucket/my_subdirectory/daily_backup/db.backup
-      ftp: ftp://host.mydomain.com/path/to/daily_backup/db.backup
-      swift: swift://host.mydomain.com/path/to/daily_backup/db.backup

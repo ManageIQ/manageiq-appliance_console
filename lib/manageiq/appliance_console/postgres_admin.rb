@@ -1,6 +1,7 @@
 require 'awesome_spawn'
 require 'pathname'
 require 'linux_admin'
+require 'pg'
 
 module ManageIQ
 module ApplianceConsole
@@ -44,6 +45,13 @@ module ApplianceConsole
 
     def self.database_disk_filesystem
       "xfs".freeze
+    end
+
+    def self.with_pg_connection(db_opts = {:user => user, :dbname => user})
+      conn = PG.connect(db_opts)
+      yield conn
+    ensure
+      conn.close if conn
     end
 
     def self.initialized?
@@ -100,13 +108,13 @@ module ApplianceConsole
 
     def self.restore(opts)
       file        = opts[:local_file]
-      backup_type = opts.delete(:backup_type)
+      backup_type = opts.delete(:backup_type) || validate_backup_file_type(file)
 
-      case
-      when backup_type == :pgdump     then restore_pg_dump(opts)
-      when backup_type == :basebackup then restore_pg_basebackup(file)
-      when pg_dump_file?(file)        then restore_pg_dump(opts)
-      when base_backup_file?(file)    then restore_pg_basebackup(file)
+      prepare_restore(backup_type, opts[:dbname])
+
+      case backup_type
+      when :pgdump     then restore_pg_dump(opts)
+      when :basebackup then restore_pg_basebackup(file)
       else
         raise "#{file} is not a database backup"
       end
@@ -142,6 +150,7 @@ module ApplianceConsole
       args = combine_command_args(opts, :format => "c", :file => opts[:local_file], nil => dbname)
       args = handle_multi_value_pg_dump_args!(opts, args)
 
+      FileUtils.mkdir_p(File.dirname(opts.fetch(:local_file, "")))
       run_command_with_logging("pg_dump", opts, args)
       opts[:local_file]
     end
@@ -319,6 +328,84 @@ module ApplianceConsole
       end
     ensure
       File.delete(error_path) if File.exist?(error_path)
+    end
+
+    private_class_method def self.prepare_restore(backup_type, dbname)
+      if application_connections?
+        message = "Database restore failed. Shut down all evmserverd processes before attempting a database restore"
+        ManageIQ::ApplianceConsole.logger.error(message)
+        raise message
+      end
+
+      disable_replication(dbname)
+
+      conn_count = connection_count(backup_type, dbname)
+      if conn_count > 1
+        message = "Database restore failed. #{conn_count - 1} connections remain to the database."
+        ManageIQ::ApplianceConsole.logger.error(message)
+        raise message
+      end
+    end
+
+    private_class_method def self.application_connections?
+      result = [{"count" => 0}]
+
+      with_pg_connection do |conn|
+        result = conn.exec("SELECT COUNT(pid) FROM pg_stat_activity WHERE application_name LIKE '%MIQ%'")
+      end
+
+      result[0]["count"].to_i > 0
+    end
+
+    private_class_method def self.disable_replication(dbname)
+      require 'pg/logical_replication'
+
+      with_pg_connection do |conn|
+        pglogical = PG::LogicalReplication::Client.new(conn)
+
+        if pglogical.subscriber?
+          pglogical.subcriptions(dbname).each do |subscriber|
+            sub_id = subscriber["subscription_name"]
+            begin
+              pglogical.drop_subscription(sub_id, true)
+            rescue PG::InternalError => e
+              raise unless e.message.include?("could not connect to publisher")
+              raise unless e.message.match?(/replication slot .* does not exist/)
+
+              pglogical.disable_subscription(sub_id).check
+              pglogical.alter_subscription_options(sub_id, "slot_name" => "NONE")
+              pglogical.drop_subscription(sub_id, true)
+            end
+          end
+        elsif pglogical.publishes?('miq')
+          pglogical.drop_publication('miq')
+        end
+      end
+    end
+
+    private_class_method def self.connection_count(backup_type, dbname)
+      result = nil
+
+      with_pg_connection do |conn|
+        query  = "SELECT COUNT(pid) FROM pg_stat_activity"
+        query << " WHERE backend_type = 'client backend'" if backup_type == :basebackup
+        query << " WHERE datname = '#{dbname}'"           if backup_type == :pgdump
+        result = conn.exec(query)
+      end
+
+      result[0]["count"].to_i
+    end
+
+    private_class_method def self.validate_backup_file_type(file)
+      if base_backup_file?(file)
+        :basebackup
+      elsif pg_dump_file?(file)
+        :pgdump
+      else
+        message = "#{filename} is not in a recognized database backup format"
+        ManageIQ::ApplianceConsole.error(message)
+        raise message
+      end
     end
   end
 end
