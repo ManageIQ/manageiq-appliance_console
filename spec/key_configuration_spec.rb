@@ -62,7 +62,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           v2_exists(true)  # after downloaded
           expect(Net::SCP).to receive(:start).with(host, "root", :password => password)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
-          expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chmod).with(0o440, /v2_key/).and_return(["v2_key"])
           expect(subject.activate).to be_truthy
         end
 
@@ -71,7 +71,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           v2_exists(false)
           expect(ManageIQ::Password).to receive(:generate_symmetric).and_return(154)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
-          expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chmod).with(0o440, /v2_key/).and_return(["v2_key"])
           expect(subject.activate).to be_truthy
         end
       end
@@ -85,7 +85,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           expect(scp).to receive(:download!).with(subject.key_path, /v2_key/).and_return(:result)
           expect(Net::SCP).to receive(:start).with(host, "root", :password => password).and_yield(scp).and_return(true)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
-          expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chmod).with(0o440, /v2_key/).and_return(["v2_key"])
           expect(subject.activate).to be_truthy
         end
 

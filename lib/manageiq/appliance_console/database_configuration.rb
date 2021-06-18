@@ -275,7 +275,7 @@ FRIENDLY
 
     def do_save(settings)
       require 'yaml'
-      File.write(DB_YML, YAML.dump(settings))
+      File.write(DB_YML, YAML.dump(settings), :perm => 0o440)
     end
 
     def initialize_from_hash(hash)

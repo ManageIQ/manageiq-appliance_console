@@ -73,7 +73,7 @@ module ApplianceConsole
         say("Failed to overwrite original key, original key kept. #{e.message}")
         return false
       end
-      FileUtils.chmod(0o400, KEY_FILE)
+      File.chmod(0o440, KEY_FILE)
     end
 
     def remove_new_key_if_any
