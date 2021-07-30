@@ -275,7 +275,10 @@ FRIENDLY
 
     def do_save(settings)
       require 'yaml'
-      File.write(DB_YML, YAML.dump(settings))
+      File.open(DB_YML, "w") do |f|
+        f.write(YAML.dump(settings))
+        f.chown(manageiq_uid, manageiq_gid)
+      end
     end
 
     def initialize_from_hash(hash)
@@ -288,6 +291,14 @@ FRIENDLY
           raise ArgumentError, "Invalid argument: #{k}"
         end
       end
+    end
+
+    def manageiq_uid
+      @manageiq_uid ||= Process::UID.from_name("manageiq")
+    end
+
+    def manageiq_gid
+      @manageiq_gid ||= Process::GID.from_name("manageiq")
     end
   end
 end
