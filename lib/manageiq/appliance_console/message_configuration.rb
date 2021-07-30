@@ -116,7 +116,10 @@ module ManageIQ
           messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
         end
 
-        File.write(messaging_yaml_path, messaging_yaml.to_yaml)
+        File.open(messaging_yaml_path, "w") do |f|
+          f.write(messaging_yaml.to_yaml)
+          f.chown(manageiq_uid, manageiq_gid)
+        end
       end
 
       def remove_installed_files
@@ -192,6 +195,14 @@ module ManageIQ
 
       def secure?
         message_server_port == 9_093
+      end
+
+      def manageiq_uid
+        @manageiq_uid ||= Process::UID.from_name("manageiq")
+      end
+
+      def manageiq_gid
+        @manageiq_gid ||= Process::GID.from_name("manageiq")
       end
     end
   end
