@@ -1,3 +1,5 @@
+require 'manageiq/appliance_console/postgres_admin'
+
 describe ManageIQ::ApplianceConsole::Cli do
   subject { described_class.new }
 
@@ -218,6 +220,90 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect(config_double).to_not receive(:post_activation)
 
       subject.run
+    end
+  end
+
+  describe "#db_dump" do
+    it "runs PostgresAdmin.backup_pg_dump" do
+      expected_db_opts = {
+        :dbname     => "vmdb_production",
+        :username   => "root",
+        :port       => 5432,
+        :local_file => "/tmp/vmdb_pg_dump"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:backup_pg_dump).with(expected_db_opts)
+      subject.parse(%w[--dump --local-file /tmp/vmdb_pg_dump]).run
+    end
+
+    it "handles custom options" do
+      expected_db_opts = {
+        :dbname     => "my_vmdb",
+        :username   => "admin",
+        :password   => "smartvm",
+        :hostname   => "host",
+        :port       => 2345,
+        :local_file => "/tmp/vmdb_pg_dump"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:backup_pg_dump).with(expected_db_opts)
+      subject.parse(%w[--dump --dbname my_vmdb -U admin -p smartvm -h host --port 2345 -l /tmp/vmdb_pg_dump]).run
+    end
+  end
+
+  describe "#db_backup" do
+    it "runs PostgresAdmin.backup" do
+      expected_db_opts = {
+        :dbname     => "vmdb_production",
+        :username   => "root",
+        :port       => 5432,
+        :local_file => "/tmp/vmdb_pg_backup"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:backup).with(expected_db_opts)
+      subject.parse(%w[--backup --local-file /tmp/vmdb_pg_backup]).run
+    end
+
+    it "handles custom options" do
+      expected_db_opts = {
+        :dbname     => "my_vmdb",
+        :username   => "admin",
+        :password   => "smartvm",
+        :hostname   => "host",
+        :port       => 2345,
+        :local_file => "/tmp/vmdb_pg_backup"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:backup).with(expected_db_opts)
+      subject.parse(%w[--backup --dbname my_vmdb -U admin -p smartvm -h host --port 2345 -l /tmp/vmdb_pg_backup]).run
+    end
+  end
+
+  describe "#db_restore" do
+    it "runs PostgresAdmin.restore" do
+      expected_db_opts = {
+        :dbname     => "vmdb_production",
+        :username   => "root",
+        :port       => 5432,
+        :local_file => "/tmp/vmdb_pg_backup"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:restore).with(expected_db_opts)
+      subject.parse(%w[--restore --local-file /tmp/vmdb_pg_backup]).run
+    end
+
+    it "handles custom options" do
+      expected_db_opts = {
+        :dbname     => "my_vmdb",
+        :username   => "admin",
+        :password   => "smartvm",
+        :hostname   => "host",
+        :port       => 2345,
+        :local_file => "/tmp/vmdb_pg_backup"
+      }
+
+      expect(ManageIQ::ApplianceConsole::PostgresAdmin).to receive(:restore).with(expected_db_opts)
+      subject.parse(%w[--restore --dbname my_vmdb -U admin -p smartvm -h host --port 2345 -l /tmp/vmdb_pg_backup]).run
     end
   end
 
