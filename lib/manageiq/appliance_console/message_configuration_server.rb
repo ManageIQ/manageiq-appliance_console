@@ -184,6 +184,8 @@ module ManageIQ
 
         keystore_params = assemble_keystore_params
 
+        FileUtils.mkdir_p(keystore_dir_path) unless keystore_dir_path.directory?
+
         # Generte a Java keystore and key pair, creating keystore.jks
         # :stdin_data provides the -storepass twice to confirm and an extra CR to accept the same password for -keypass
         AwesomeSpawn.run!("keytool", :params => keystore_params, :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")

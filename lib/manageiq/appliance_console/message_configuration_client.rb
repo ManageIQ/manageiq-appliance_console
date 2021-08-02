@@ -82,6 +82,8 @@ module ManageIQ
       def fetch_from_server(src_file, dst_file)
         return if file_found?(dst_file)
 
+        FileUtils.mkdir_p(dst_file.dirname) unless dst_file.dirname.directory?
+
         Net::SCP.start(message_server_host, message_server_username, :password => message_server_password) do |scp|
           scp.download!(src_file, dst_file)
         end
