@@ -82,8 +82,7 @@ module ApplianceConsole
         say("\nUpdating external authentication options on appliance ...")
         params = update_hash.collect { |key, value| "#{key}=#{value}" }
         params = configure_provider_type!(params)
-        result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", params)
-        raise parse_errors(result).join(', ') if result.failure?
+        ManageIQ::ApplianceConsole::Utilities.rake_run!("evm:settings:set", params)
       end
     end
 
@@ -152,17 +151,8 @@ module ApplianceConsole
 
     def load_current
       say("\nFetching external authentication options from appliance ...")
-      result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:get", EXT_AUTH_OPTIONS.keys)
-
-      if result.success?
-        return parse_response(result)
-      else
-        raise parse_errors(result).join(', ')
-      end
-    end
-
-    def parse_errors(result)
-      result.error.split("\n").collect { |line| line if line =~ /^error: /i }.compact
+      result = ManageIQ::ApplianceConsole::Utilities.rake_run!("evm:settings:get", EXT_AUTH_OPTIONS.keys)
+      parse_response(result)
     end
 
     def normalize_key(key)

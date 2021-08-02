@@ -175,8 +175,7 @@ module ManageIQ
       def configure_messaging_type(value)
         say(__method__.to_s.tr("_", " ").titleize)
 
-        result = ManageIQ::ApplianceConsole::Utilities.rake_run("evm:settings:set", ["/prototype/messaging_type=#{value}"])
-        raise parse_errors(result).join(', ') if result.failure?
+        ManageIQ::ApplianceConsole::Utilities.rake_run!("evm:settings:set", ["/prototype/messaging_type=#{value}"])
       end
 
       def restart_evmserverd
@@ -193,12 +192,6 @@ module ManageIQ
 
       def secure?
         message_server_port == 9_093
-      end
-
-      private
-
-      def parse_errors(result)
-        result.error.split("\n").collect { |line| line if line =~ /^error: /i }.compact
       end
     end
   end
