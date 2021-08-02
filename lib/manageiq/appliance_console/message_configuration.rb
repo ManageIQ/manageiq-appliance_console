@@ -194,6 +194,12 @@ module ManageIQ
       def secure?
         message_server_port == 9_093
       end
+
+      private
+
+      def parse_errors(result)
+        result.error.split("\n").collect { |line| line if line =~ /^error: /i }.compact
+      end
     end
   end
 end
