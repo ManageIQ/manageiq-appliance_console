@@ -93,9 +93,9 @@ module ApplianceConsole
     end
 
     def create_key
-      result = !!ManageIQ::Password.generate_symmetric(NEW_KEY_FILE)
-      File.chown(manageiq_uid, manageiq_gid, NEW_KEY_FILE) if result
-      result
+      return unless !!ManageIQ::Password.generate_symmetric(NEW_KEY_FILE)
+
+      File.chown(manageiq_uid, manageiq_gid, NEW_KEY_FILE)
     end
 
     def fetch_key
