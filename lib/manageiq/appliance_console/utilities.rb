@@ -16,6 +16,16 @@ module ApplianceConsole
       result
     end
 
+    def self.rake_run!(task, params)
+      result = rake_run(task, params)
+      if result.failure?
+        parsed_errors = result.error.split("\n").select { |line| line.match?(/^error: /i) }.join(', ')
+        raise parsed_errors
+      end
+
+      result
+    end
+
     def self.db_connections
       result = AwesomeSpawn.run("bin/rails runner",
                                 :params => ["exit EvmDatabaseOps.database_connections"],
