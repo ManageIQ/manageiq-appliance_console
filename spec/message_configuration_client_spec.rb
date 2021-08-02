@@ -27,6 +27,9 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     FileUtils.mkdir_p("#{@tmp_base_dir}/config")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
+
+    allow(Process::UID).to receive(:from_name).with("manageiq").and_return(Process.uid)
+    allow(Process::GID).to receive(:from_name).with("manageiq").and_return(Process.gid)
   end
 
   after do
