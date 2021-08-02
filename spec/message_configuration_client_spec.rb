@@ -271,7 +271,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     shared_examples "messaging yaml file" do
       it "creates the messaging yaml file" do
-        expect(subject.send(:configure_messaging_yaml)).to be_positive
+        subject.send(:configure_messaging_yaml)
         expect(subject.messaging_yaml_path).to exist
       end
 
@@ -284,6 +284,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
       it "correctly populates the messaging yaml file" do
         expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
+        expect(File).to receive(:chown).with(Process.uid, Process.gid, subject.messaging_yaml_path)
         expect(subject.send(:configure_messaging_yaml)).to be_nil
       end
     end
