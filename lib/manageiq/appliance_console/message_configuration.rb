@@ -1,9 +1,13 @@
 require 'active_support/core_ext/module/delegation'
 require 'pathname'
 
+require_relative './manageiq_user_mixin'
+
 module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
+      include ManageIQ::ApplianceConsole::ManageiqUserMixin
+
       attr_reader :message_keystore_username, :message_keystore_password,
                   :message_server_host, :message_server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
@@ -195,14 +199,6 @@ module ManageIQ
 
       def secure?
         message_server_port == 9_093
-      end
-
-      def manageiq_uid
-        @manageiq_uid ||= Process::UID.from_name("manageiq")
-      end
-
-      def manageiq_gid
-        @manageiq_gid ||= Process::GID.from_name("manageiq")
       end
     end
   end

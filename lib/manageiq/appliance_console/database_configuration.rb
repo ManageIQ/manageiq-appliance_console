@@ -5,9 +5,13 @@ require 'manageiq-password'
 require 'pathname'
 require 'fileutils'
 
+require_relative './manageiq_user_mixin'
+
 module ManageIQ
 module ApplianceConsole
   class DatabaseConfiguration
+    include ManageIQ::ApplianceConsole::ManageiqUserMixin
+
     attr_accessor :adapter, :host, :username, :database, :port, :region
     attr_reader :password
 
@@ -291,14 +295,6 @@ FRIENDLY
           raise ArgumentError, "Invalid argument: #{k}"
         end
       end
-    end
-
-    def manageiq_uid
-      @manageiq_uid ||= Process::UID.from_name("manageiq")
-    end
-
-    def manageiq_gid
-      @manageiq_gid ||= Process::GID.from_name("manageiq")
     end
   end
 end
