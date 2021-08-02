@@ -1,4 +1,9 @@
 describe ManageIQ::ApplianceConsole::KeyConfiguration do
+  before do
+    allow(Process::UID).to receive(:from_name).with("manageiq").and_return(Process.uid)
+    allow(Process::GID).to receive(:from_name).with("manageiq").and_return(Process.gid)
+  end
+
   context "#ask_questions" do
     subject { Class.new(described_class).tap { |c| c.include(ManageIQ::ApplianceConsole::Prompts) }.new }
 
@@ -63,6 +68,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           expect(Net::SCP).to receive(:start).with(host, "root", :password => password)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
           expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chown).with(Process.uid, Process.gid, /v2_key\.tmp/)
           expect(subject.activate).to be_truthy
         end
 
@@ -72,6 +78,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           expect(ManageIQ::Password).to receive(:generate_symmetric).and_return(154)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
           expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chown).with(Process.uid, Process.gid, /v2_key\.tmp/)
           expect(subject.activate).to be_truthy
         end
       end
@@ -86,6 +93,7 @@ describe ManageIQ::ApplianceConsole::KeyConfiguration do
           expect(Net::SCP).to receive(:start).with(host, "root", :password => password).and_yield(scp).and_return(true)
           expect(FileUtils).to receive(:mv).with(/v2_key\.tmp/, /v2_key$/, :force=>true).and_return(true)
           expect(FileUtils).to receive(:chmod).with(0o400, /v2_key/).and_return(["v2_key"])
+          expect(File).to receive(:chown).with(Process.uid, Process.gid, /v2_key\.tmp/)
           expect(subject.activate).to be_truthy
         end
 

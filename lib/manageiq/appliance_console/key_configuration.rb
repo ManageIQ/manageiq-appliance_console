@@ -4,6 +4,8 @@ require 'net/scp'
 require 'active_support/all'
 require 'manageiq-password'
 
+require_relative './manageiq_user_mixin'
+
 module ManageIQ
 module ApplianceConsole
   CERT_DIR = ENV['KEY_ROOT'] || ManageIQ::ApplianceConsole::RAILS_ROOT.join("certs")
@@ -11,6 +13,8 @@ module ApplianceConsole
   NEW_KEY_FILE = "#{KEY_FILE}.tmp".freeze
 
   class KeyConfiguration
+    include ManageIQ::ApplianceConsole::ManageiqUserMixin
+
     attr_accessor :host, :login, :password, :key_path, :action, :force
 
     def initialize(options = {})
@@ -89,7 +93,9 @@ module ApplianceConsole
     end
 
     def create_key
-      ManageIQ::Password.generate_symmetric(NEW_KEY_FILE) && true
+      result = !!ManageIQ::Password.generate_symmetric(NEW_KEY_FILE)
+      File.chown(manageiq_uid, manageiq_gid, NEW_KEY_FILE) if result
+      result
     end
 
     def fetch_key
@@ -97,6 +103,7 @@ module ApplianceConsole
       Net::SCP.start(host, login, :password => password) do |scp|
         scp.download!(key_path, NEW_KEY_FILE)
       end
+      File.chown(manageiq_uid, manageiq_gid, NEW_KEY_FILE)
       File.exist?(NEW_KEY_FILE)
     rescue => e
       say("Failed to fetch key: #{e.message}")
