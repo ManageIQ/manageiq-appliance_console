@@ -1,9 +1,13 @@
 require 'active_support/core_ext/module/delegation'
 require 'pathname'
 
+require_relative './manageiq_user_mixin'
+
 module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
+      include ManageIQ::ApplianceConsole::ManageiqUserMixin
+
       attr_reader :message_keystore_username, :message_keystore_password,
                   :message_server_host, :message_server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
@@ -116,7 +120,10 @@ module ManageIQ
           messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
         end
 
-        File.write(messaging_yaml_path, messaging_yaml.to_yaml)
+        File.open(messaging_yaml_path, "w") do |f|
+          f.write(messaging_yaml.to_yaml)
+          f.chown(manageiq_uid, manageiq_gid)
+        end
       end
 
       def remove_installed_files

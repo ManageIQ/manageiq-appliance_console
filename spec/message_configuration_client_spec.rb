@@ -27,6 +27,9 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     FileUtils.mkdir_p("#{@tmp_base_dir}/config")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
+
+    allow(Process::UID).to receive(:from_name).with("manageiq").and_return(Process.uid)
+    allow(Process::GID).to receive(:from_name).with("manageiq").and_return(Process.gid)
   end
 
   after do
@@ -268,7 +271,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     shared_examples "messaging yaml file" do
       it "creates the messaging yaml file" do
-        expect(subject.send(:configure_messaging_yaml)).to be_positive
+        subject.send(:configure_messaging_yaml)
         expect(subject.messaging_yaml_path).to exist
       end
 
@@ -280,7 +283,12 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       end
 
       it "correctly populates the messaging yaml file" do
-        expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
+        allow(File).to receive(:open).and_call_original
+
+        file_stub = double("File")
+        expect(File).to receive(:open).with(subject.messaging_yaml_path, "w").and_yield(file_stub)
+        expect(file_stub).to receive(:write).with(content)
+        expect(file_stub).to receive(:chown).with(Process.uid, Process.gid)
         expect(subject.send(:configure_messaging_yaml)).to be_nil
       end
     end

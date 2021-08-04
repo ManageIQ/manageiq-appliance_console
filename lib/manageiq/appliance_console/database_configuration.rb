@@ -5,9 +5,13 @@ require 'manageiq-password'
 require 'pathname'
 require 'fileutils'
 
+require_relative './manageiq_user_mixin'
+
 module ManageIQ
 module ApplianceConsole
   class DatabaseConfiguration
+    include ManageIQ::ApplianceConsole::ManageiqUserMixin
+
     attr_accessor :adapter, :host, :username, :database, :port, :region
     attr_reader :password
 
@@ -275,7 +279,10 @@ FRIENDLY
 
     def do_save(settings)
       require 'yaml'
-      File.write(DB_YML, YAML.dump(settings))
+      File.open(DB_YML, "w") do |f|
+        f.write(YAML.dump(settings))
+        f.chown(manageiq_uid, manageiq_gid)
+      end
     end
 
     def initialize_from_hash(hash)
