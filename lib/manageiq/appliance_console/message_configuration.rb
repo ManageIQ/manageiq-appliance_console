@@ -120,8 +120,10 @@ module ManageIQ
           messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
         end
 
-        File.write(messaging_yaml_path, messaging_yaml.to_yaml)
-        File.chown(manageiq_uid, manageiq_gid, messaging_yaml_path)
+        File.open(messaging_yaml_path, "w") do |f|
+          f.write(messaging_yaml.to_yaml)
+          f.chown(manageiq_uid, manageiq_gid)
+        end
       end
 
       def remove_installed_files

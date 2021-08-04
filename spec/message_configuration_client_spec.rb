@@ -283,8 +283,12 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       end
 
       it "correctly populates the messaging yaml file" do
-        expect(File).to receive(:write).with(subject.messaging_yaml_path, content)
-        expect(File).to receive(:chown).with(Process.uid, Process.gid, subject.messaging_yaml_path)
+        allow(File).to receive(:open).and_call_original
+
+        file_stub = double("File")
+        expect(File).to receive(:open).with(subject.messaging_yaml_path, "w").and_yield(file_stub)
+        expect(file_stub).to receive(:write).with(content)
+        expect(file_stub).to receive(:chown).with(Process.uid, Process.gid)
         expect(subject.send(:configure_messaging_yaml)).to be_nil
       end
     end
