@@ -63,8 +63,8 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
     end
 
     it "encrypts once" do
-      hash = {"production" => {"password" => "v1:{KSOqhNiOWJbR0lz7v6PTJg==}"}}
-      expect(described_class.encrypt_password(hash)["production"]["password"]).to eq("v1:{KSOqhNiOWJbR0lz7v6PTJg==}")
+      hash = {"production" => {"password" => "v2:{DUb5th63TM+zIB6RhnTtVg==}"}}
+      expect(described_class.encrypt_password(hash)["production"]["password"]).to eq("v2:{DUb5th63TM+zIB6RhnTtVg==}")
     end
 
     it "doesn't modify the receiver" do
