@@ -27,8 +27,13 @@ module ApplianceConsole
     end
 
     def self.db_connections
+      code   = [
+        "database ||= ActiveRecord::Base.configurations[Rails.env]['database']",
+        "conn = ActiveRecord::Base.connection",
+        "exit conn.client_connections.count { |c| c['database'] == database }"
+      ]
       result = AwesomeSpawn.run("bin/rails runner",
-                                :params => ["exit EvmDatabaseOps.database_connections"],
+                                :params => [code.join("; ")],
                                 :chdir  => ManageIQ::ApplianceConsole::RAILS_ROOT
                                )
       Integer(result.exit_status)
