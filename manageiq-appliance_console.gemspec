@@ -20,8 +20,8 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activerecord",            "~> 6.0.3.5"
-  spec.add_runtime_dependency "activesupport",           "~> 6.0.3.5"
+  spec.add_runtime_dependency "activerecord",            "~> 6.0.4", ">= 6.0.4.1"
+  spec.add_runtime_dependency "activesupport",           "~> 6.0.4", ">= 6.0.4.1"
   spec.add_runtime_dependency "awesome_spawn",           "~> 1.4"
   spec.add_runtime_dependency "bcrypt",                  "~> 3.1.10"
   spec.add_runtime_dependency "bcrypt_pbkdf",            ">= 1.0", "< 2.0"
