@@ -207,9 +207,7 @@ module ApplianceConsole
         opt :oidc_unconfig,               "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
         opt :server,                      "{start|stop|restart} actions on evmserverd Server",              :type => :string
         opt :openscap,                    "Setup OpenScap",                                                 :type => :boolean, :default => false
-        opt :message_server_config,       "Subcommand to   Configure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
         opt :message_server_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
-        opt :message_client_config,       "Subcommand to   Configure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
         opt :message_client_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
         opt :message_keystore_username,   "Message Server Keystore Username",                               :type => :string
         opt :message_keystore_password,   "Message Server Keystore Password",                               :type => :string
@@ -248,8 +246,7 @@ module ApplianceConsole
                               set_server_state? || set_replication? || openscap? ||
                               saml_config? || saml_unconfig? ||
                               oidc_config? || oidc_unconfig? ||
-                              message_server_config? || message_server_unconfig? ||
-                              message_client_config? || message_client_unconfig?
+                              message_server_unconfig? || message_client_unconfig?
 
       if set_host?
         system_hosts = LinuxAdmin::Hosts.new
@@ -276,9 +273,7 @@ module ApplianceConsole
       oidc_unconfig if oidc_unconfig?
       set_server_state if set_server_state?
       openscap if openscap?
-      message_server_config if message_server_config?
       message_server_unconfig if message_server_unconfig?
-      message_client_config if message_client_config?
       message_client_unconfig if message_client_unconfig?
     rescue CliError => e
       say(e.message)
@@ -509,7 +504,7 @@ module ApplianceConsole
     end
 
     def message_server_config
-      MessageServerConfiguration.new(options).configure
+      raise "Configuring a message server is not supported"
     end
 
     def message_server_unconfig
@@ -517,7 +512,7 @@ module ApplianceConsole
     end
 
     def message_client_config
-      MessageClientConfiguration.new(options).configure
+      raise "Configuring a message client is not supported"
     end
 
     def message_client_unconfig

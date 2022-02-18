@@ -811,7 +811,12 @@ describe ManageIQ::ApplianceConsole::Cli do
   end
 
   context "#message_server_config" do
-    it "should initiate Message Server config" do
+    it "should raise an error if --message-server-config is passed" do
+      expect { subject.parse(%w[--message-server-config --message-server-host server.example.com]).run }
+        .to raise_error(OptimistDieSpecError)
+    end
+
+    xit "should initiate Message Server config" do
       message_server = double
       expect(message_server).to receive(:configure)
       expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
@@ -820,7 +825,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
     end
 
-    it "should initiate Message Server config with ip addr" do
+    xit "should initiate Message Server config with ip addr" do
       message_server = double
       expect(message_server).to receive(:configure)
       expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
@@ -829,7 +834,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       subject.parse(%w[--message-server-config --message-server-use-ipaddr true --message-keystore-username user --message-keystore-password pass]).run
     end
 
-    it "should initiate Message Server config with persistent disk" do
+    xit "should initiate Message Server config with persistent disk" do
       message_server = double
       expect(message_server).to receive(:configure)
       expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
@@ -849,7 +854,12 @@ describe ManageIQ::ApplianceConsole::Cli do
   end
 
   context "#message_client_config" do
-    it "should initiate Message Client config" do
+    it "should raise an error if --message-client-config is passed" do
+      expect { subject.parse(%w[--message-server-host server.example.com]).run }
+        .to raise_error(OptimistEducateSpecError)
+    end
+
+    xit "should initiate Message Client config" do
       message_client = double
       expect(message_client).to receive(:configure)
       expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new)
