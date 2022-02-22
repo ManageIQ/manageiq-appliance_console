@@ -22,6 +22,10 @@ module ManageIQ
       SAMPLE_CONFIG_DIR                 = "#{BASE_DIR}/config-sample".freeze
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
+      def self.available?
+        File.exist?("#{BASE_DIR}/bin/kafka-run-class.sh")
+      end
+
       def initialize(options = {})
         @message_server_port        = options[:message_server_port] || 9093
         @message_keystore_username  = options[:message_keystore_username] || "admin"

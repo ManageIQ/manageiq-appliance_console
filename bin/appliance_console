@@ -425,7 +425,11 @@ Static Network Configuration
           say("#{selection}\n\n")
 
           message_server = MessageServerConfiguration.new
-          if message_server.ask_questions && message_server.configure
+          if !MessageServerConfiguration.available?
+            say("\nMessage Server configuration is unavailable!\n")
+            press_any_key
+            raise MiqSignalError
+          elsif message_server.ask_questions && message_server.configure
             say("\nMessage Server configured successfully.\n")
             press_any_key
           else
@@ -438,7 +442,11 @@ Static Network Configuration
           say("#{selection}\n\n")
 
           message_client = MessageClientConfiguration.new
-          if message_client.ask_questions && message_client.configure
+          if !MessageClientConfiguration.available?
+            say("\nMessage Client configuration is unavailable!\n")
+            press_any_key
+            raise MiqSignalError
+          elsif message_client.ask_questions && message_client.configure
             say("\nMessage Client configured successfully.\n")
             press_any_key
           else

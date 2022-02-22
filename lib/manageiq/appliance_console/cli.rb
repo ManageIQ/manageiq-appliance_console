@@ -509,6 +509,8 @@ module ApplianceConsole
     end
 
     def message_server_config
+      raise "Message Server Configuration is not available" unless MessageServerConfiguration.available?
+
       MessageServerConfiguration.new(options).configure
     end
 
@@ -517,6 +519,8 @@ module ApplianceConsole
     end
 
     def message_client_config
+      raise "Message Client Configuration is not available" unless MessageClientConfiguration.available?
+
       MessageClientConfiguration.new(options).configure
     end
 

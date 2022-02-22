@@ -811,31 +811,43 @@ describe ManageIQ::ApplianceConsole::Cli do
   end
 
   context "#message_server_config" do
-    it "should initiate Message Server config" do
-      message_server = double
-      expect(message_server).to receive(:configure)
-      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
-        .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
-        .and_return(message_server)
-      subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+    context "with kafka installed" do
+      before { allow(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:available?).and_return(true) }
+
+      it "should initiate Message Server config" do
+        message_server = double
+        expect(message_server).to receive(:configure)
+        expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+          .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass"))
+          .and_return(message_server)
+        subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass]).run
+      end
+
+      it "should initiate Message Server config with ip addr" do
+        message_server = double
+        expect(message_server).to receive(:configure)
+        expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+          .with(hash_including(:message_server_use_ipaddr => true, :message_keystore_username => "user", :message_keystore_password => "pass"))
+          .and_return(message_server)
+        subject.parse(%w[--message-server-config --message-server-use-ipaddr true --message-keystore-username user --message-keystore-password pass]).run
+      end
+
+      it "should initiate Message Server config with persistent disk" do
+        message_server = double
+        expect(message_server).to receive(:configure)
+        expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
+          .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass", :message_persistent_disk => "/dev/test"))
+          .and_return(message_server)
+        subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass --message-persistent-disk /dev/test]).run
+      end
     end
 
-    it "should initiate Message Server config with ip addr" do
-      message_server = double
-      expect(message_server).to receive(:configure)
-      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
-        .with(hash_including(:message_server_use_ipaddr => true, :message_keystore_username => "user", :message_keystore_password => "pass"))
-        .and_return(message_server)
-      subject.parse(%w[--message-server-config --message-server-use-ipaddr true --message-keystore-username user --message-keystore-password pass]).run
-    end
+    context "without kafka installed" do
+      before { allow(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:available?).and_return(false) }
 
-    it "should initiate Message Server config with persistent disk" do
-      message_server = double
-      expect(message_server).to receive(:configure)
-      expect(ManageIQ::ApplianceConsole::MessageServerConfiguration).to receive(:new)
-        .with(hash_including(:message_server_host => "server.example.com", :message_keystore_username => "user", :message_keystore_password => "pass", :message_persistent_disk => "/dev/test"))
-        .and_return(message_server)
-      subject.parse(%w[--message-server-config --message-server-host server.example.com --message-keystore-username user --message-keystore-password pass --message-persistent-disk /dev/test]).run
+      it "should raise an exception if the option is passed" do
+        expect { subject.parse(%w[--message-server-config]).run }.to raise_error(RuntimeError, "Message Server Configuration is not available")
+      end
     end
   end
 
@@ -849,21 +861,33 @@ describe ManageIQ::ApplianceConsole::Cli do
   end
 
   context "#message_client_config" do
-    it "should initiate Message Client config" do
-      message_client = double
-      expect(message_client).to receive(:configure)
-      expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new)
-        .with(hash_including(:message_server_host       => "server.example.com",
-                             :message_server_username   => "root",
-                             :message_server_password   => "smartvm",
-                             :message_keystore_username => "user",
-                             :message_keystore_password => "pass")).and_return(message_client)
-      subject.parse(%w[--message-client-config
-                       --message-server-host server.example.com
-                       --message-server-username root
-                       --message-server-password smartvm
-                       --message-keystore-username user
-                       --message-keystore-password pass]).run
+    context "with kafka installed" do
+      before { allow(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:available?).and_return(true) }
+
+      it "should initiate Message Client config" do
+        message_client = double
+        expect(message_client).to receive(:configure)
+        expect(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:new)
+          .with(hash_including(:message_server_host       => "server.example.com",
+                               :message_server_username   => "root",
+                               :message_server_password   => "smartvm",
+                               :message_keystore_username => "user",
+                               :message_keystore_password => "pass")).and_return(message_client)
+        subject.parse(%w[--message-client-config
+                         --message-server-host server.example.com
+                         --message-server-username root
+                         --message-server-password smartvm
+                         --message-keystore-username user
+                         --message-keystore-password pass]).run
+      end
+    end
+
+    context "without kafka installed" do
+      before { allow(ManageIQ::ApplianceConsole::MessageClientConfiguration).to receive(:available?).and_return(false) }
+
+      it "raises an exception if the option is passed" do
+        expect { subject.parse(%w[--message-client-config]).run }.to raise_error(RuntimeError, "Message Client Configuration is not available")
+      end
     end
   end
 
