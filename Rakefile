@@ -8,7 +8,10 @@ RSpec::Core::RakeTask.new(:spec)
 # setting to allow the postgres specs to run.
 desc "Run RSpec code examples (assumes ci dependencies)"
 RSpec::Core::RakeTask.new("spec:ci") do |t|
-  t.rspec_opts = "--options #{File.expand_path(".rspec_ci", __dir__)}"
+  # Temporarily disable the PG runner on CI
+  # was: t.rspec_opts = "--options #{File.expand_path(".rspec_ci", __dir__)}"
+  warn "\e[33;1mWARN: PostgresRunner specs are temporarily disabled on CI\e[0m" if ENV["CI"]
+  t.rspec_opts = "--options #{File.expand_path(".rspec", __dir__)}"
 end
 
 desc "Run RSpec code examples (with local postgres dependencies)"
