@@ -10,8 +10,8 @@ module ApplianceConsole
       rake_run(task, params).success?
     end
 
-    def self.rake_run(task, params)
-      result = AwesomeSpawn.run("rake #{task}", :chdir => ManageIQ::ApplianceConsole::RAILS_ROOT, :params => params)
+    def self.rake_run(task, params, env = {})
+      result = AwesomeSpawn.run("rake #{task}", :chdir => ManageIQ::ApplianceConsole::RAILS_ROOT, :params => params, :env => env)
       ManageIQ::ApplianceConsole.logger.error(result.error) if result.failure?
       result
     end
