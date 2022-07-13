@@ -6,8 +6,8 @@ require "awesome_spawn"
 module ManageIQ
 module ApplianceConsole
   module Utilities
-    def self.rake(task, params)
-      rake_run(task, params).success?
+    def self.rake(task, params, env = {})
+      rake_run(task, params, env).success?
     end
 
     def self.rake_run(task, params, env = {})
@@ -16,8 +16,8 @@ module ApplianceConsole
       result
     end
 
-    def self.rake_run!(task, params)
-      result = rake_run(task, params)
+    def self.rake_run!(task, params, env = {})
+      result = rake_run(task, params, env)
       if result.failure?
         parsed_errors = result.error.split("\n").select { |line| line.match?(/^error: /i) }.join(', ')
         raise parsed_errors
