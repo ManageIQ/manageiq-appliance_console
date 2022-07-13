@@ -12,6 +12,9 @@ require "manageiq/password/rspec_matchers"
 Dir[File.expand_path(File.join(__dir__, "support/**/*.rb"))].each { |f| require f }
 
 RSpec.configure do |config|
+  require "awesome_spawn/spec_helper"
+  include AwesomeSpawn::SpecHelper
+
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
 

@@ -13,10 +13,15 @@ describe ManageIQ::ApplianceConsole::Utilities do
     end
 
     it "handles file with a space" do
-      usage_hash = described_class.disk_usage(file).first
-      expect(usage_hash[:filesystem]).to be_kind_of String
-      expect(usage_hash[:filesystem]).to be_present
-      expect(usage_hash[:total_bytes]).to be > 0
+      expect(AwesomeSpawn).to receive(:run!)
+        .with("df", :params => ["-T", "-P", file])
+        .and_return(double(:output => 'good job'))
+
+      expect(AwesomeSpawn).to receive(:run!)
+        .with("df", :params => ["-T", "-P", "-i", file])
+        .and_return(double(:output => 'good job'))
+
+      described_class.disk_usage(file)
     end
   end
 

@@ -107,15 +107,20 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
   end
 
   context "#create_region" do
-    it "normal case" do
+    before do
+      @config.region = 42
       expect(ManageIQ::ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
-      allow(@config).to receive_messages(:log_and_feedback => :some_object)
+    end
+
+    it "normal case" do
+      expect(@config).not_to receive(:log_and_feedback_exception)
+      stub_good_run("rake evm:db:region", :chdir => ManageIQ::ApplianceConsole::RAILS_ROOT, :env=>{"REGION" => 42, "VERBOSE" => "false"}, :params => {})
       expect(@config.create_region).to be_truthy
     end
 
     it "failure" do
-      expect(ManageIQ::ApplianceConsole::Utilities).to receive(:bail_if_db_connections)
-      allow(@config).to receive_messages(:log_and_feedback => nil)
+      expect(@config).not_to receive(:log_and_feedback_exception)
+      stub_bad_run("rake evm:db:region", :chdir => ManageIQ::ApplianceConsole::RAILS_ROOT, :env=>{"REGION" => 42, "VERBOSE" => "false"}, :params => {})
       expect(@config.create_region).to be_falsey
     end
   end
