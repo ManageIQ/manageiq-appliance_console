@@ -89,7 +89,7 @@ module ApplianceConsole
       hint = "Please stop the EVM server process on all appliances in the region"
       ManageIQ::ApplianceConsole::Utilities.bail_if_db_connections("preventing the setup of a database region.\n#{hint}")
       log_and_feedback(__method__) do
-        ManageIQ::ApplianceConsole::Utilities.rake("evm:db:region", {}, {'REGION' => region, 'VERBOSE' => 'false'})
+        ManageIQ::ApplianceConsole::Utilities.rake("evm:db:region", {}, {'REGION' => region.to_s, 'VERBOSE' => 'false'})
       end
     end
 
