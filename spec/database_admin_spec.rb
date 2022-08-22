@@ -559,18 +559,15 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
           say ["y", "metrics_*"]
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
-          expect_output <<-EXAMPLE.strip_heredoc
-
+          expect_output <<-EXAMPLE.strip_heredoc.chomp
+            Would you like to exclude tables in the dump? (Y/N): 
             To exclude tables from the dump, enter them in a space separated
             list.  For example:
 
                 > metrics_* vim_performance_states event_streams
 
+            Enter the tables to exclude: |metrics_* vim_performance_states event_streams| 
           EXAMPLE
-          expect_readline_question_asked <<-PROMPT.strip_heredoc.chomp
-            Would you like to exclude tables in the dump? (Y/N): y
-            Enter the tables to exclude: |metrics_* vim_performance_states event_streams|
-          PROMPT
         end
 
         it "adds `:exclude_table_data => ['metrics_*', 'vms']` to @database_opts" do

@@ -11,6 +11,7 @@ shared_context 'with a terminal ui', :with_ui do
     File.open(@temp_stdin.path, 'w+')
   end
 
+  # this is now data typed in our tests by us via 'say'
   let(:readline_output) do
     @temp_stdout = Tempfile.new("temp_stdout")
     File.open(@temp_stdout.path, 'w+')
@@ -56,14 +57,6 @@ shared_context 'with a terminal ui', :with_ui do
     expect(subject).to receive(:print)
   end
 
-  def expect_readline_question_asked(question)
-    readline_output.rewind
-    readline_output_content = readline_output.read
-    unless readline_output_content.empty?
-      expect(readline_output_content).to include(question)
-    end
-  end
-
   def expect_output(strs)
     strs = strs.collect { |s| s == "" ? "\n" : s }.join if strs.kind_of?(Array)
     expect(output.string).to eq(strs)
@@ -71,7 +64,6 @@ shared_context 'with a terminal ui', :with_ui do
 
   def expect_heard(strs, check_eof = true)
     strs = Array(strs)
-    expect_readline_question_asked(strs.shift) unless readline_output.tap(&:rewind).read.empty?
     expect_output(strs)
     expect { subject.ask("is there more") }.to raise_error(EOFError) if check_eof
     expect(input).to be_eof
