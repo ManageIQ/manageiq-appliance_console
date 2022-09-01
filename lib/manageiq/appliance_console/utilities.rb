@@ -27,8 +27,13 @@ module ApplianceConsole
     end
 
     def self.db_connections
+      # TODO: this is impossible to test right now because we need to shell out and run our rails app which isn't a direct dependency here.
+      # We have the settings from the database_configuration, so we should pass them here and simplify this and make it testable.
+      # Basically, we're doing a lot of work to run this 1 query:
+      #   psql -U username -h host postgres -c "select count(*) from pg_stat_activity where datname = 'vmdb_production';"
+      # We shouldn't need to subtract our 1 "connection" in "bail_if_db_connections" if we connect to the postgres db.
       code   = [
-        "database ||= ActiveRecord::Base.configurations[Rails.env]['database']",
+        "database ||= ActiveRecord::Base.configurations.configs_for(:env_name => Rails.env).first.database",
         "conn = ActiveRecord::Base.connection",
         "exit conn.client_connections.count { |c| c['database'] == database }"
       ]
