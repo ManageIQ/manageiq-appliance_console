@@ -26,6 +26,10 @@ module ManageIQ
         File.exist?("#{BASE_DIR}/bin/kafka-run-class.sh")
       end
 
+      def self.configured?
+        MessageServerConfiguration.configured? || MessageClientConfiguration.configured?
+      end
+
       def initialize(options = {})
         @message_server_port        = options[:message_server_port] || 9093
         @message_keystore_username  = options[:message_keystore_username] || "admin"

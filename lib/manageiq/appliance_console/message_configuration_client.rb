@@ -77,6 +77,10 @@ module ManageIQ
         fetch_from_server(message_ca_cert_path_src, ca_cert_path)
       end
 
+      def self.configured?
+        MessageClientConfiguration.new.installed_files.all? { |f| File.exist?(f) }
+      end
+
       private
 
       def fetch_from_server(src_file, dst_file)
