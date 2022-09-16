@@ -92,18 +92,20 @@ module ApplianceConsole
       eth0.reload
       eth0.parse_conf if eth0.respond_to?(:parse_conf)
 
-      host        = LinuxAdmin::Hosts.new.hostname
-      ip          = eth0.address
-      mac         = eth0.mac_address
-      mask        = eth0.netmask
-      gw          = eth0.gateway
-      dns1, dns2  = dns.nameservers
-      order       = dns.search_order.join(' ')
-      timezone    = LinuxAdmin::TimeDate.system_timezone
-      version     = File.read(VERSION_FILE).chomp if File.exist?(VERSION_FILE)
-      dbhost      = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_host
-      database    = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_name
-      evm_running = LinuxAdmin::Service.new("evmserverd").running?
+      host             = LinuxAdmin::Hosts.new.hostname
+      ip               = eth0.address
+      mac              = eth0.mac_address
+      mask             = eth0.netmask
+      gw               = eth0.gateway
+      dns1, dns2       = dns.nameservers
+      order            = dns.search_order.join(' ')
+      timezone         = LinuxAdmin::TimeDate.system_timezone
+      version          = File.read(VERSION_FILE).chomp if File.exist?(VERSION_FILE)
+      dbhost           = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_host
+      database         = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_name
+      evm_running      = LinuxAdmin::Service.new("evmserverd").running?
+      messaging        = ManageIQ::ApplianceConsole::MessageConfiguration.configured?
+      messaging_broker = ManageIQ::ApplianceConsole::MessageServerConfiguration.configured?
 
       summary_attributes = [
         summary_entry("Hostname", host),
@@ -120,6 +122,8 @@ module ApplianceConsole
         summary_entry("#{I18n.t("product.name")} Server", evm_running ? "running" : "not running"),
         summary_entry("#{I18n.t("product.name")} Database", dbhost || "not configured"),
         summary_entry("Database/Region", database ? "#{database} / #{region.to_i}" : "not configured"),
+        summary_entry("Messaging", messaging ? "configured" : "not configured"),
+        summary_entry("Local Messaging Broker", messaging_broker ? "configured" : "not configured"),
         summary_entry("External Auth", ExternalHttpdAuthentication.config_status),
         summary_entry("#{I18n.t("product.name")} Version", version),
       ]
@@ -437,7 +441,6 @@ Static Network Configuration
             press_any_key
             raise MiqSignalError
           end
-
         when "message_client"
           say("#{selection}\n\n")
 
