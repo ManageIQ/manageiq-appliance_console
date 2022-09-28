@@ -8,7 +8,7 @@ module ApplianceConsole
     include ManageIQ::ApplianceConsole::Logging
 
     REGISTER_CMD    = 'repmgr standby register'.freeze
-    REPMGRD_SERVICE = 'repmgr10'.freeze
+    REPMGRD_SERVICE = 'repmgr13'.freeze
 
     attr_accessor :disk, :standby_host, :run_repmgrd_configuration, :resync_data, :force_register
 
