@@ -62,13 +62,18 @@ module ApplianceConsole
       LinuxAdmin::Service.new(service_name).running?
     end
 
-    def self.local_server_in_recovery?
-      data_directory.join("recovery.conf").exist?
+    def self.local_server_received_standby_signal?
+      # Beginning with PostgreSQL 12, replication configuration has been integrated into the main PostgreSQL configuraton system and the conventional recovery.conf file is no longer valid.
+      # see: https://repmgr.org/docs/current/release-5.0.html
+      # https://www.2ndquadrant.com/en/blog/replication-configuration-changes-in-postgresql-12/
+      # "standby.signal" – indicates the server should start up as a hot standby
+      # If a standby is promoted, "standby.signal" is removed entirely (and not renamed as was the case with "recovery.conf", which became "recovery.done").
+      data_directory.join("standby.signal").exist? || data_directory.join("recovery.conf").exist?
     end
 
     def self.local_server_status
       if service_running?
-        "running (#{local_server_in_recovery? ? "standby" : "primary"})"
+        "running (#{local_server_received_standby_signal? ? "standby" : "primary"})"
       elsif initialized?
         "initialized and stopped"
       else

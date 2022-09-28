@@ -334,14 +334,14 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
         end
       end
 
-      describe ".local_server_in_recovery?" do
-        it "returns true when recovery.conf exists" do
-          FileUtils.touch("#{ENV["APPLIANCE_PG_DATA"]}/recovery.conf")
-          expect(described_class.local_server_in_recovery?).to be true
+      describe ".local_server_received_standby_signal?" do
+        it "returns true when standby.signal exists" do
+          FileUtils.touch("#{ENV["APPLIANCE_PG_DATA"]}/standby.signal")
+          expect(described_class.local_server_received_standby_signal?).to be true
         end
 
-        it "returns false when recovery.conf does not exist" do
-          expect(described_class.local_server_in_recovery?).to be false
+        it "returns false when standby.signal does not exist" do
+          expect(described_class.local_server_received_standby_signal?).to be false
         end
       end
 
@@ -358,12 +358,12 @@ describe ManageIQ::ApplianceConsole::PostgresAdmin do
             allow(service).to receive(:running?).and_return(true)
           end
 
-          it "returns a running status and primary with no recovery file" do
+          it "returns a running status and primary with no standby.signal file" do
             expect(described_class.local_server_status).to eq("running (primary)")
           end
 
-          it "returns a running status and standby with a recovery file" do
-            FileUtils.touch("#{ENV["APPLIANCE_PG_DATA"]}/recovery.conf")
+          it "returns a running status and standby with a standby.signal file" do
+            FileUtils.touch("#{ENV["APPLIANCE_PG_DATA"]}/standby.signal")
             expect(described_class.local_server_status).to eq("running (standby)")
           end
         end
