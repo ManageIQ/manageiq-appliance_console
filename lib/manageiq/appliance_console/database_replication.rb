@@ -54,16 +54,18 @@ Replication Server Configuration
 
     def config_file_contents(host)
       service_name = PostgresAdmin.service_name
+      # FYI, 5.0 made quoting strings strict.  Always use single quoted strings.
+      # https://repmgr.org/docs/current/release-5.0.html
       <<-EOS.strip_heredoc
-        node_id=#{node_number}
-        node_name=#{host}
+        node_id='#{node_number}'
+        node_name='#{host}'
         conninfo='host=#{host} user=#{database_user} dbname=#{database_name}'
-        use_replication_slots=1
+        use_replication_slots='1'
         pg_basebackup_options='--wal-method=stream'
-        failover=automatic
+        failover='automatic'
         promote_command='repmgr standby promote -f #{REPMGR_CONFIG} --log-to-file'
         follow_command='repmgr standby follow -f #{REPMGR_CONFIG} --log-to-file --upstream-node-id=%n'
-        log_file=#{REPMGR_LOG}
+        log_file='#{REPMGR_LOG}'
         service_start_command='sudo systemctl start #{service_name}'
         service_stop_command='sudo systemctl stop #{service_name}'
         service_restart_command='sudo systemctl restart #{service_name}'
