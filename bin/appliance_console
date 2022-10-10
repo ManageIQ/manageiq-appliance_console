@@ -435,7 +435,6 @@ Static Network Configuration
             raise MiqSignalError
           elsif message_server.ask_questions && message_server.configure
             say("\nMessage Server configured successfully.\n")
-            press_any_key
           else
             say("\nMessage Server configuration failed!\n")
             press_any_key
@@ -451,7 +450,6 @@ Static Network Configuration
             raise MiqSignalError
           elsif message_client.ask_questions && message_client.configure
             say("\nMessage Client configured successfully.\n")
-            press_any_key
           else
             say("\nMessage Client configuration failed!\n")
             press_any_key
