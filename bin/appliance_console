@@ -103,7 +103,7 @@ module ApplianceConsole
       version          = File.read(VERSION_FILE).chomp if File.exist?(VERSION_FILE)
       dbhost           = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_host
       database         = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_name
-      evm_running      = LinuxAdmin::Service.new("evmserverd").running?
+      evm_running      = ManageIQ::ApplianceConsole::EvmServer.running?
       messaging        = ManageIQ::ApplianceConsole::MessageConfiguration.configured?
       messaging_broker = ManageIQ::ApplianceConsole::MessageServerConfiguration.configured?
 
@@ -326,12 +326,11 @@ Static Network Configuration
 
       when I18n.t("advanced_settings.evmstop")
         say("#{selection}\n\n")
-        service = LinuxAdmin::Service.new("evmserverd")
-        if service.running?
+        if ManageIQ::ApplianceConsole::EvmServer.running?
           if ask_yn? "\nNote: It may take up to a few minutes for all #{I18n.t("product.name")} server processes to exit gracefully. Stop #{I18n.t("product.name")}"
             say("\nStopping #{I18n.t("product.name")} Server...")
             logger.info("EVM server stop initiated by appliance console.")
-            service.stop
+            ManageIQ::ApplianceConsole::EvmServer.stop
           end
         else
           say("\n#{I18n.t("product.name")} Server is not running...")
@@ -343,13 +342,7 @@ Static Network Configuration
         if ask_yn?("\nStart #{I18n.t("product.name")}")
           say("\nStarting #{I18n.t("product.name")} Server...")
           logger.info("EVM server start initiated by appliance console.")
-          begin
-            LinuxAdmin::Service.new("evmserverd").start
-          rescue AwesomeSpawn::CommandResultError => e
-            say e.result.output
-            say e.result.error
-            say ""
-          end
+          ManageIQ::ApplianceConsole::EvmServer.start
           press_any_key
         end
 
@@ -554,13 +547,13 @@ Static Network Configuration
         when RE_RESTART
           if are_you_sure?("restart the appliance now")
             logger.info("Appliance restart initiated by appliance console.")
-            LinuxAdmin::Service.new("evmserverd").stop
+            ManageIQ::ApplianceConsole::EvmServer.stop
             LinuxAdmin::System.reboot!
           end
         when RE_DELLOGS
           if are_you_sure?("restart the appliance now")
             logger.info("Appliance restart with clean logs initiated by appliance console.")
-            LinuxAdmin::Service.new("evmserverd").stop
+            ManageIQ::ApplianceConsole::EvmServer.stop
             LinuxAdmin::Service.new("miqtop").stop
             LinuxAdmin::Service.new("miqvmstat").stop
             LinuxAdmin::Service.new("httpd").stop
@@ -576,7 +569,7 @@ Static Network Configuration
         if are_you_sure?("shut down the appliance now")
           say("\nShutting down appliance...  This process may take a few minutes.\n\n")
           logger.info("Appliance shutdown initiated by appliance console")
-          LinuxAdmin::Service.new("evmserverd").stop
+          ManageIQ::ApplianceConsole::EvmServer.stop
           LinuxAdmin::System.shutdown!
         end
 
