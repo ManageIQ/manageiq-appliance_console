@@ -64,8 +64,6 @@ module ManageIQ
 
         say("Starting kafka and configure it to start on reboots ...")
         LinuxAdmin::Service.new("kafka").start.enable
-
-        restart_evmserverd
       end
 
       def ask_for_parameters

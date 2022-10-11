@@ -25,10 +25,6 @@ module ApplianceConsole
       say("Database Configuration\n")
       ask_for_database_credentials(false)
     end
-
-    def post_activation
-      start_evm
-    end
   end
 end
 end

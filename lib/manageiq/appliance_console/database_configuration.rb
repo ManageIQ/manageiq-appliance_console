@@ -48,7 +48,6 @@ module ApplianceConsole
 
       raise MiqSignalError unless activate
 
-      post_activation
       say("\nConfiguration activated successfully.\n")
     rescue RuntimeError => e
       puts "Configuration failed#{": " + e.message unless e.class == MiqSignalError}"
@@ -234,18 +233,6 @@ FRIENDLY
       ensure
         ModelWithNoBackingTable.remove_connection
       end
-    end
-
-    def start_evm
-      pid = fork do
-        begin
-          EvmServer.start(:enable => true)
-        rescue => e
-          logger.error("Failed to enable and start evmserverd service: #{e.message}")
-          logger.error(e.backtrace.join("\n"))
-        end
-      end
-      Process.detach(pid)
     end
 
     private

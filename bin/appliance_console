@@ -393,6 +393,14 @@ Static Network Configuration
 
         messaging_action = ask_with_menu("Configure Messaging", messaging_options)
 
+        changes_requested = database_action != "no_changes" || messaging_action != "no_changes"
+
+        # Stop evmserver while we make changes to the database and/or messaging configuration
+        if changes_requested
+          say("\nStopping #{I18n.t("product.name")} Server...")
+          ManageIQ::ApplianceConsole::EvmServer.stop
+        end
+
         database_configuration =
           case database_action
           when "create_internal"
@@ -448,6 +456,12 @@ Static Network Configuration
             press_any_key
             raise MiqSignalError
           end
+        end
+
+        # Start evmserverd if database and/or messaging were set up and we are supposed to run as an evmserver
+        if changes_requested && database_configuration.run_as_evm_server
+          say("\nStarting #{I18n.t("product.name")} Server...")
+          ManageIQ::ApplianceConsole::EvmServer.start
         end
 
         press_any_key
