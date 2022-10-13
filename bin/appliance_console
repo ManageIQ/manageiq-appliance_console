@@ -103,9 +103,15 @@ module ApplianceConsole
       version          = File.read(VERSION_FILE).chomp if File.exist?(VERSION_FILE)
       dbhost           = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_host
       database         = ManageIQ::ApplianceConsole::DatabaseConfiguration.database_name
-      evm_running      = ManageIQ::ApplianceConsole::EvmServer.running?
       messaging        = ManageIQ::ApplianceConsole::MessageConfiguration.configured?
       messaging_broker = ManageIQ::ApplianceConsole::MessageServerConfiguration.configured?
+      evm_status       = if ManageIQ::ApplianceConsole::EvmServer.running?
+        "running"
+      elsif ManageIQ::ApplianceConsole::EvmServer.runnable?
+        "not running"
+      else
+        "not configured"
+      end
 
       summary_attributes = [
         summary_entry("Hostname", host),
@@ -119,7 +125,7 @@ module ApplianceConsole
         summary_entry("MAC Address", mac),
         summary_entry("Timezone", timezone),
         summary_entry("Local Database Server", PostgresAdmin.local_server_status),
-        summary_entry("#{I18n.t("product.name")} Server", evm_running ? "running" : "not running"),
+        summary_entry("#{I18n.t("product.name")} Server", evm_status),
         summary_entry("#{I18n.t("product.name")} Database", dbhost || "not configured"),
         summary_entry("Database/Region", database ? "#{database} / #{region.to_i}" : "not configured"),
         summary_entry("Messaging", messaging ? "configured" : "not configured"),
