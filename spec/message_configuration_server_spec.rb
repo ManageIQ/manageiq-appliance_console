@@ -286,38 +286,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
   end
 
-  describe "#restart_services" do
-    before do
-      expect(subject).to receive(:say).exactly(3).times
-      @evmserverd = ManageIQ::ApplianceConsole::EvmServer
-
-      zookeeper = LinuxAdmin::Service.new("zookeeper")
-      expect(zookeeper).to receive(:start).and_return(zookeeper)
-      expect(zookeeper).to receive(:enable)
-
-      kafka = LinuxAdmin::Service.new("kafka")
-      expect(kafka).to receive(:start).and_return(kafka)
-      expect(kafka).to receive(:enable)
-
-      expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
-      expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
-    end
-
-    it "starts the needed services" do
-      expect(@evmserverd).to receive(:running?).and_return(true)
-      expect(@evmserverd).to receive(:restart)
-
-      subject.send(:restart_services)
-    end
-
-    it "does not restart evmserverd if it is not running" do
-      expect(@evmserverd).to receive(:running?).and_return(false)
-      expect(@evmserverd).to_not receive(:restart)
-
-      subject.send(:restart_services)
-    end
-  end
-
   describe "#configured?" do
     it "returns true if the kafka service is running" do
       kafka = LinuxAdmin::Service.new("kafka")
