@@ -20,7 +20,7 @@ module ApplianceConsole
 
       self.size = Utilities.disk_usage(LOGFILE_DIRECTORY)[0][:total_bytes]
       self.current_logrotate_count = /rotate\s+(\d+)/.match(File.read(MIQ_LOGS_CONF))[1]
-      self.evm_was_running = LinuxAdmin::Service.new("evmserverd").running?
+      self.evm_was_running = EvmServer.running?
     end
 
     def activate
@@ -103,13 +103,13 @@ module ApplianceConsole
 
     def start_evm
       say 'Starting EVM'
-      LinuxAdmin::Service.new("evmserverd").enable.start
+      EvmServer.start(:enable => true)
       LinuxAdmin::Service.new("httpd").enable.start
     end
 
     def stop_evm
       say 'Stopping EVM'
-      LinuxAdmin::Service.new("evmserverd").stop
+      EvmServer.stop
       LinuxAdmin::Service.new("httpd").stop
     end
   end

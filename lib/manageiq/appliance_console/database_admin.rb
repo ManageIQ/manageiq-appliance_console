@@ -38,7 +38,7 @@ module ManageIQ
 
       def ask_questions
         setting_header
-        if action == :restore && LinuxAdmin::Service.new("evmserverd").running?
+        if action == :restore && EvmServer.running?
           say("\nDatabase restore failed. Please execute the \“Stop EVM Server Processes\” command and try again.")
           press_any_key
           raise MiqSignalError

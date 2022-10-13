@@ -529,15 +529,13 @@ module ApplianceConsole
     end
 
     def set_server_state
-      service = LinuxAdmin::Service.new("evmserverd")
-      service_running = service.running?
       case options[:server]
       when "start"
-        service.start unless service_running
+        EvmServer.start unless EvmServer.running?
       when "stop"
-        service.stop if service_running
+        EvmServer.stop if EvmServer.running?
       when "restart"
-        service.restart
+        EvmServer.restart
       else
         raise "Invalid server action"
       end

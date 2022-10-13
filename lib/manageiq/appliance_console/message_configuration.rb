@@ -195,8 +195,7 @@ module ManageIQ
 
       def restart_evmserverd
         say("Restart evmserverd if it is running...")
-        evmserverd_service = LinuxAdmin::Service.new("evmserverd")
-        evmserverd_service.restart if evmserverd_service.running?
+        EvmServer.restart if EvmServer.running?
       end
 
       def unconfigure

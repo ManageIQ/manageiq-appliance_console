@@ -389,8 +389,7 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
       it "forks and detaches the service start command" do
         expect(@config).to receive(:fork) do |&block|
           service = double(:service)
-          expect(LinuxAdmin::Service).to receive(:new).and_return(service)
-          expect(service).to receive(:start).with(true).and_return(service)
+          expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:start).with(:enable => true).and_return(service)
           block.call
           1234 # return a test pid
         end

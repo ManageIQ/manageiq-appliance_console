@@ -289,7 +289,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   describe "#restart_services" do
     before do
       expect(subject).to receive(:say).exactly(3).times
-      @evmserverd = LinuxAdmin::Service.new("evmserverd")
+      @evmserverd = ManageIQ::ApplianceConsole::EvmServer
 
       zookeeper = LinuxAdmin::Service.new("zookeeper")
       expect(zookeeper).to receive(:start).and_return(zookeeper)
@@ -301,7 +301,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       expect(LinuxAdmin::Service).to receive(:new).with("zookeeper").and_return(zookeeper)
       expect(LinuxAdmin::Service).to receive(:new).with("kafka").and_return(kafka)
-      expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(@evmserverd)
     end
 
     it "starts the needed services" do

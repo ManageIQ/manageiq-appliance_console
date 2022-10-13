@@ -29,9 +29,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       it "asks for file location" do
         expect(subject).to receive(:say).with("Restore Database From Backup\n\n")
 
-        evmserverd = LinuxAdmin::Service.new("evmserverd")
-        expect(evmserverd).to receive(:running?).and_return(false)
-        expect(LinuxAdmin::Service).to receive(:new).with("evmserverd").and_return(evmserverd)
+        expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:running?).and_return(false)
 
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
@@ -40,9 +38,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       end
 
       it "raises MiqSignalError for :restore action if evmserverd is running" do
-        service = double(:service)
-        expect(LinuxAdmin::Service).to receive(:new).and_return(service)
-        allow(service).to receive(:running?).and_return(true)
+        allow(ManageIQ::ApplianceConsole::EvmServer).to receive(:running?).and_return(true)
         allow(subject).to receive(:press_any_key)
 
         expect { subject.ask_questions }.to raise_error signal_error
