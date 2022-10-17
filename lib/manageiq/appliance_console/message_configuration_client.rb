@@ -30,7 +30,6 @@ module ManageIQ
           create_client_properties          # Create the client.properties configuration fle
           fetch_truststore_from_server      # Fetch the Java Keystore from the Kafka Server
           configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
-          restart_evmserverd
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
           say(e.result.error)

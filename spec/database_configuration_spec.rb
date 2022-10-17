@@ -384,19 +384,6 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
         end
       end
     end
-
-    describe "#start_evm" do
-      it "forks and detaches the service start command" do
-        expect(@config).to receive(:fork) do |&block|
-          service = double(:service)
-          expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:start).with(:enable => true).and_return(service)
-          block.call
-          1234 # return a test pid
-        end
-        expect(Process).to receive(:detach).with(1234)
-        @config.start_evm
-      end
-    end
   end
 
   context "with test database yml file" do

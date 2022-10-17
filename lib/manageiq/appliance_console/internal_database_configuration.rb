@@ -109,10 +109,6 @@ module ApplianceConsole
       copy_template "pg_ident.conf"
     end
 
-    def post_activation
-      start_evm if run_as_evm_server
-    end
-
     private
 
     def mount_point

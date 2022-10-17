@@ -193,14 +193,8 @@ module ManageIQ
         ManageIQ::ApplianceConsole::Utilities.rake_run!("evm:settings:set", ["/prototype/messaging_type=#{value}"])
       end
 
-      def restart_evmserverd
-        say("Restart evmserverd if it is running...")
-        EvmServer.restart if EvmServer.running?
-      end
-
       def unconfigure
         configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
-        restart_evmserverd
         remove_installed_files
       end
 

@@ -54,20 +54,6 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
     expect(described_class.postgresql_template.to_s).to end_with("TEMPLATE/var/lib/pgsql/data")
   end
 
-  describe "#post_activation" do
-    it "doesnt start evm if run_as_evm_server is false" do
-      @config.run_as_evm_server = false
-      expect(@config).not_to receive(:start_evm)
-      @config.post_activation
-    end
-
-    it "starts evm if run_as_evm_server is true" do
-      @config.run_as_evm_server = true
-      expect(@config).to receive(:start_evm)
-      @config.post_activation
-    end
-  end
-
   describe "#initialize_postgresql_disk" do
     before do
       lvm = double("LogicalVolumeManagement", :setup => nil)

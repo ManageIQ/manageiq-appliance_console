@@ -332,20 +332,4 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject.send(:fetch_truststore_from_server)).to be_nil
     end
   end
-
-  describe "#restart_evmserverd" do
-    it "restarts evmserverd if it is running" do
-      expect(subject).to receive(:say)
-      expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:running?).and_return(true)
-      expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:restart)
-      expect(subject.send(:restart_evmserverd)).to be_nil
-    end
-
-    it "does not restart evmserverd if it is not running" do
-      expect(subject).to receive(:say)
-      expect(ManageIQ::ApplianceConsole::EvmServer).to receive(:running?).and_return(false)
-      expect(ManageIQ::ApplianceConsole::EvmServer).to_not receive(:restart)
-      expect(subject.send(:restart_evmserverd)).to be_nil
-    end
-  end
 end
