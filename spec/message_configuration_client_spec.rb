@@ -196,10 +196,13 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~MESSAGING_KAFKA_YML
         ---
         base: &base
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
 
         development:
           <<: *base
@@ -216,28 +219,39 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~SECURE_MESSAGING_YML
         ---
         base:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
         development:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
         production:
-          hostname: my-kafka-server.example.com
+          host: my-kafka-server.example.com
           port: 9093
+          protocol: Kafka
+          encoding: json
           sasl.mechanism: PLAIN
           sasl.username: admin
           sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
           security.protocol: SASL_SSL
           ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
         test:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
       SECURE_MESSAGING_YML
     end
 
@@ -245,27 +259,38 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~UNSECURE_MESSAGING_YML
         ---
         base:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
         development:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
         production:
-          hostname: my-kafka-server.example.com
+          host: my-kafka-server.example.com
           port: 9092
+          protocol: Kafka
+          encoding: json
           sasl.mechanism: PLAIN
           sasl.username: admin
           sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
           security.protocol: PLAINTEXT
         test:
-          hostname: localhost
+          host: localhost
           port: 9092
-          username: admin
-          password: smartvm
+          protocol: Kafka
+          encoding: json
+          sasl.mechanism: PLAIN
+          sasl.username: admin
+          sasl.password: smartvm
       UNSECURE_MESSAGING_YML
     end
 

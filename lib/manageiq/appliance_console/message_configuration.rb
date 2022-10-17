@@ -112,14 +112,11 @@ module ManageIQ
 
         messaging_yaml = YAML.load_file(messaging_yaml_sample_path)
 
-        messaging_yaml["production"].delete("username")
-        messaging_yaml["production"].delete("password")
-
-        messaging_yaml["production"]["hostname"]          = message_server_host
-        messaging_yaml["production"]["port"]              = message_server_port
-        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
-        messaging_yaml["production"]["sasl.username"]     = message_keystore_username
-        messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(message_keystore_password)
+        messaging_yaml["production"]["host"]           = message_server_host
+        messaging_yaml["production"]["port"]           = message_server_port
+        messaging_yaml["production"]["sasl.mechanism"] = "PLAIN"
+        messaging_yaml["production"]["sasl.username"]  = message_keystore_username
+        messaging_yaml["production"]["sasl.password"]  = ManageIQ::Password.try_encrypt(message_keystore_password)
 
         if secure?
           messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
