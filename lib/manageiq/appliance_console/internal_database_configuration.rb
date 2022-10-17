@@ -5,7 +5,7 @@ require "linux_admin"
 module ManageIQ
 module ApplianceConsole
   class InternalDatabaseConfiguration < DatabaseConfiguration
-    attr_accessor :disk, :run_as_evm_server
+    attr_accessor :disk
 
     DEDICATED_DB_SHARED_BUFFERS = "'1GB'".freeze
     SHARED_DB_SHARED_BUFFERS = "'128MB'".freeze
@@ -24,10 +24,9 @@ module ApplianceConsole
     end
 
     def set_defaults
-      self.host              = 'localhost'
-      self.username          = "root"
-      self.database          = "vmdb_production"
-      self.run_as_evm_server = true
+      self.host     = 'localhost'
+      self.username = "root"
+      self.database = "vmdb_production"
     end
 
     def activate
