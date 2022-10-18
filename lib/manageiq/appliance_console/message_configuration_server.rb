@@ -43,7 +43,6 @@ module ManageIQ
           configure_keystore                # Populate the Java Keystore
           create_server_properties          # Update the /opt/message/config/server.properties
           configure_messaging_yaml          # Set up the local message client in case EVM is actually running on this, Message Server
-          configure_messaging_type("kafka") # Settings.prototype.messaging_type = 'kafka'
           restart_services
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)

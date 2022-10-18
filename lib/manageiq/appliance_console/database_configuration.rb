@@ -12,7 +12,7 @@ module ApplianceConsole
   class DatabaseConfiguration
     include ManageIQ::ApplianceConsole::ManageiqUserMixin
 
-    attr_accessor :adapter, :host, :username, :database, :port, :region
+    attr_accessor :adapter, :host, :username, :database, :port, :region, :run_as_evm_server
     attr_reader :password
 
     class ModelWithNoBackingTable < ActiveRecord::Base
@@ -38,6 +38,7 @@ module ApplianceConsole
       @adapter ||= "postgresql"
       # introduced by Logging
       self.interactive = true unless hash.key?(:interactive)
+      self.run_as_evm_server = true unless hash.key?(:run_as_evm_server)
     end
 
     def run_interactive

@@ -187,14 +187,7 @@ module ManageIQ
         true
       end
 
-      def configure_messaging_type(value)
-        say(__method__.to_s.tr("_", " ").titleize)
-
-        ManageIQ::ApplianceConsole::Utilities.rake_run!("evm:settings:set", ["/prototype/messaging_type=#{value}"])
-      end
-
       def unconfigure
-        configure_messaging_type("miq_queue") # Settings.prototype.messaging_type = 'miq_queue'
         remove_installed_files
       end
 
