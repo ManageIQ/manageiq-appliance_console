@@ -354,5 +354,33 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         expect(subject.message_server_host).to eq("192.0.2.1")
       end
     end
+
+    context "when --message-server-host is specified as localhost*" do
+      before do
+        allow(subject).to receive(:agree).and_return(true)
+        allow(subject).to receive(:host_reachable?).and_return(true)
+        allow(subject).to receive(:message_server_configured?).and_return(true)
+      end
+
+      it "replaces localhost with 127.0.0.1" do
+        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost")
+        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
+        expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+        expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return("/tmp/disk")
+
+        subject.ask_for_parameters
+        expect(subject.message_server_host).to eq("127.0.0.1")
+      end
+
+      it "replaces localhost.localadmin with 127.0.0.1" do
+        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost.localadmin")
+        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
+        expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
+        expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return("/tmp/disk")
+
+        subject.ask_for_parameters
+        expect(subject.message_server_host).to eq("127.0.0.1")
+      end
+    end
   end
 end
