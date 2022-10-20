@@ -196,8 +196,10 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~MESSAGING_KAFKA_YML
         ---
         base: &base
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
 
@@ -216,26 +218,33 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~SECURE_MESSAGING_YML
         ---
         base:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
         development:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
         production:
-          hostname: my-kafka-server.example.com
+          host: my-kafka-server.example.com
           port: 9093
-          sasl.mechanism: PLAIN
-          sasl.username: admin
-          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
-          security.protocol: SASL_SSL
-          ssl.ca.location: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          protocol: Kafka
+          encoding: json
+          username: admin
+          password: #{ManageIQ::Password.try_encrypt("super_secret")}
+          ssl: true
+          ca_file: "#{@tmp_base_dir}/config/keystore/ca-cert"
         test:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
       SECURE_MESSAGING_YML
@@ -245,25 +254,32 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       <<~UNSECURE_MESSAGING_YML
         ---
         base:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
         development:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
         production:
-          hostname: my-kafka-server.example.com
+          host: my-kafka-server.example.com
           port: 9092
-          sasl.mechanism: PLAIN
-          sasl.username: admin
-          sasl.password: #{ManageIQ::Password.try_encrypt("super_secret")}
-          security.protocol: PLAINTEXT
+          protocol: Kafka
+          encoding: json
+          username: admin
+          password: #{ManageIQ::Password.try_encrypt("super_secret")}
+          ssl: false
         test:
-          hostname: localhost
+          host: localhost
           port: 9092
+          protocol: Kafka
+          encoding: json
           username: admin
           password: smartvm
       UNSECURE_MESSAGING_YML

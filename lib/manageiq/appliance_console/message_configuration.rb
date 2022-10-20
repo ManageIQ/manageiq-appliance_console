@@ -108,20 +108,16 @@ module ManageIQ
 
         messaging_yaml = YAML.load_file(messaging_yaml_sample_path)
 
-        messaging_yaml["production"].delete("username")
-        messaging_yaml["production"].delete("password")
-
-        messaging_yaml["production"]["hostname"]          = message_server_host
-        messaging_yaml["production"]["port"]              = message_server_port
-        messaging_yaml["production"]["sasl.mechanism"]    = "PLAIN"
-        messaging_yaml["production"]["sasl.username"]     = message_keystore_username
-        messaging_yaml["production"]["sasl.password"]     = ManageIQ::Password.try_encrypt(message_keystore_password)
+        messaging_yaml["production"]["host"]      = message_server_host
+        messaging_yaml["production"]["port"]      = message_server_port
+        messaging_yaml["production"]["username"]  = message_keystore_username
+        messaging_yaml["production"]["password"]  = ManageIQ::Password.try_encrypt(message_keystore_password)
 
         if secure?
-          messaging_yaml["production"]["security.protocol"] = "SASL_SSL"
-          messaging_yaml["production"]["ssl.ca.location"]   = ca_cert_path.to_path
+          messaging_yaml["production"]["ssl"]     = true
+          messaging_yaml["production"]["ca_file"] = ca_cert_path.to_path
         else
-          messaging_yaml["production"]["security.protocol"] = "PLAINTEXT"
+          messaging_yaml["production"]["ssl"] = false
         end
 
         File.open(messaging_yaml_path, "w") do |f|
