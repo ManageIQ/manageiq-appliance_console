@@ -8,7 +8,6 @@ module ApplianceConsole
     include ManageIQ::ApplianceConsole::Logging
 
     REGISTER_CMD    = 'repmgr standby register'.freeze
-    REPMGRD_SERVICE = 'repmgr13'.freeze
 
     attr_accessor :disk, :standby_host, :run_repmgrd_configuration, :resync_data, :force_register
 
@@ -111,7 +110,7 @@ module ApplianceConsole
     end
 
     def start_repmgrd
-      LinuxAdmin::Service.new(REPMGRD_SERVICE).enable.start
+      LinuxAdmin::Service.new(repmgr_service_name).enable.start
       true
     rescue AwesomeSpawn::CommandResultError => e
       message = "Failed to start repmgrd: #{e.message}"
@@ -121,7 +120,7 @@ module ApplianceConsole
     end
 
     def stop_repmgrd
-      LinuxAdmin::Service.new(REPMGRD_SERVICE).stop
+      LinuxAdmin::Service.new(repmgr_service_name).stop
       true
     end
 

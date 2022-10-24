@@ -7,10 +7,19 @@ module ApplianceConsole
   class DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
 
-    REPMGR_CONFIG     = '/etc/repmgr/13/repmgr.conf'.freeze
-    REPMGR_LOG        = '/var/log/repmgr/repmgrd-13.log'.freeze
     PGPASS_FILE       = '/var/lib/pgsql/.pgpass'.freeze
     NETWORK_INTERFACE = 'eth0'.freeze
+
+    REPGMR_FILE_LOCATIONS = {
+      "repmgr10" => {
+        "config" => "/etc/repmgr/10/repmgr.conf",
+        "log"    => "/var/log/repmgr/repmgrd.log"
+      },
+      "repmgr13" => {
+        "config" => "/etc/repmgr/13/repmgr.conf",
+        "log"    => "/var/log/repmgr/repmgrd-13.log"
+      }
+    }.freeze
 
     attr_accessor :node_number, :database_name, :database_user,
                   :database_password, :primary_host
@@ -37,18 +46,36 @@ Replication Server Configuration
         EOL
     end
 
-    def repmgr_configured?
-      File.exist?(REPMGR_CONFIG)
+    def self.repmgr_config
+      repmgr_file_locations["config"]
     end
 
+    def self.repmgr_configured?
+      File.exist?(repmgr_config)
+    end
+
+    def self.repmgr_file_locations
+      REPGMR_FILE_LOCATIONS[repmgr_service_name]
+    end
+
+    def self.repmgr_log
+      repmgr_file_locations["log"]
+    end
+
+    def self.repmgr_service_name
+      @repmgr_service_name ||= File.exist?(REPGMR_FILE_LOCATIONS["repmgr13"]["config"]) ? "repmgr13" : "repmgr10"
+    end
+
+    delegate :repmgr_config, :repmgr_configured?, :repmgr_file_locations, :repmgr_log, :repmgr_service_name, :to => self
+
     def confirm_reconfiguration
-      say("Warning: File #{REPMGR_CONFIG} exists. Replication is already configured")
-      logger.warn("Warning: File #{REPMGR_CONFIG} exists. Replication is already configured")
+      say("Warning: File #{repmgr_config} exists. Replication is already configured")
+      logger.warn("Warning: File #{repmgr_config} exists. Replication is already configured")
       agree("Continue with configuration? (Y/N): ")
     end
 
     def create_config_file(host)
-      File.write(REPMGR_CONFIG, config_file_contents(host))
+      File.write(repmgr_config, config_file_contents(host))
       true
     end
 
@@ -63,9 +90,9 @@ Replication Server Configuration
         use_replication_slots='1'
         pg_basebackup_options='--wal-method=stream'
         failover='automatic'
-        promote_command='repmgr standby promote -f #{REPMGR_CONFIG} --log-to-file'
-        follow_command='repmgr standby follow -f #{REPMGR_CONFIG} --log-to-file --upstream-node-id=%n'
-        log_file='#{REPMGR_LOG}'
+        promote_command='repmgr standby promote -f #{repmgr_config} --log-to-file'
+        follow_command='repmgr standby follow -f #{repmgr_config} --log-to-file --upstream-node-id=%n'
+        log_file='#{repmgr_log}'
         service_start_command='sudo systemctl start #{service_name}'
         service_stop_command='sudo systemctl stop #{service_name}'
         service_restart_command='sudo systemctl restart #{service_name}'
