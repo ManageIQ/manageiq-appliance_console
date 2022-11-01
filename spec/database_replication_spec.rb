@@ -51,7 +51,7 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
   context "#create_config_file" do
     it "writes the config file contents" do
       expect(subject).to receive(:config_file_contents).and_return("the contents")
-      expect(File).to receive(:write).with(described_class::REPMGR_CONFIG, "the contents")
+      expect(File).to receive(:write).with(described_class.repmgr_config, "the contents")
       expect(subject.create_config_file("host")).to be true
     end
   end
@@ -59,15 +59,15 @@ describe ManageIQ::ApplianceConsole::DatabaseReplication do
   context "#config_file_contents" do
     let(:expected_config_file) do
       <<-EOS.strip_heredoc
-        node_id=nodenumber
-        node_name=host
+        node_id='nodenumber'
+        node_name='host'
         conninfo='host=host user=user dbname=databasename'
-        use_replication_slots=1
+        use_replication_slots='1'
         pg_basebackup_options='--wal-method=stream'
-        failover=automatic
+        failover='automatic'
         promote_command='repmgr standby promote -f /etc/repmgr/10/repmgr.conf --log-to-file'
         follow_command='repmgr standby follow -f /etc/repmgr/10/repmgr.conf --log-to-file --upstream-node-id=%n'
-        log_file=/var/log/repmgr/repmgrd.log
+        log_file='/var/log/repmgr/repmgrd.log'
         service_start_command='sudo systemctl start postgresql-9.5'
         service_stop_command='sudo systemctl stop postgresql-9.5'
         service_restart_command='sudo systemctl restart postgresql-9.5'
