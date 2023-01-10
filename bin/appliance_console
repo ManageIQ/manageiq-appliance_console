@@ -13,7 +13,6 @@ require 'highline/import'
 require 'rubygems'
 require 'bcrypt'
 require 'linux_admin'
-require 'manageiq/appliance_console/postgres_admin'
 require 'awesome_spawn'
 
 require 'manageiq/appliance_console/i18n'
