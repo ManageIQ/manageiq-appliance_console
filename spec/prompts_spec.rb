@@ -277,7 +277,8 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
         expect(subject.ask_for_disk("database disk").path).to eq("/dev/a")
         expect_heard ["database disk", "", "",
                       "1) /dev/a: 10 MB", "",
-                      "2) Don't partition the disk", "", "",
+                      "2) Don't partition the disk", "",
+                      "(1) ", "",
                       "Choose the database disk: |1| "]
       end
     end
@@ -328,28 +329,28 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", %w(a b), 1)).to eq("a")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "(1) ", "", "Choose the q?: |1| "]
     end
 
     it "defaults to the number of a menu option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, 1)).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "(1) ", "", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash key option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "a")).to eq("a1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |1| "]
+      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "(1) ", "", "Choose the q?: |1| "]
     end
 
     it "defaults to the index of a menu hash value option" do
       say ""
       expect_cls
       expect(subject.ask_with_menu("q?", {"a" => "a1", "b" => "b1"}, "b1")).to eq("b1")
-      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "", "Choose the q?: |2| "]
+      expect_heard ["q?", "", "", "1) a", "", "2) b", "", "(2) ", "", "Choose the q?: |2| "]
     end
   end
 

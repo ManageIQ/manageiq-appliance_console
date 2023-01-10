@@ -98,7 +98,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
           expect(subject.ask_file_location).to be_truthy
 
           error = "Please provide #{errmsg}"
-          expect_heard ["Enter the #{prmpt}: ", error, prompt]
+          expect_heard ["Enter the #{prmpt}: |/tmp/evm_db.backup| ", error, prompt]
 
           expect(subject.database_opts[:local_file]).to eq(file.path)
         end
