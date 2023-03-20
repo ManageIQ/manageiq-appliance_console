@@ -190,8 +190,9 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
           }
         ]
 
-        expect(Process).to receive(:wait).with(1234)
+        expect(Process).to receive(:wait2).with(1234).and_return([1234, double(:success? => true)])
         expect(AwesomeSpawn).to receive(:run!).with(*run_args).and_return(double(:output => "success"))
+
         expect(subject.register_standby_server).to be true
       end
     end
