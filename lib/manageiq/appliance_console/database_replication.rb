@@ -151,8 +151,8 @@ Replication Server Configuration
         end
       end
 
-      Process.wait(pid)
-      $CHILD_STATUS.success?
+      pid, status = Process.wait2(pid)
+      status.success?
     end
 
     def primary_connection_hash
