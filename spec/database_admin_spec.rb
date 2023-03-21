@@ -555,8 +555,6 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
 
       context "when excluding tables" do
         it "asks to input tables, providing an example and sensible defaults" do
-          pending "something is wrong with this test and the readline mocking on CI" if ENV["CI"]
-
           say ["y", "metrics_*"]
           expect(subject.ask_for_tables_to_exclude_in_dump).to be_truthy
           expect_output <<-EXAMPLE.strip_heredoc.chomp
