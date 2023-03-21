@@ -8,19 +8,19 @@ Bundler.setup
 require 'manageiq-appliance_console'
 
 require 'fileutils'
+# defines globally /via kernal: agree(), ask(), choose() and say()
 require 'highline/import'
-require 'highline/system_extensions'
 require 'rubygems'
 require 'bcrypt'
 require 'linux_admin'
-require 'manageiq/appliance_console/postgres_admin'
 require 'awesome_spawn'
-include HighLine::SystemExtensions
 
 require 'manageiq/appliance_console/i18n'
 
-$terminal.wrap_at = 80
-$terminal.page_at = 35
+HighLine.default_instance.tap do |highline|
+  highline.wrap_at = 80
+  highline.page_at = 35
+end
 
 def summary_entry(field, value)
   dfield = "#{field}:"
@@ -141,7 +141,7 @@ Welcome to the #{I18n.t("product.name")} Virtual Appliance.
 
 To modify the configuration, use a web browser to access the management page.
 
-#{$terminal.list(summary_attributes)}
+#{HighLine.default_instance.list(summary_attributes)}
         EOL
 
       press_any_key
