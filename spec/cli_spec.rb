@@ -55,15 +55,12 @@ describe ManageIQ::ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-      .with(:region            => 1,
-            :database          => 'vmdb_production',
-            :username          => 'root',
-            :password          => 'pass',
-            :interactive       => false,
-            :disk              => '/dev/x',
-            :run_as_evm_server => true)
-      .and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
+    expect_internal_db(
+      :region   => 1,
+      :username => 'root',
+      :password => 'pass',
+      :disk     => '/dev/x'
+    ).and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
     expect(subject.key_configuration).not_to receive(:activate)
     subject.run
   end
@@ -73,15 +70,12 @@ describe ManageIQ::ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-      .with(:region            => 1,
-            :database          => 'vmdb_production',
-            :username          => 'user',
-            :password          => 'pass',
-            :interactive       => false,
-            :disk              => 'x',
-            :run_as_evm_server => true)
-      .and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
+    expect_internal_db(
+      :region   => 1,
+      :username => 'user',
+      :password => 'pass',
+      :disk     => 'x'
+    ).and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
 
     subject.run
   end
@@ -91,14 +85,13 @@ describe ManageIQ::ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-      .with(:region            => 1,
-            :database          => 'vmdb_production',
-            :username          => 'user',
-            :password          => 'pass',
-            :interactive       => false,
-            :disk              => 'x',
-            :run_as_evm_server => false)
+    expect_internal_db(
+      :region            => 1,
+      :username          => 'user',
+      :password          => 'pass',
+      :disk              => 'x',
+      :run_as_evm_server => false
+    )
       .and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
     subject.run
   end
@@ -108,14 +101,12 @@ describe ManageIQ::ApplianceConsole::Cli do
     expect_v2_key
     expect(subject).to receive(:disk_from_string).and_return('x')
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-      .with(:database          => 'vmdb_production',
-            :username          => 'user',
-            :password          => 'pass',
-            :interactive       => false,
-            :disk              => 'x',
-            :run_as_evm_server => false)
-      .and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
+    expect_internal_db(
+      :username          => 'user',
+      :password          => 'pass',
+      :disk              => 'x',
+      :run_as_evm_server => false
+      ).and_return(double(:check_disk_is_mount_point => true, :activate => true, :post_activation => true))
     subject.run
   end
 
@@ -123,15 +114,14 @@ describe ManageIQ::ApplianceConsole::Cli do
     subject.parse(%w(--hostname host --port 1234 --dbname db --username user --password pass -r 1))
     expect_v2_key
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
-      .with(:host        => 'host',
-            :port        => 1234,
-            :database    => 'db',
-            :region      => 1,
-            :username    => 'user',
-            :password    => 'pass',
-            :interactive => false)
-      .and_return(double(:activate => true, :post_activation => true))
+    expect_external_db(
+      :host     => 'host',
+      :port     => 1234,
+      :database => 'db',
+      :region   => 1,
+      :username => 'user',
+      :password => 'pass'
+    ).and_return(double(:activate => true, :post_activation => true))
 
     subject.run
   end
@@ -140,14 +130,13 @@ describe ManageIQ::ApplianceConsole::Cli do
     subject.parse(%w(--hostname host --port 1234 --dbname db --username user --password pass))
     expect_v2_key
     expect(subject).to receive(:say)
-    expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
-      .with(:host        => 'host',
-            :port        => 1234,
-            :database    => 'db',
-            :username    => 'user',
-            :password    => 'pass',
-            :interactive => false)
-      .and_return(double(:activate => true, :post_activation => true))
+    expect_external_db(
+      :host     => 'host',
+      :port     => 1234,
+      :database => 'db',
+      :username => 'user',
+      :password => 'pass'
+    ).and_return(double(:activate => true, :post_activation => true))
 
     subject.run
   end
@@ -169,14 +158,11 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect(subject).to receive(:disk_from_string).and_return('x')
       expect(subject).to receive(:say).exactly(3).times
       config_double = double(:check_disk_is_mount_point => true, :activate => false)
-      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-        .with(:region            => 1,
-              :database          => 'vmdb_production',
-              :username          => 'user',
-              :password          => 'pass',
-              :interactive       => false,
-              :disk              => 'x',
-              :run_as_evm_server => true)
+      expect_internal_db(
+        :region   => 1,
+        :username => 'user',
+        :password => 'pass',
+        :disk     => 'x')
         .and_return(config_double)
       expect(config_double).to_not receive(:post_activation)
 
@@ -189,14 +175,11 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect(subject).to receive(:disk_from_string).and_return(nil)
       expect(subject).to receive(:say).exactly(3).times
       config_double = double
-      expect(ManageIQ::ApplianceConsole::InternalDatabaseConfiguration).to receive(:new)
-        .with(:region            => 1,
-              :database          => 'vmdb_production',
-              :username          => 'user',
-              :password          => 'pass',
-              :interactive       => false,
-              :run_as_evm_server => true)
-        .and_return(config_double)
+      expect_internal_db(
+        :region   => 1,
+        :username => 'user',
+        :password => 'pass'
+      ).and_return(config_double)
       expect(config_double).to receive(:check_disk_is_mount_point).and_raise("The disk for database must be a mount point")
       expect(config_double).to_not receive(:post_activation)
 
@@ -208,15 +191,14 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect_v2_key
       expect(subject).to receive(:say).exactly(3).times
       config_double = double(:activate => false)
-      expect(ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration).to receive(:new)
-        .with(:host        => 'host',
-              :port        => 5432,
-              :database    => 'db',
-              :region      => 1,
-              :username    => 'user',
-              :password    => 'pass',
-              :interactive => false)
-        .and_return(config_double)
+      expect_external_db(
+        :host     => 'host',
+        :port     => 5432,
+        :database => 'db',
+        :region   => 1,
+        :username => 'user',
+        :password => 'pass',
+      ).and_return(config_double)
       expect(config_double).to_not receive(:post_activation)
 
       subject.run
@@ -781,7 +763,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect(extauth_opts).to receive(:parse)
         .with("sso_enabled=true")
         .and_return("/authentication/sso_enabled" => true)
-      expect(extauth_opts).to receive(:update_configuration).with("/authentication/sso_enabled" => true)
+      expect(extauth_opts).to receive(:update_configuration).with({"/authentication/sso_enabled" => true})
       subject.parse(%w(--extauth-opts sso_enabled=true)).run
     end
 
@@ -791,7 +773,7 @@ describe ManageIQ::ApplianceConsole::Cli do
       expect(extauth_opts).to receive(:parse)
         .with("/authentication/local_login_disabled=false")
         .and_return("/authentication/local_login_disabled" => false)
-      expect(extauth_opts).to receive(:update_configuration).with("/authentication/local_login_disabled" => false)
+      expect(extauth_opts).to receive(:update_configuration).with({"/authentication/local_login_disabled" => false})
       subject.parse(%w(--extauth-opts /authentication/local_login_disabled=false)).run
     end
 
@@ -899,5 +881,24 @@ describe ManageIQ::ApplianceConsole::Cli do
 
   def expect_v2_key(exists = true)
     allow(subject.key_configuration).to receive(:key_exist?).and_return(exists)
+  end
+
+  def expect_internal_db(options)
+    stub_db_config(:internal, options)
+  end
+
+  def expect_external_db(options)
+    stub_db_config(:external, options)
+  end
+
+  def stub_db_config(internal, options)
+    if internal == :internal
+      options = options.reverse_merge(:database => 'vmdb_production', :interactive => false, :run_as_evm_server => true)
+      klass = ManageIQ::ApplianceConsole::InternalDatabaseConfiguration
+    else
+      options = options.reverse_merge(:database => 'vmdb_production', :interactive => false)
+      klass = ManageIQ::ApplianceConsole::ExternalDatabaseConfiguration
+    end
+    expect(klass).to receive(:new).with(options)
   end
 end

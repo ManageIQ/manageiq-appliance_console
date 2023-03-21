@@ -365,8 +365,8 @@ describe ManageIQ::ApplianceConsole::DatabaseConfiguration do
           new_settings = {"production" => @settings["production"].dup}
           new_settings["production"]["host"] = "new_host"
           allow(@config).to receive_messages(:merged_settings => new_settings)
-          expect(@config).to receive(:do_save).with("production" => hash_including(new_settings["production"].except("password")))
-          expect(@config).to receive(:do_save).with("production" => hash_including(@settings["production"].except("password")))
+          expect(@config).to receive(:do_save).with({"production" => hash_including(new_settings["production"].except("password"))})
+          expect(@config).to receive(:do_save).with({"production" => hash_including(@settings["production"].except("password"))})
         end
 
         it "where no exception is raised" do

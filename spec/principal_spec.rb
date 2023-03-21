@@ -36,7 +36,7 @@ describe ManageIQ::ApplianceConsole::Principal do
   private
 
   def expect_run(cmd, params, *responses)
-    expect(AwesomeSpawn).to receive(:run).with(cmd, :params => params)
+    expect(AwesomeSpawn).to receive(:run).with(cmd, {:params => params})
       .and_return(*(responses.empty? ? response : responses))
   end
 
