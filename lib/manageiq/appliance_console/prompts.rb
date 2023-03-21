@@ -34,7 +34,11 @@ module ApplianceConsole
 
     def press_any_key
       say("\nPress any key to continue.")
-      STDIN.noecho(&:getch)
+      HighLine.default_instance.tap do |highline|
+        highline.terminal.raw_no_echo_mode_exec do
+          highline.terminal.get_character
+        end
+      end
     end
 
     def clear_screen
