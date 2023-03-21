@@ -704,7 +704,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     let(:replication_standby) { ManageIQ::ApplianceConsole::DatabaseReplicationStandby.new }
 
     before do
-      pending "does not work on macOS because `ip` command is not available" if RUBY_PLATFORM.match?(/darwin/)
+      pending "does not work because `ip` command is not available" unless LinuxAdmin::Common.cmd?("ip")
 
       allow(ManageIQ::ApplianceConsole::DatabaseReplicationPrimary).to receive(:new).and_return(replication_primary)
       allow(ManageIQ::ApplianceConsole::DatabaseReplicationStandby).to receive(:new).and_return(replication_standby)
