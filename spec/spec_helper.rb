@@ -3,6 +3,18 @@ if ENV['CI']
   SimpleCov.start
 end
 
+# In GitHub Actions (CI), we do not have a tty, so the various tests that use
+# STDIN in order to test interactivity will fail. This code creates a psuedo-tty
+# in that environment. If you want to test locally in a "non-tty" way, you can
+# run the tests as follows: `true | bundle exec rake 2>&1 | cat`
+unless STDIN.tty?
+  require "pty"
+  require "io/console"
+  _master_io, slave_file = PTY.open
+  slave_file.raw!
+  STDIN.reopen(slave_file)
+end
+
 require "manageiq-appliance_console"
 ManageIQ::ApplianceConsole.logger = Logger.new("/dev/null")
 
