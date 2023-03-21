@@ -195,7 +195,7 @@ module ApplianceConsole
 
     def just_ask(prompt, default = nil, validate = nil, error_text = nil, klass = nil)
       ask("Enter the #{prompt}: ", klass) do |q|
-        q.readline = true
+        q.readline = true if STDIN.tty?
         q.default = default.to_s if default
         q.validate = validate if validate
         q.responses[:not_valid] = error_text ? "Please provide #{error_text}" : "Please provide in the specified format"

@@ -127,15 +127,11 @@ module ManageIQ
       end
 
       def should_exclude_tables?
-        ask_yn?("Would you like to exclude tables in the dump") do |q|
-          q.readline = true
-        end
+        ask_yn?("Would you like to exclude tables in the dump")
       end
 
       def should_split_output?
-        ask_yn?("Would you like to split the #{action} output into multiple parts") do |q|
-          q.readline = true
-        end
+        ask_yn?("Would you like to split the #{action} output into multiple parts")
       end
 
       def filename_prompt_args

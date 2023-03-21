@@ -66,7 +66,7 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
 
   it "should ask for any key" do
     expect(subject).to receive(:say)
-    expect(STDIN).to receive(:getc)
+    expect(input).to receive(:getc)
     subject.press_any_key
   end
 
