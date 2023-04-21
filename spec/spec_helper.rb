@@ -3,7 +3,7 @@ if ENV['CI']
   SimpleCov.start
 end
 
-require "manageiq-appliance_console"
+require "manageiq/appliance_console"
 ManageIQ::ApplianceConsole.logger = Logger.new("/dev/null")
 
 require "manageiq/password/rspec_matchers"
