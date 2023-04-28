@@ -131,7 +131,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       before do
         subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
-        expect(STDIN).to receive(:getc)
+        expect(input).to receive(:getc)
         allow(File).to receive(:delete)
       end
 
@@ -362,7 +362,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       before do
         subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
-        expect(STDIN).to receive(:getc)
+        expect(input).to receive(:getc)
         allow(File).to receive(:delete)
       end
 
@@ -593,7 +593,7 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
       before do
         subject.instance_variable_set(:@database_opts, {:local_file => uri})
         subject.instance_variable_set(:@delete_agree, true)
-        expect(STDIN).to receive(:getc)
+        expect(input).to receive(:getc)
         allow(File).to receive(:delete)
       end
 
