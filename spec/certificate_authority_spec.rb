@@ -33,6 +33,8 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
     end
 
     it "should configure http" do
+      # TODO: suppress enabling certmonger to start on reboot
+      expect(subject).to receive(:say).with(/configuring/)
       ipa_configured(true)
       expect_run(/getcert/, anything, response).at_least(3).times
 
@@ -40,7 +42,6 @@ describe ManageIQ::ApplianceConsole::CertificateAuthority do
       expect(LinuxAdmin::Service).to receive(:new).and_return(double(:enable => double(:start => nil)))
       expect(FileUtils).to receive(:chmod).with(0o644, anything)
       allow(ManageIQ::ApplianceConsole::Certificate).to receive(:say)
-      expect(subject).to receive(:say)
       subject.activate
       expect(subject.http).to eq(:complete)
       expect(subject.status_string).to eq("http: complete")

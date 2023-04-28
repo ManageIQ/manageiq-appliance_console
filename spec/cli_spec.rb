@@ -693,6 +693,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should configure DB as primary when the required arguments are specified" do
+      expect(subject).to receive(:say).with(/Configuring.*Primary/i)
       expect(replication_primary).to receive(:activate)
       subject.parse(%w(--replication primary --cluster-node-number 1 --password pass)).run
       expect(replication_primary.database_name).to eq("vmdb_production")
@@ -702,6 +703,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should configure primary replication with a fixed database name and user when specified in the flags" do
+      expect(subject).to receive(:say).with(/Configuring.*Primary/i)
       expect(replication_primary).to receive(:activate)
       subject.parse(%w(--replication primary --cluster-node-number 1 --password pass --dbname vmdb_development --username guest)).run
       expect(replication_primary.database_name).to eq("vmdb_development")
@@ -711,6 +713,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should configure DDBB replication as standby when the required parameters are specified" do
+      expect(subject).to receive(:say).with(/Configuring.*Standby/i)
       expect(replication_standby).to receive(:activate)
       subject.parse(%w(--replication standby --cluster-node-number 2 --password pass --dbname vmdb_development --primary-host 10.0.0.1)).run
       expect(replication_standby.disk).to eq(nil)
@@ -722,6 +725,7 @@ describe ManageIQ::ApplianceConsole::Cli do
     end
 
     it "should configure repmgrd when auto-failover flag is set" do
+      expect(subject).to receive(:say).with(/Configuring.*Standby/i)
       expect(subject).to receive(:disk_from_string).with('x').and_return('/dev/x')
       expect(replication_standby).to receive(:activate)
       subject.parse(%w(--replication standby --username dbuser --password pass --cluster-node-number 2 --dbdisk x --primary-host 10.0.0.1 --auto-failover)).run

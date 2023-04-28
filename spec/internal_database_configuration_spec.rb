@@ -61,6 +61,7 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
     end
 
     it "resets the permissions on the postgres users home directory if we mount on top of it" do
+      expect(@config).to receive(:say).twice.with(/Initialize/)
       allow(@config).to receive(:mount_point).and_return(Pathname.new("/var/lib/pgsql"))
       expect(FileUtils).to receive(:chown).with(ManageIQ::ApplianceConsole::PostgresAdmin.user, ManageIQ::ApplianceConsole::PostgresAdmin.group, "/var/lib/pgsql")
       expect(FileUtils).to receive(:chmod).with(0o700, "/var/lib/pgsql")
@@ -69,6 +70,7 @@ describe ManageIQ::ApplianceConsole::InternalDatabaseConfiguration do
     end
 
     it "leaves the mount point alone if it is not the postgres users home directory" do
+      expect(@config).to receive(:say).twice.with(/Initialize/)
       allow(@config).to receive(:mount_point).and_return(Pathname.new("/tmp/pgsql"))
       expect(FileUtils).not_to receive(:chown)
       expect(FileUtils).not_to receive(:chown)
