@@ -15,7 +15,7 @@ module ApplianceConsole
       options.each { |n, v| public_send("#{n}=", v) }
       @ca_name ||= "ipa"
       @realm = @realm.upcase if @realm
-      @name ||= "#{service}/#{hostname}@#{realm}"
+      @name ||= "#{service}/#{hostname}\\@#{realm}"
     end
 
     def register

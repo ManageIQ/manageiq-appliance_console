@@ -3,7 +3,7 @@ describe ManageIQ::ApplianceConsole::Principal do
   let(:hostname) { "machine.network.com" }
   let(:realm)    { "NETWORK.COM" }
   let(:service)  { "postgres" }
-  let(:principal_name) { "postgres/machine.network.com@NETWORK.COM" }
+  let(:principal_name) { "postgres/machine.network.com\\@NETWORK.COM" }
 
   subject { described_class.new(:hostname => hostname, :realm => realm, :service => service) }
 
