@@ -29,10 +29,9 @@ shared_context 'with a terminal ui', :with_ui do
   after do
     @temp_stdin.close! if @temp_stdin
     @temp_stdout.close! if @temp_stdout
-    HighLine.default_instance = HighLine.new(STDIN, STDOUT)
-    # best-guess cleanup: Readline has .input=, .output= but no .input, .output
-    Readline.input = STDIN
-    Readline.output = STDOUT
+    HighLine.default_instance = HighLine.new
+    Readline.input = nil
+    Readline.output = nil
   end
 
   # net/ssh messes with track_eof
