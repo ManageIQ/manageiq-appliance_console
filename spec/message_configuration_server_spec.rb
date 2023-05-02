@@ -363,6 +363,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "replaces localhost with 127.0.0.1" do
+        expect(subject).to receive(:say).with(/Message Server Parameters/)
         expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
         expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
@@ -373,6 +374,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "replaces localhost.localadmin with 127.0.0.1" do
+        expect(subject).to receive(:say).with(/Message Server Parameters/)
         expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost.localadmin")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
         expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")

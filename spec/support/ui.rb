@@ -21,6 +21,7 @@ shared_context 'with a terminal ui', :with_ui do
   let(:prompt) { "\n?  " }
 
   before do
+    HighLine.default_instance = HighLine.new(input, output)
     Readline.input = input
     Readline.output = readline_output
   end
@@ -28,9 +29,9 @@ shared_context 'with a terminal ui', :with_ui do
   after do
     @temp_stdin.close! if @temp_stdin
     @temp_stdout.close! if @temp_stdout
-    # best-guess cleanup: Readline has .input=, .output= but no .input, .output
-    Readline.input = STDIN
-    Readline.output = STDOUT
+    HighLine.default_instance = HighLine.new
+    Readline.input = nil
+    Readline.output = nil
   end
 
   # net/ssh messes with track_eof
