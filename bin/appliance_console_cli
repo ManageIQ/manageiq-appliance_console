@@ -3,5 +3,5 @@
 require 'bundler'
 Bundler.setup
 
-require 'manageiq-appliance_console'
+require 'manageiq/appliance_console'
 ManageIQ::ApplianceConsole::Cli.parse(ARGV)
