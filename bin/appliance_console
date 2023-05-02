@@ -5,7 +5,7 @@
 require 'bundler'
 Bundler.setup
 
-require 'manageiq-appliance_console'
+require 'manageiq/appliance_console'
 
 require 'fileutils'
 require 'highline/import'

@@ -2,7 +2,7 @@ require "readline"
 
 # It would be nice if we didn't need to fetch the world to get
 # ManageIQ::ApplianceConsole::RAILS_ROOT
-require 'manageiq-appliance_console'
+require 'manageiq/appliance_console'
 require "manageiq/appliance_console/i18n"
 
 shared_context 'with a terminal ui', :with_ui do
