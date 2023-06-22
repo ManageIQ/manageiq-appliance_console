@@ -10,12 +10,14 @@ module ApplianceConsole
     attr_accessor :service
     # kerberos principal name
     attr_accessor :name
+    attr_accessor :service_principal
 
     def initialize(options = {})
       options.each { |n, v| public_send("#{n}=", v) }
       @ca_name ||= "ipa"
       @realm = @realm.upcase if @realm
-      @name ||= "#{service}/#{hostname}\\@#{realm}"
+      @service_principal ||= "#{service}/#{hostname}"
+      @name ||= "#{service_principal}@#{realm}"
     end
 
     def register
@@ -33,13 +35,13 @@ module ApplianceConsole
     private
 
     def exist?
-      AwesomeSpawn.run("/usr/bin/ipa", :params => ["-e", "skip_version_check=1", "service-find", "--principal", name]).success?
+      AwesomeSpawn.run("/usr/bin/ipa", :params => ["-e", "skip_version_check=1", "service-find", "--principal", service_principal]).success?
     end
 
     def request
       # using --force because these services tend not to be in dns
       # this is like VERIFY_NONE
-      AwesomeSpawn.run!("/usr/bin/ipa", :params => ["-e", "skip_version_check=1", "service-add", "--force", name])
+      AwesomeSpawn.run!("/usr/bin/ipa", :params => ["-e", "skip_version_check=1", "service-add", "--force", service_principal])
     end
   end
 end
