@@ -23,7 +23,7 @@ describe ManageIQ::ApplianceConsole::Certificate do
 
   # not sure if we care about this (it is probably allowing us to neglect )
   it "should have a principal" do
-    expect(subject.principal.name).to eq("postgres/#{host}\\@#{realm}")
+    expect(subject.principal.name).to eq("postgres/#{host}@#{realm}")
     expect(subject.principal).to be_ipa
   end
 
