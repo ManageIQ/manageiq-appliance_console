@@ -17,6 +17,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - **BREAKING** Don't start evmserverd until messaging is configured [[#196]](https://github.com/ManageIQ/manageiq-appliance_console/pull/196)
 - Simplify messaging options by saving in yml files [[#197]](https://github.com/ManageIQ/manageiq-appliance_console/pull/197)
 
+## [7.2.2] - 2023-06-30
+### Fixed
+- Fix sporadic test failure [[#204]](https://github.com/ManageIQ/manageiq-appliance_console/pull/204)
+- Move gem name loader to proper namespaced location [[#208]](https://github.com/ManageIQ/manageiq-appliance_console/pull/208)
+- Separate kerberos from service principal name and use correctly [[#215]](https://github.com/ManageIQ/manageiq-appliance_console/pull/215)
+
 ## [7.2.1] - 2023-05-03
 ### Fixed
 - Remove MIQ specific gem source [[#209]](https://github.com/ManageIQ/manageiq-appliance_console/pull/209)
@@ -216,7 +222,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [1.0.0] - 2017-10-19
 
 [Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...HEAD
-[8.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.1...v8.0.0
+[8.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.2...v8.0.0
+[7.2.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.1...v7.2.2
 [7.2.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.0...v7.2.1
 [7.2.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.1.1...v7.2.0
 [7.1.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.1.0...v7.1.1
