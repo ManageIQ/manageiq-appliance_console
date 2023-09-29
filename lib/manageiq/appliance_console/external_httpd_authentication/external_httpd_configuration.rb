@@ -124,7 +124,7 @@ module ApplianceConsole
       def configure_sssd_ifp(config)
         user_attributes = LDAP_ATTRS.keys.collect { |k| "+#{k}" }.join(", ")
         ifp_config      = "
-  allowed_uids = #{APACHE_USER}, root
+  allowed_uids = #{APACHE_USER}, root, manageiq
   user_attributes = #{user_attributes}
 "
         if config.include?("[ifp]")
