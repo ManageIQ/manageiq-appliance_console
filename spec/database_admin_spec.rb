@@ -461,39 +461,12 @@ describe ManageIQ::ApplianceConsole::DatabaseAdmin, :with_ui do
     subject { described_class.new(:dump, input, output) }
 
     describe "#ask_questions" do
-      let(:pg_dump_warning) do
-        <<-WARN.strip_heredoc
-          WARNING:  This is not the recommended and supported way of running a
-          database backup, and is strictly meant for exporting a database for
-          support/debugging purposes!
-
-
-        WARN
-      end
-
-      it "warns about using pg_dump and asks for file location" do
+      it "asks for file location and tables to exclude" do
         expect(subject).to receive(:say).with("Create Database Dump\n\n")
-        expect(subject).to receive(:say).with(pg_dump_warning)
         expect(subject).to receive(:ask_file_location)
         expect(subject).to receive(:ask_for_tables_to_exclude_in_dump)
 
         subject.ask_questions
-      end
-
-      it "has proper formatting for the pg_dump warning" do
-        allow(subject).to receive(:ask_file_location)
-        allow(subject).to receive(:ask_for_tables_to_exclude_in_dump)
-        subject.ask_questions
-
-        expect_output <<-PROMPT.strip_heredoc
-          Create Database Dump
-
-          WARNING:  This is not the recommended and supported way of running a
-          database backup, and is strictly meant for exporting a database for
-          support/debugging purposes!
-
-
-        PROMPT
       end
     end
 

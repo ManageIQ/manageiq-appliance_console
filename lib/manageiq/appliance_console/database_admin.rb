@@ -15,14 +15,6 @@ module ManageIQ
         Example: 'mydomain.com/user'
       PROMPT
 
-      DB_DUMP_WARNING = <<-WARN.strip_heredoc
-        WARNING:  This is not the recommended and supported way of running a
-        database backup, and is strictly meant for exporting a database for
-        support/debugging purposes!
-
-
-      WARN
-
       attr_reader :action, :backup_type, :database_opts, :delete_agree, :filename
 
       def initialize(action = :restore, input = $stdin, output = $stdout)
@@ -43,7 +35,6 @@ module ManageIQ
           press_any_key
           raise MiqSignalError
         end
-        say(DB_DUMP_WARNING) if action == :dump
         ask_file_location
         ask_for_tables_to_exclude_in_dump
       end
