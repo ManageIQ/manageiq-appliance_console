@@ -118,6 +118,6 @@ describe ManageIQ::ApplianceConsole::Certificate do
   end
 
   def response(ret_code = 0)
-    AwesomeSpawn::CommandResult.new("cmd", "output", "", ret_code)
+    AwesomeSpawn::CommandResult.new("cmd", "output", "", nil, ret_code)
   end
 end
