@@ -38,3 +38,9 @@ RSpec.configure do |config|
     config.add_setting :with_postgres_specs, :default => false
   end
 end
+
+require "active_record"
+require "active_support"
+puts
+puts "\e[93mUsing ActiveRecord #{ActiveRecord.version}\e[0m"
+puts "\e[93mUsing ActiveSupport #{ActiveSupport.version}\e[0m"
