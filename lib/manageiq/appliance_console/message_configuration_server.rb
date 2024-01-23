@@ -198,7 +198,7 @@ module ManageIQ
                                                                           "-out"     => ca_cert_path,
                                                                           "-days"    => 10_000,
                                                                           "-passout" => "env:PASSWORD",
-                                                                          "-subj"    => '/CN=something'}])
+                                                                          "-subj"    => '/CN=ApplianceCA'}])
 
         # Import the CA cert into the trust store, creating truststore.jks
         # :stdin_data provides the -storepass argument and yes to confirm
