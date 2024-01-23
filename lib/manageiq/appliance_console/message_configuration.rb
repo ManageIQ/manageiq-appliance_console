@@ -110,7 +110,13 @@ module ManageIQ
 
         return if file_found?(messaging_yaml_path)
 
-        messaging_yaml = YAML.load_file(messaging_yaml_sample_path)
+        data = File.read(messaging_yaml_sample_path)
+        messaging_yaml =
+          if YAML.respond_to?(:safe_load)
+            YAML.safe_load(data, :aliases => true)
+          else
+            YAML.load(data) # rubocop:disable Security/YAMLLoad
+          end
 
         messaging_yaml["production"]["host"]      = message_server_host
         messaging_yaml["production"]["port"]      = message_server_port
