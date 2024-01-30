@@ -67,6 +67,8 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
+        return false if hostname?(message_server_host) && !hostname_fqdn?(message_server_host)
+
         return false unless host_reachable?(message_server_host, "Message Server Host:")
 
         true
@@ -174,6 +176,21 @@ module ManageIQ
         end
 
         say("Content already exists in #{path}. Taking no action.")
+        true
+      end
+
+      def hostname?(host)
+        host !~ IP_REGEXP
+      end
+
+      def hostname_fqdn?(host)
+        require "socket"
+
+        fqdn = Addrinfo.getaddrinfo(Socket.gethostname, nil).first.getnameinfo.first
+        unless host == fqdn
+          return false
+        end
+
         true
       end
 
