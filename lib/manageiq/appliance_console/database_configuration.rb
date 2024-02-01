@@ -257,7 +257,13 @@ FRIENDLY
         require 'fileutils'
         FileUtils.cp(DB_YML_TMPL, DB_YML) if File.exist?(DB_YML_TMPL)
       end
-      YAML.load_file(DB_YML)
+
+      data = File.read(DB_YML)
+      if YAML.respond_to?(:safe_load)
+        YAML.safe_load(data, :aliases => true)
+      else
+        YAML.load(data) # rubocop:disable Security/YAMLLoad
+      end
     end
 
     def validate_encryption_key!
