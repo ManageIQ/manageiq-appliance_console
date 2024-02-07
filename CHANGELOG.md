@@ -247,7 +247,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.1.0...HEAD
+[8.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...v8.1.0
 [8.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.2...v8.0.0
 [7.2.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.1...v7.2.2
 [7.2.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.0...v7.2.1
