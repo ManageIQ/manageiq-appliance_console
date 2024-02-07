@@ -4,17 +4,43 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [8.1.0] - 2024-02-07
+### Fixed
+- Fix sporadic test failure [[#204]](https://github.com/ManageIQ/manageiq-appliance_console/pull/204)
+- Remove MIQ specific gem source [[#209]](https://github.com/ManageIQ/manageiq-appliance_console/pull/209)
+- Double escape @ in realm to avoid shell interpretation [[#211]](https://github.com/ManageIQ/manageiq-appliance_console/pull/211)
+- Move gem name loader to proper namespaced location [[#208]](https://github.com/ManageIQ/manageiq-appliance_console/pull/208)
+- Separate kerberos from service principal name and use correctly [[#215]](https://github.com/ManageIQ/manageiq-appliance_console/pull/215)
+- Add manageiq user to allowed_uids for sssd [[#220]](https://github.com/ManageIQ/manageiq-appliance_console/pull/220)
+- Remove warning about using pg_dump [[#221]](https://github.com/ManageIQ/manageiq-appliance_console/pull/221)
+- Fix specs where AwesomeSpawn private interface changed [[#224]](https://github.com/ManageIQ/manageiq-appliance_console/pull/224)
+- Change the Name of the CA from something to ApplianceCA [[#228]](https://github.com/ManageIQ/manageiq-appliance_console/pull/228)
+- Fix YAML.load_file failing on aliases [[#234]](https://github.com/ManageIQ/manageiq-appliance_console/pull/234)
+
+### Added
+- Make backward compatible changes to work with repmgr13 - version 5.2.1 [[#192]](https://github.com/ManageIQ/manageiq-appliance_console/pull/192)
+- Support Ruby 3.0 [[#206]](https://github.com/ManageIQ/manageiq-appliance_console/pull/206)
+- Support Ruby 3.1 [[#227]](https://github.com/ManageIQ/manageiq-appliance_console/pull/227)
+- Allow rails 7 gems in gemspec [[#226]](https://github.com/ManageIQ/manageiq-appliance_console/pull/226)
+
+### Changed
+- Update to Highline 2.1.0 [[#201]](https://github.com/ManageIQ/manageiq-appliance_console/pull/201)
+- Clean up test output (highline and stdout messages) [[#210]](https://github.com/ManageIQ/manageiq-appliance_console/pull/210)
+
+### Removed
+- Drop Ruby 2.7 [[#223]](https://github.com/ManageIQ/manageiq-appliance_console/pull/223)
+
 ## [8.0.0] - 2022-10-18
 ### Fixed
 - Don't require pressing any key twice for message configuration [[#193]](https://github.com/ManageIQ/manageiq-appliance_console/pull/193)
 
 ### Added
-- Report messaging configuration on sum03- info page [[#190]](https://github.com/ManageIQ/manageiq-appliance_console/pull/190)
+- Report messaging configuration on summary info page [[#190]](https://github.com/ManageIQ/manageiq-appliance_console/pull/190)
 
 ### Changed
+- **BREAKING** Don't start evmserverd until messaging is configured [[#196]](https://github.com/ManageIQ/manageiq-appliance_console/pull/196)
 - Refactor EvmServer operations [[#194]](https://github.com/ManageIQ/manageiq-appliance_console/pull/194)
 - Only start evmserverd after all application configuration is done [[#195]](https://github.com/ManageIQ/manageiq-appliance_console/pull/195)
-- **BREAKING** Don't start evmserverd until messaging is configured [[#196]](https://github.com/ManageIQ/manageiq-appliance_console/pull/196)
 - Simplify messaging options by saving in yml files [[#197]](https://github.com/ManageIQ/manageiq-appliance_console/pull/197)
 
 ## [7.2.2] - 2023-06-30
