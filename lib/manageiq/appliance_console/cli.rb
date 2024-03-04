@@ -256,7 +256,6 @@ module ApplianceConsole
         system_hosts.hostname = options[:host]
         system_hosts.set_loopback_hostname(options[:host])
         system_hosts.save
-        LinuxAdmin::Service.new("network").restart
       end
       create_key if key?
       set_db if database?

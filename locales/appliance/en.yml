@@ -4,7 +4,6 @@ en:
     name: ManageIQ
   advanced_settings:
     menu_order:
-    - networking
     - dbbackup
     - dbdump
     - dbrestore
@@ -21,7 +20,6 @@ en:
     - shutdown
     - summary
     - quit
-    networking: Configure Network
     dbbackup: Create Database Backup
     dbdump: Create Database Dump
     dbrestore: Restore Database From Backup
@@ -41,4 +39,4 @@ en:
   database_admin:
     local: Local file
     sample_url:
-      nfs: nfs://host.mydomain.com/exported/my_exported_folder/db.backup
+      nfs: nfs://host.example.com/exported/my_exported_folder/db.backup

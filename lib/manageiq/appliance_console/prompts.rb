@@ -67,26 +67,6 @@ module ApplianceConsole
       just_ask(prompt, default, validate, error_text, &block)
     end
 
-    def ask_for_ip_or_none(prompt, default = nil)
-      ask_for_ip(prompt, default, Regexp.union(NONE_REGEXP, IP_REGEXP)).gsub(NONE_REGEXP, "")
-    end
-
-    def ask_for_ipv4(prompt, default)
-      ask_for_ip(prompt, default, IPV4_REGEXP)
-    end
-
-    def ask_for_ipv4_or_none(prompt, default = nil)
-      ask_for_ip(prompt, default, Regexp.union(NONE_REGEXP, IPV4_REGEXP)).gsub(NONE_REGEXP, "")
-    end
-
-    def ask_for_ipv6(prompt, default)
-      ask_for_ip(prompt, default, IPV6_REGEXP)
-    end
-
-    def ask_for_ipv6_or_none(prompt, default = nil)
-      ask_for_ip(prompt, default, Regexp.union(IPV6_REGEXP, NONE_REGEXP)).gsub(NONE_REGEXP, '')
-    end
-
     def ask_for_hostname(prompt, default = nil, validate = HOSTNAME_REGEXP, error_text = "a valid Hostname.", &block)
       just_ask(prompt, default, validate, error_text, &block)
     end
