@@ -312,7 +312,7 @@ To modify the configuration, use a web browser to access the management page.
         # Start evmserverd if database and/or messaging were set up and we are supposed to run as an evmserver
         if changes_requested && database_configuration.run_as_evm_server
           say("\nStarting #{I18n.t("product.name")} Server...")
-          ManageIQ::ApplianceConsole::EvmServer.start
+          ManageIQ::ApplianceConsole::EvmServer.start(:enable => true)
         end
 
         press_any_key
