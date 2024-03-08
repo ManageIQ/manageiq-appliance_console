@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.0.1] - 2023-03-08
+### Fixed
+- Enable evmserver after configuring db and messaging [[#239]](https://github.com/ManageIQ/manageiq-appliance_console/pull/239)
+
 ## [9.0.0] - 2024-03-05
 ### Changed
 - Update codeclimate channel to the latest in manageiq-style [[#237]](https://github.com/ManageIQ/manageiq-appliance_console/pull/237)
@@ -254,8 +258,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.0...HEAD
-[8.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.1.0...v9.0.0
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...HEAD
+[9.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.0...v9.0.1
+[9.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.1.0...v9.0.0
 [8.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...v8.1.0
 [8.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.2...v8.0.0
 [7.2.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v7.2.1...v7.2.2
