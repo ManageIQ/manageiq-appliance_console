@@ -273,12 +273,14 @@ module ApplianceConsole
       saml_unconfig if saml_unconfig?
       oidc_config if oidc_config?
       oidc_unconfig if oidc_unconfig?
-      set_server_state if set_server_state?
       openscap if openscap?
       message_server_config if message_server_config?
       message_server_unconfig if message_server_unconfig?
       message_client_config if message_client_config?
       message_client_unconfig if message_client_unconfig?
+      # set_server_state must be after set_db and message_*_config so that a user
+      # can configure database, messaging, and start the server in one command
+      set_server_state if set_server_state?
     rescue CliError => e
       say(e.message)
       say("")
@@ -322,9 +324,6 @@ module ApplianceConsole
       # start pg, create user, create db update the rails configuration,
       # verify, set up the database with region. activate does it all!
       raise CliError, "Failed to configure internal database" unless config.activate
-
-      # enable/start related services
-      config.post_activation
     rescue RuntimeError => e
       raise CliError, "Failed to configure internal database #{e.message}"
     end
@@ -343,9 +342,6 @@ module ApplianceConsole
 
       # call create_or_join_region (depends on region value)
       raise CliError, "Failed to configure external database" unless config.activate
-
-      # enable/start related services
-      config.post_activation
     end
 
     def set_replication
