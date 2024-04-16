@@ -4,4 +4,5 @@ require 'bundler'
 Bundler.setup
 
 require 'manageiq/appliance_console'
+require 'manageiq/appliance_console/i18n'
 ManageIQ::ApplianceConsole::Cli.parse(ARGV)
