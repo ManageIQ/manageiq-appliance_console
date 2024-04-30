@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ed25519",                 ">= 1.2", "< 2.0"
   spec.add_runtime_dependency "highline",                "~> 2.1"
   spec.add_runtime_dependency "i18n",                    ">= 0.8"
-  spec.add_runtime_dependency "linux_admin",             "~> 2.0"
+  spec.add_runtime_dependency "linux_admin",             "~> 3.0"
   spec.add_runtime_dependency "manageiq-password",       "< 2"
   spec.add_runtime_dependency "net-scp",                 "~> 4.0"
   spec.add_runtime_dependency "net-ssh",                 "~> 7.2"
