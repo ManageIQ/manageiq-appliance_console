@@ -4,6 +4,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.0.2] - 2024-05-01
+### Fixed
+- Bump net-ssh/scp for OpenSSL 3.0 support [[#248]](https://github.com/ManageIQ/manageiq-appliance_console/pull/248)
+- Start evmserverd after cli config [[#244]](https://github.com/ManageIQ/manageiq-appliance_console/pull/244)
+- Fix missing i18n with appliance_console_cli [[#247]](https://github.com/ManageIQ/manageiq-appliance_console/pull/247)
+
+### Changed
+- Update paambaati/codeclimate-action action to v6 [[#249]](https://github.com/ManageIQ/manageiq-appliance_console/pull/249)
+- Add renovate.json [[#214]](https://github.com/ManageIQ/manageiq-appliance_console/pull/214)
+
 ## [9.0.1] - 2023-03-08
 ### Fixed
 - Enable evmserver after configuring db and messaging [[#239]](https://github.com/ManageIQ/manageiq-appliance_console/pull/239)
@@ -258,7 +268,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.2...HEAD
+[9.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...v9.0.2
 [9.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.0...v9.0.1
 [9.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.1.0...v9.0.0
 [8.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...v8.1.0
