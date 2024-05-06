@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.0.3] - 2023-05-06
+### Fixed
+- Fix missing kafka client ca-cert [[#250]](https://github.com/ManageIQ/manageiq-appliance_console/pull/250)
+
 ## [9.0.2] - 2024-05-01
 ### Fixed
 - Bump net-ssh/scp for OpenSSL 3.0 support [[#248]](https://github.com/ManageIQ/manageiq-appliance_console/pull/248)
