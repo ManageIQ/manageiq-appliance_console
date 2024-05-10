@@ -121,32 +121,7 @@ module ApplianceConsole
       self.port     = ask_for_integer("port number", nil, port) unless local?
       self.database = just_ask("name of the database on #{host}", database) unless local?
       self.username = just_ask("username", username) unless local?
-      count = 0
-      loop do
-        password1 = ask_for_password("database password on #{host}", password)
-        # if they took the default, just bail
-        break if (password1 == password)
-
-        if password1.strip.length == 0
-          say("\nPassword can not be empty, please try again")
-          next
-        end
-        if password_twice
-          password2 = ask_for_password("database password again")
-          if password1 == password2
-            self.password = password1
-            break
-          elsif count > 0 # only reprompt password once
-            raise "passwords did not match"
-          else
-            count += 1
-            say("\nThe passwords did not match, please try again")
-          end
-        else
-          self.password = password1
-          break
-        end
-      end
+      self.password = ask_for_new_password("database password on #{host}", :default => password, :confirm_password => password_twice)
     end
 
     def friendly_inspect

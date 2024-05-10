@@ -6,6 +6,7 @@ module ManageIQ
 module ApplianceConsole
   class DatabaseReplication
     include ManageIQ::ApplianceConsole::Logging
+    include ManageIQ::ApplianceConsole::Prompts
 
     PGPASS_FILE       = '/var/lib/pgsql/.pgpass'.freeze
     NETWORK_INTERFACE = 'eth0'.freeze
@@ -115,25 +116,9 @@ Replication Server Configuration
     private
 
     def ask_for_cluster_database_credentials
-      self.database_name = just_ask("cluster database name", database_name)
-      self.database_user = just_ask("cluster database username", database_user)
-
-      count = 0
-      loop do
-        count += 1
-        password1 = ask_for_password("cluster database password", database_password)
-        # if they took the default, just bail
-        break if password1 == database_password
-        password2 = ask_for_password("cluster database password")
-        if password1 == password2
-          self.database_password = password1
-          break
-        elsif count > 1 # only reprompt password once
-          raise RuntimeError, "passwords did not match"
-        else
-          say("\nThe passwords did not match, please try again")
-        end
-      end
+      self.database_name     = just_ask("cluster database name", database_name)
+      self.database_user     = just_ask("cluster database username", database_user)
+      self.database_password = ask_for_new_password("cluster database password", :default => database_password)
     end
 
     def run_repmgr_command(cmd, params = {})

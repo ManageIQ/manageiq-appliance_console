@@ -7,6 +7,7 @@ module ManageIQ
   module ApplianceConsole
     class MessageConfiguration
       include ManageIQ::ApplianceConsole::ManageiqUserMixin
+      include ManageIQ::ApplianceConsole::Prompts
 
       attr_reader :message_keystore_username, :message_keystore_password,
                   :message_server_host, :message_server_port,

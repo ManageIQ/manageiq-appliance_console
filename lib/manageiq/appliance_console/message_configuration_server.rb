@@ -75,7 +75,7 @@ module ManageIQ
         @message_server_host       = "127.0.0.1" if @message_server_host.include?("localhost")
 
         @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
-        @message_keystore_password = ask_for_password("Message Keystore Password")
+        @message_keystore_password = ask_for_new_password("Message Keystore Password")
         @message_persistent_disk   = ask_for_persistent_disk
       end
 
