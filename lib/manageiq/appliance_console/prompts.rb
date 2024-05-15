@@ -113,6 +113,27 @@ module ApplianceConsole
       pass == "********" ? (default || "") : pass
     end
 
+    def ask_for_new_password(prompt, default: nil, allow_empty: false, retry_limit: 1, confirm_password: true)
+      count = 0
+      loop do
+        password1 = ask_for_password(prompt, default)
+        if password1.strip.empty? && !allow_empty
+          say("\nPassword can not be empty, please try again")
+          next
+        end
+
+        return password1 if password1 == default || !confirm_password
+
+        password2 = ask_for_password(prompt)
+        return password1 if password1 == password2
+
+        raise "passwords did not match" if count >= retry_limit
+
+        count += 1
+        say("\nThe passwords did not match, please try again")
+      end
+    end
+
     def ask_for_string(prompt, default = nil)
       just_ask(prompt, default)
     end
