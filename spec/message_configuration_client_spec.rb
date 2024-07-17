@@ -40,12 +40,13 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
   describe "#ask_questions" do
     before do
       allow(subject).to receive(:agree).and_return(true)
+      allow(subject).to receive(:host_resolvable?).and_return(true)
       allow(subject).to receive(:host_reachable?).and_return(true)
       allow(subject).to receive(:message_client_configured?).and_return(false)
     end
 
     it "should prompt for message_keystore_username and message_keystore_password" do
-      expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-host-name.example.com")
+      expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname").and_return("my-host-name.example.com")
       expect(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
       expect(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")
@@ -61,7 +62,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     it "should display Server Hostname and Key Username" do
-      allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address").and_return("my-kafka-server.example.com")
+      allow(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname").and_return("my-kafka-server.example.com")
       allow(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
       allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
       allow(subject).to receive(:ask_for_password).with("Message Keystore Password").and_return("top_secret")

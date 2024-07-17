@@ -14,6 +14,7 @@ module ApplianceConsole
     INT_REGEXP    = /^[0-9]+$/
     NONE_REGEXP   = /^('?NONE'?)?$/i.freeze
     HOSTNAME_REGEXP = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
+    MESSAGING_HOSTNAME_REGEXP = /^(?!.*localhost)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
 
     def ask_for_uri(prompt, expected_scheme, opts = {})
       require 'uri'
@@ -69,6 +70,11 @@ module ApplianceConsole
 
     def ask_for_hostname(prompt, default = nil, validate = HOSTNAME_REGEXP, error_text = "a valid Hostname.", &block)
       just_ask(prompt, default, validate, error_text, &block)
+    end
+
+    def ask_for_messaging_hostname(prompt, default = nil, error_text = "a valid Messaging Hostname (not an IP or localhost)", &block)
+      validation = ->(h) { h =~ MESSAGING_HOSTNAME_REGEXP && h !~ IP_REGEXP }
+      just_ask(prompt, default, validation, error_text, &block)
     end
 
     def ask_for_ip_or_hostname(prompt, default = nil)
