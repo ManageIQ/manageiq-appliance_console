@@ -68,7 +68,7 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_reachable?(message_server_host, "Message Server Host:")
+        return false unless host_resolvable?(message_server_host) && host_reachable?(message_server_host, "Message Server Host:")
 
         true
       end
@@ -186,6 +186,29 @@ module ManageIQ
           say("the #{what} must be reachable by name.")
           return false
         end
+        say("Succeeded.")
+        true
+      end
+
+      def host_resolvable?(host)
+        require 'ipaddr'
+        require 'resolv'
+
+        say("Checking if #{host} is resolvable ... ")
+        begin
+          ip_address = Resolv.getaddress(host)
+
+          if IPAddr.new("127.0.0.1/8").include?(ip_address) || IPAddr.new("::1/128").include?(ip_address)
+            say("Failed.\nThe hostname must not resolve to a link-local address")
+
+            return false
+          end
+        rescue Resolv::ResolvError => e
+          say("Failed.\nHostname #{host} is not resolvable: #{e.message}")
+
+          return false
+        end
+
         say("Succeeded.")
         true
       end

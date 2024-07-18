@@ -46,7 +46,7 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
-        @message_server_host         = ask_for_string("Message Server Hostname or IP address")
+        @message_server_host         = ask_for_messaging_hostname("Message Server Hostname")
         @message_server_port         = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
         @message_server_username     = ask_for_string("Message Server Username", message_server_username)
         @message_server_password     = ask_for_password("Message Server Password")

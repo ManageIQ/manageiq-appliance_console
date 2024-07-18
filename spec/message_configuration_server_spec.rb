@@ -35,6 +35,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
   describe "#ask_questions" do
     before do
       allow(subject).to receive(:agree).and_return(true)
+      allow(subject).to receive(:host_resolvable?).and_return(true)
       allow(subject).to receive(:host_reachable?).and_return(true)
       allow(subject).to receive(:message_server_configured?).and_return(false)
     end
@@ -45,7 +46,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should prompt for message_keystore_username and message_keystore_password" do
-        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
 
@@ -55,7 +56,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should re-prompt when an empty message_keystore_password is given" do
-        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).and_return("")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
@@ -67,7 +68,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should display Server Hostname and Keystore Username" do
-        allow(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        allow(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
 
@@ -88,7 +89,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       it "should prompt for message_keystore_username, message_keystore_password and persistent disk" do
         message_persistent_disk = LinuxAdmin::Disk.new(:path => "/tmp/disk")
-        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
         expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return(message_persistent_disk)
@@ -215,14 +216,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       expect(subject).to receive(:say).with("Configure Keystore")
     end
 
-    context "with IP address" do
-      let(:ks_alias) { "localhost" }
-      let(:message_server_host) { "192.0.2.0" }
-      let(:ext) { "san=ip:#{message_server_host}" }
-
-      include_examples "configure keystore"
-    end
-
     context "with hostname" do
       let(:ks_alias) { "my-host-name.example.com" }
       let(:message_server_host) { ks_alias }
@@ -281,13 +274,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         expect(File).not_to receive(:write)
         expect(subject.send(:create_server_properties)).to be_nil
       end
-    end
-
-    context "with IP address" do
-      let(:ident_algorithm) { "" }
-      let(:client_auth) { "none" }
-      let(:message_server_host) { "192.0.2.0" }
-      include_examples "service properties file"
     end
 
     context "with hostname" do
@@ -364,36 +350,6 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       it "sets message_server_host to the provided value" do
         expect(subject.message_server_host).to eq("192.0.2.1")
-      end
-    end
-
-    context "when --message-server-host is specified as localhost*" do
-      before do
-        allow(subject).to receive(:agree).and_return(true)
-        allow(subject).to receive(:host_reachable?).and_return(true)
-        allow(subject).to receive(:message_server_configured?).and_return(true)
-      end
-
-      it "replaces localhost with 127.0.0.1" do
-        expect(subject).to receive(:say).with(/Message Server Parameters/)
-        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost")
-        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
-        expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
-        expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return("/tmp/disk")
-
-        subject.ask_for_parameters
-        expect(subject.message_server_host).to eq("127.0.0.1")
-      end
-
-      it "replaces localhost.localadmin with 127.0.0.1" do
-        expect(subject).to receive(:say).with(/Message Server Parameters/)
-        expect(subject).to receive(:ask_for_string).with("Message Server Hostname or IP address", anything).and_return("localhost.localadmin")
-        expect(subject).to receive(:ask_for_string).with("Message Keystore Username", anything).and_return("admin")
-        expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
-        expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return("/tmp/disk")
-
-        subject.ask_for_parameters
-        expect(subject.message_server_host).to eq("127.0.0.1")
       end
     end
   end

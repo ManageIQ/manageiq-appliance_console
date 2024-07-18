@@ -68,11 +68,7 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @message_server_host       = ask_for_string("Message Server Hostname or IP address", message_server_host)
-
-        # SSL Validation for Kafka does not work for hostnames containing "localhost"
-        # Therefore we replace with the equivalent IP "127.0.0.1" if a /localhost*/ hostname was entered
-        @message_server_host       = "127.0.0.1" if @message_server_host.include?("localhost")
+        @message_server_host       = ask_for_messaging_hostname("Message Server Hostname", message_server_host)
 
         @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
         @message_keystore_password = ask_for_new_password("Message Keystore Password")
@@ -301,13 +297,8 @@ module ManageIQ
                            "-genkey"   => nil,
                            "-keyalg"   => "RSA"}
 
-        if message_server_host.ipaddress?
-          keystore_params["-alias"] = "localhost"
-          keystore_params["-ext"] = "san=ip:#{message_server_host}"
-        else
-          keystore_params["-alias"] = message_server_host
-          keystore_params["-ext"] = "san=dns:#{message_server_host}"
-        end
+        keystore_params["-alias"] = message_server_host
+        keystore_params["-ext"] = "san=dns:#{message_server_host}"
 
         keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
 
