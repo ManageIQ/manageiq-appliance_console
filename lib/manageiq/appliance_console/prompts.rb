@@ -15,6 +15,7 @@ module ApplianceConsole
     NONE_REGEXP   = /^('?NONE'?)?$/i.freeze
     HOSTNAME_REGEXP = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
     MESSAGING_HOSTNAME_REGEXP = /^(?!.*localhost)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
+    MESSAGING_PASSWORD_REGEXP = /\A[a-zA-Z0-9_\-\.\$\*]+\z/.freeze
 
     def ask_for_uri(prompt, expected_scheme, opts = {})
       require 'uri'
@@ -119,12 +120,17 @@ module ApplianceConsole
       pass == "********" ? (default || "") : pass
     end
 
-    def ask_for_new_password(prompt, default: nil, allow_empty: false, retry_limit: 1, confirm_password: true)
+    def ask_for_new_password(prompt, default: nil, allow_empty: false, retry_limit: 1, confirm_password: true, validation: nil, validation_err: nil)
       count = 0
       loop do
         password1 = ask_for_password(prompt, default)
         if password1.strip.empty? && !allow_empty
           say("\nPassword can not be empty, please try again")
+          next
+        end
+
+        if validation && password1 !~ validation
+          say("\nPassword is invalid: #{validation_err}, please try again")
           next
         end
 
@@ -138,6 +144,10 @@ module ApplianceConsole
         count += 1
         say("\nThe passwords did not match, please try again")
       end
+    end
+
+    def ask_for_messaging_password(prompt)
+      ask_for_new_password(prompt, :validation => MESSAGING_PASSWORD_REGEXP, :validation_err => "allowed characters are a-z, A-Z, 0-9, -, _, ., $, and *")
     end
 
     def ask_for_string(prompt, default = nil)
