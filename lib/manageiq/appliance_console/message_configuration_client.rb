@@ -53,7 +53,7 @@ module ManageIQ
         @message_truststore_path_src = ask_for_string("Message Server Truststore Path", truststore_path)
         @message_ca_cert_path_src    = ask_for_string("Message Server CA Cert Path", ca_cert_path)
         @message_keystore_username   = ask_for_string("Message Keystore Username", message_keystore_username) if secure?
-        @message_keystore_password   = ask_for_password("Message Keystore Password") if secure?
+        @message_keystore_password   = ask_for_messaging_password("Message Keystore Password") if secure?
       end
 
       def show_parameters
