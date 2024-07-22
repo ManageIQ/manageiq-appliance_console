@@ -80,7 +80,7 @@ module ManageIQ
       end
 
       def use_new_disk
-        agree("Configure a new persistent disk volume? (Y/N): ")
+        agree("Configure a new persistent disk volume? (optional) (Y/N): ")
       end
 
       def choose_disk
