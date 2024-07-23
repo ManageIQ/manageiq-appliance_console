@@ -17,7 +17,7 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @message_server_host           = options[:message_server_use_ipaddr] == true ? my_ipaddr : options[:message_server_host] || my_hostname
+        @message_server_host           = options[:message_server_host] || my_hostname
         @message_persistent_disk       = LinuxAdmin::Disk.new(:path => options[:message_persistent_disk]) unless options[:message_persistent_disk].nil?
 
         @jaas_config_path              = config_dir_path.join("kafka_server_jaas.conf")
