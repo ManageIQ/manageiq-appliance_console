@@ -20,7 +20,7 @@ module ManageIQ
         @message_truststore_path_src = options[:message_truststore_path_src] || truststore_path
         @message_ca_cert_path_src    = options[:message_ca_cert_path_src] || ca_cert_path
 
-        @installed_files = [client_properties_path, messaging_yaml_path, truststore_path]
+        @installed_files = [client_properties_path, messaging_yaml_path, truststore_path, ca_cert_path]
       end
 
       def configure
