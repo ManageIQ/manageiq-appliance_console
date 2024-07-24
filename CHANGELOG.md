@@ -4,6 +4,19 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.1.0] - 2024-07-24
+### Added
+- Add a common method for asking for a password [[#251](https://github.com/ManageIQ/manageiq-appliance_console/pull/251)]
+- Add messaging hostname validation [[#254](https://github.com/ManageIQ/manageiq-appliance_console/pull/254)]
+- Indicate that messaging persistent disk is optional [[#256](https://github.com/ManageIQ/manageiq-appliance_console/pull/256)]
+- Add messaging password validation [[#255](https://github.com/ManageIQ/manageiq-appliance_console/pull/255)]
+
+### Changed
+- Deprecate message-server-use-ipaddr option from cli [[#257](https://github.com/ManageIQ/manageiq-appliance_console/pull/257)]
+
+### Fixed
+- Add ca-cert to messaging client installed_files [[#258](https://github.com/ManageIQ/manageiq-appliance_console/pull/258)]
+
 ## [9.0.3] - 2023-05-06
 ### Fixed
 - Fix missing kafka client ca-cert [[#250]](https://github.com/ManageIQ/manageiq-appliance_console/pull/250)
@@ -272,8 +285,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.2...HEAD
-[9.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...v9.0.2
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.0...HEAD
+[9.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.3...v9.1.0
+[9.0.3]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.2...v9.0.3
+[9.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...v9.0.2
 [9.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.0...v9.0.1
 [9.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.1.0...v9.0.0
 [8.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v8.0.0...v8.1.0
