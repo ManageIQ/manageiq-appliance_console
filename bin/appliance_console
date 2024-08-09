@@ -72,13 +72,13 @@ RE_RESTART  = "Restart".freeze
 RE_DELLOGS  = "Restart and Clean Logs".freeze
 RE_OPTIONS  = [RE_RESTART, RE_DELLOGS, ManageIQ::ApplianceConsole::CANCEL].freeze
 
-NETWORK_INTERFACE = "eth0".freeze
 CLOUD_INIT_NETWORK_CONFIG_FILE = "/etc/cloud/cloud.cfg.d/99_miq_disable_network_config.cfg".freeze
 CLOUD_INIT_DISABLE_NETWORK_CONFIG = "network: {config: disabled}\n".freeze
 
 module ManageIQ
 module ApplianceConsole
-  eth0 = LinuxAdmin::NetworkInterface.new(NETWORK_INTERFACE)
+  # Get a list of network interfaces
+  nics = LinuxAdmin::NetworkInterface.list.reject(&:loopback?)
   # Because it takes a few seconds, get the region once in the outside loop
   region = ManageIQ::ApplianceConsole::DatabaseConfiguration.region
 
@@ -88,15 +88,8 @@ module ApplianceConsole
 
   loop do
     begin
-      dns = LinuxAdmin::Dns.new
-      eth0.reload
-      eth0.parse_conf if eth0.respond_to?(:parse_conf)
-
+      dns              = LinuxAdmin::Dns.new
       host             = LinuxAdmin::Hosts.new.hostname
-      ip               = eth0.address
-      mac              = eth0.mac_address
-      mask             = eth0.netmask
-      gw               = eth0.gateway
       dns1, dns2       = dns.nameservers
       order            = dns.search_order.join(' ')
       timezone         = LinuxAdmin::TimeDate.system_timezone
@@ -113,16 +106,25 @@ module ApplianceConsole
         "not configured"
       end
 
-      summary_attributes = [
-        summary_entry("Hostname", host),
-        summary_entry("IPv4 Address", "#{ip}/#{mask}"),
-        summary_entry("IPv4 Gateway", gw),
-        summary_entry("IPv6 Address", eth0.address6 ? "#{eth0.address6}/#{eth0.prefix6}" : ''),
-        summary_entry("IPV6 Gateway", eth0.gateway6),
+      summary_attributes = [summary_entry("Hostname", host)]
+
+      nics.each(&:reload)
+      nics.each do |nic|
+        next if nic.address.nil? && nic.address6.nil?
+
+        summary_attributes += [
+          summary_entry("#{nic.interface} IPv4 Address", "#{nic.address}/#{nic.prefix}"),
+          summary_entry("#{nic.interface} IPv4 Gateway", nic.gateway),
+          summary_entry("#{nic.interface} IPv6 Address", nic.address6 ? "#{nic.address6}/#{nic.prefix6}" : ""),
+          summary_entry("#{nic.interface} IPv6 Gateway", nic.gateway6),
+          summary_entry("#{nic.interface} MAC Address", nic.mac_address)
+        ]
+      end
+
+      summary_attributes += [
         summary_entry("Primary DNS", dns1),
         summary_entry("Secondary DNS", dns2),
         summary_entry("Search Order", order),
-        summary_entry("MAC Address", mac),
         summary_entry("Timezone", timezone),
         summary_entry("Local Database Server", PostgresAdmin.local_server_status),
         summary_entry("#{I18n.t("product.name")} Server", evm_status),
