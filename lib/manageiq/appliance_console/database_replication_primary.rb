@@ -10,7 +10,7 @@ module ApplianceConsole
       self.database_name     = "vmdb_production"
       self.database_user     = "root"
       self.database_password = nil
-      self.primary_host      = LinuxAdmin::NetworkInterface.new(NETWORK_INTERFACE).address
+      self.primary_host      = network_interfaces.first&.address
     end
 
     def ask_questions

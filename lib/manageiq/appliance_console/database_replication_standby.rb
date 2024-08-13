@@ -17,7 +17,7 @@ module ApplianceConsole
       self.database_user     = "root"
       self.database_password = nil
       self.primary_host      = nil
-      self.standby_host      = LinuxAdmin::NetworkInterface.new(NETWORK_INTERFACE).address
+      self.standby_host      = network_interfaces.first&.address
       self.resync_data       = false
     end
 

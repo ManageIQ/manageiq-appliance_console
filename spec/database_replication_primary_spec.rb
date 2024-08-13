@@ -1,7 +1,6 @@
 describe ManageIQ::ApplianceConsole::DatabaseReplicationPrimary do
   before do
-    stub_const("ManageIQ::ApplianceConsole::NETWORK_INTERFACE", "either_net")
-    expect(LinuxAdmin::NetworkInterface).to receive(:new).and_return(double(:address => "192.0.2.1"))
+    expect(LinuxAdmin::NetworkInterface).to receive(:list).and_return([double(:address => "192.0.2.1", :loopback? => false)])
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
     allow(subject).to receive(:agree)

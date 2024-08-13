@@ -25,6 +25,10 @@ module ApplianceConsole
     attr_accessor :node_number, :database_name, :database_user,
                   :database_password, :primary_host
 
+    def network_interfaces
+      @network_interfaces ||= LinuxAdmin::NetworkInterface.list.reject(&:loopback?)
+    end
+
     def ask_for_unique_cluster_node_number
       self.node_number = ask_for_integer("number uniquely identifying this node in the replication cluster")
     end
