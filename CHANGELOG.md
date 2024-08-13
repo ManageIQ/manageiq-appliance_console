@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [9.1.1] - 2024-08-13
+### Changed
+- Don't depend on eth0 for displaying network information [[#263](https://github.com/ManageIQ/manageiq-appliance_console/pull/263)]
+
 ## [9.1.0] - 2024-07-24
 ### Added
 - Add a common method for asking for a password [[#251](https://github.com/ManageIQ/manageiq-appliance_console/pull/251)]
@@ -285,7 +289,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.1...HEAD
+[9.1.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.0...v9.1.1
 [9.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.3...v9.1.0
 [9.0.3]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.2...v9.0.3
 [9.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.1...v9.0.2
