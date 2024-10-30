@@ -201,7 +201,7 @@ module ApplianceConsole
         src_path  = path_join(src_dir, file)
         dest_path = path_join(dest_dir, file.gsub(".erb", ""))
         if src_path.to_s.include?(".erb")
-          File.write(dest_path, ERB.new(File.read(src_path), nil, '-').result(binding))
+          File.write(dest_path, ERB.new(File.read(src_path), trim_mode: '-').result(binding))
         else
           FileUtils.cp src_path, dest_path
         end
