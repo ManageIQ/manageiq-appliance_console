@@ -4,6 +4,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.0] - 2024-11-19
+### Added
+- Test with ruby 3.3 [[#269](https://github.com/ManageIQ/manageiq-appliance_console/pull/269)]
+
+### Changed
+- **BREAKING** Store saml remote user configuration separately from sssd lookup [[#265](https://github.com/ManageIQ/manageiq-appliance_console/pull/265)]
+
+### Fixed
+- Fix warnings on newer ERB versions [[#267](https://github.com/ManageIQ/manageiq-appliance_console/pull/267)]
+
 ## [9.1.1] - 2024-08-13
 ### Changed
 - Don't depend on eth0 for displaying network information [[#263](https://github.com/ManageIQ/manageiq-appliance_console/pull/263)]
@@ -289,7 +299,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.1...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.0...HEAD
+[10.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.1...v10.0.0
 [9.1.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.0...v9.1.1
 [9.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.3...v9.1.0
 [9.0.3]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.0.2...v9.0.3
