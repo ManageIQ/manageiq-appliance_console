@@ -43,7 +43,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
                                                   :params => ["https://#{client_host}", "https://#{client_host}/saml2"])
 
       allow(subject).to receive(:copy_template)
-      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf").and_return(true)
+      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-saml.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to SAML ...")
@@ -75,7 +75,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
                                                   :params => ["https://#{client_host}", "https://#{client_host}/saml2"])
 
       allow(subject).to receive(:copy_template)
-      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf").and_return(true)
+      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-saml.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").and_return(true)
       expect(subject).to receive(:download_network_file).with(idp_metadata_url, described_class::IDP_METADATA_FILE).and_return(true)
 
@@ -113,7 +113,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
       expect(FileUtils).to receive(:cp).with(downloaded_idp_metadata, described_class::IDP_METADATA_FILE).and_return(true)
 
       allow(subject).to receive(:copy_template)
-      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf").and_return(true)
+      expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-saml.conf").and_return(true)
       expect(subject).to receive(:copy_template).with(described_class::HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf").and_return(true)
 
       expect(subject).to receive(:say).with("Setting Appliance Authentication Settings to SAML ...")
@@ -138,6 +138,7 @@ describe ManageIQ::ApplianceConsole::SamlAuthentication do
       allow(subject).to receive(:remove_file)
       expect(subject).to receive(:remove_file).with(described_class::HTTPD_CONFIG_DIRECTORY.join("manageiq-external-auth-saml.conf")).and_return(true)
       expect(subject).to receive(:remove_file).with(described_class::HTTPD_CONFIG_DIRECTORY.join("manageiq-remote-user.conf")).and_return(true)
+      expect(subject).to receive(:remove_file).with(described_class::HTTPD_CONFIG_DIRECTORY.join("manageiq-remote-user-saml.conf")).and_return(true)
 
       expect(subject).to receive(:say).with(/Unconfiguring SAML Authentication .../)
       expect(subject).to receive(:say).with(/Setting Appliance Authentication Settings to Database .../)

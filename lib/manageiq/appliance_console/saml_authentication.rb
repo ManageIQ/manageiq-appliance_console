@@ -90,13 +90,15 @@ module ManageIQ
 
       def copy_apache_saml_configfiles
         debug_msg("Copying Apache SAML Config files ...")
-        copy_template(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user.conf")
+        copy_template(HTTPD_CONFIG_DIRECTORY, "manageiq-remote-user-saml.conf")
         copy_template(HTTPD_CONFIG_DIRECTORY, "manageiq-external-auth-saml.conf")
       end
 
       def remove_apache_saml_configfiles
         debug_msg("Removing Apache SAML Config files ...")
+        # legacy systems may have manageiq-remote-user.conf instead of manageiq-remote-user-saml.conf
         remove_file(HTTPD_CONFIG_DIRECTORY.join("manageiq-remote-user.conf"))
+        remove_file(HTTPD_CONFIG_DIRECTORY.join("manageiq-remote-user-saml.conf"))
         remove_file(HTTPD_CONFIG_DIRECTORY.join("manageiq-external-auth-saml.conf"))
       end
 
