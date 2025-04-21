@@ -170,8 +170,8 @@ module ApplianceConsole
         true
       end
 
-      def valid_parameters?(ipaserver)
-        host_reachable?(ipaserver, "IPA Server")
+      def valid_parameters?(_ipaserver)
+        true
       end
 
       #
@@ -180,21 +180,6 @@ module ApplianceConsole
       def config_file_write(config, path, timestamp)
         FileUtils.copy(path, "#{path}.#{timestamp}") if File.exist?(path)
         File.open(path, "w") { |f| f.write(config) }
-      end
-
-      #
-      # Network validation
-      #
-      def host_reachable?(host, what = "Server")
-        require 'net/ping'
-        say("Checking connectivity to #{host} ... ")
-        unless Net::Ping::External.new(host).ping
-          say("Failed.\nCould not connect to #{host},")
-          say("the #{what} must be reachable by name.")
-          return false
-        end
-        say("Succeeded.")
-        true
       end
 
       def cp_template(file, src_dir, dest_dir = "/")
