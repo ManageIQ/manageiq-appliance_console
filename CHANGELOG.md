@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [10.0.2] - 2025-05-08
+## Changed
+- Remove ping of IPA Server [[#278](https://github.com/ManageIQ/manageiq-appliance_console/pull/278)]
+
 ## [10.0.1] - 2024-11-27
 ## Changed
 - Readline does not work with ruby 3.3 [[#270](https://github.com/ManageIQ/manageiq-appliance_console/pull/270)]
@@ -303,7 +307,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.1...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...HEAD
+[10.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.0...v10.0.1
 [10.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.1...v10.0.0
 [9.1.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.0...v9.1.1
