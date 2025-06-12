@@ -382,6 +382,18 @@ To modify the configuration, use a web browser to access the management page.
         say("Failover Monitor Service configured successfully")
         press_any_key
 
+      when I18n.t("advanced_settings.containers_config")
+        say("#{selection}\n\n")
+        containers_config = ManageIQ::ApplianceConsole::ContainersConfiguration.new
+        if containers_config.ask_questions && containers_config.activate
+          say("Containers configuration configured")
+          press_any_key
+        else
+          say("Containers configuration unchanged")
+          press_any_key
+          raise MiqSignalError
+        end
+
       when I18n.t("advanced_settings.log_config")
         say("#{selection}\n\n")
         log_config = ManageIQ::ApplianceConsole::LogfileConfiguration.new

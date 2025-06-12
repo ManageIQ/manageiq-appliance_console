@@ -10,6 +10,7 @@ en:
     - app_config
     - db_replication
     - log_config
+    - containers_config
     - failover_monitor
     - httpdauth
     - extauth_opts
@@ -26,6 +27,7 @@ en:
     app_config: Configure Application
     db_replication: Configure Database Replication
     log_config: Logfile Configuration
+    containers_config: Containers Configuration
     failover_monitor: Control Application Database Failover Monitor
     httpdauth: Configure External Authentication (httpd)
     extauth_opts: Update External Authentication Options
