@@ -81,6 +81,10 @@ module ApplianceConsole
       options[:logdisk]
     end
 
+    def containers_disk?
+      options[:containers_storage_disk]
+    end
+
     def extauth_opts?
       options[:extauth_opts]
     end
@@ -221,6 +225,7 @@ module ApplianceConsole
         opt :message_truststore_path_src, "Message Server Truststore Path",                                 :type => :string
         opt :message_ca_cert_path_src,    "Message Server CA Cert Path",                                    :type => :string
         opt :message_persistent_disk,     "Message Persistent Disk Path",                                   :type => :string
+        opt :containers_storage_disk,     "Containers Storage Disk Path",                                   :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       Optimist.die "Supply only one of --message-server-config, --message-server-unconfig, --message-client-config or --message-client-unconfig" if multiple_message_subcommands?
@@ -239,7 +244,7 @@ module ApplianceConsole
 
     def run
       Optimist.educate unless set_host? || key? || database? || db_dump? || db_backup? ||
-                              db_restore? || tmp_disk? || log_disk? ||
+                              db_restore? || tmp_disk? || log_disk? || containers_disk? ||
                               uninstall_ipa? || install_ipa? || certs? || extauth_opts? ||
                               set_server_state? || set_replication? || openscap? ||
                               saml_config? || saml_unconfig? ||
@@ -261,6 +266,7 @@ module ApplianceConsole
       db_restore if db_restore?
       config_tmp_disk if tmp_disk?
       config_log_disk if log_disk?
+      config_containers_disk if containers_disk?
       uninstall_ipa if uninstall_ipa?
       install_ipa if install_ipa?
       install_certs if certs?
@@ -463,6 +469,16 @@ module ApplianceConsole
         config.activate
       else
         report_disk_error(options[:logdisk])
+      end
+    end
+
+    def config_containers_disk
+      containers_disk = disk_from_string(options[:containers_storage_disk])
+      if containers_disk
+        say("creating containers storage disk")
+        ManageIQ::ApplianceConsole::ContainersConfiguration.new(:disk => containers_disk).activate
+      else
+        report_disk_error(options[:containers_storage_disk])
       end
     end
 
