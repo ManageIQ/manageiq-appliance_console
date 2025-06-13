@@ -9,9 +9,11 @@ describe ManageIQ::ApplianceConsole::ContainersConfiguration do
   end
 
   describe "#ask_questions" do
-    it "returns true when the user confirms the updates" do
+    it "returns true when the user selects configuring a new disk" do
       expect(subject).to receive(:ask_for_disk).and_return(disk)
       expect(subject).to receive(:agree).with(/Configure a new disk for container storage.*/).and_return(true)
+      expect(subject).to receive(:agree).with(/Authenticate to a container registry.*/).and_return(false)
+      expect(subject).to receive(:agree).with(/Pull a container image.*/).and_return(false)
       expect(subject).to receive(:agree).with(/Confirm continue with these upda.*/).and_return(true)
       expect(subject.ask_questions).to be_truthy
     end
@@ -19,6 +21,8 @@ describe ManageIQ::ApplianceConsole::ContainersConfiguration do
     it "returns false when the user does not confirm the updates" do
       expect(subject).to receive(:ask_for_disk).and_return(double("LinuxAdmin::Disk", :size => "1", :path => "fake disk"))
       expect(subject).to receive(:agree).with(/Configure a new disk for container storage.*/).and_return(true)
+      expect(subject).to receive(:agree).with(/Authenticate to a container registry.*/).and_return(false)
+      expect(subject).to receive(:agree).with(/Pull a container image.*/).and_return(false)
       expect(subject).to receive(:agree).with(/Confirm continue with these upda.*/).and_return(false)
       expect(subject.ask_questions).to be_falsey
     end
@@ -41,6 +45,23 @@ describe ManageIQ::ApplianceConsole::ContainersConfiguration do
         expect(ManageIQ::ApplianceConsole::LogicalVolumeManagement).to receive(:new)
           .and_return(double(@spec_name, :setup => true))
         expect(subject.activate).to be_truthy
+      end
+    end
+
+    context "with a registry to authenticate to" do
+      let(:container_registry_uri)      { "quay.io" }
+      let(:container_registry_username) { "foo" }
+      let(:container_registry_password) { "12345" }
+
+      before do
+        subject.registry_uri      = container_registry_uri
+        subject.registry_username = container_registry_username
+        subject.registry_password = container_registry_password
+      end
+
+      it "calls podman login as the manageiq user" do
+        stub_good_run!("sudo", :params => [{:user => "manageiq"}, "podman", {:root => "/var/lib/manageiq/containers/storage"}, "login", container_registry_uri, {:password => container_registry_password, :username => container_registry_username}])
+        subject.activate
       end
     end
   end

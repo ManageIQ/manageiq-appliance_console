@@ -10,20 +10,23 @@ module ManageIQ
       CONTAINERS_VOL_NAME = "miq_containers".freeze
 
       attr_accessor :registry_uri, :registry_username, :registry_password,
-                    :registry_authfile, :registry_certdir, :registry_tls_verify, :disk
+                    :registry_authfile, :registry_certdir, :registry_tls_verify,
+                    :disk, :image
 
       def initialize(options = {})
         self.registry_uri      = options[:container_registry_uri]
         self.registry_username = options[:container_registry_username]
         self.registry_password = options[:container_registry_password]
         self.registry_authfile = options[:container_registry_authfile]
+        self.image             = options[:container_image]
         self.disk              = options[:disk]
       end
 
       def ask_questions
         clear_screen
-        choose_disk if use_new_disk?
+        choose_disk               if use_new_disk?
         choose_container_registry if authenticate_container_registry?
+        choose_container_image    if pull_container_image?
         confirm_selection
       end
 
@@ -50,7 +53,18 @@ module ManageIQ
           podman!("login", registry_uri, login_params.compact)
         end
 
+        if image
+          say("Pulling container image #{image}...")
+
+          podman!("image", "pull", image)
+        end
+
         true
+      rescue AwesomeSpawn::CommandResultError => e
+        say(e.result.output)
+        say(e.result.error)
+        say("")
+        false
       end
 
       private
@@ -68,13 +82,21 @@ module ManageIQ
       end
 
       def choose_container_registry
-        self.registry_uri      = ask_for_string("Registry:")
-        self.registry_username = ask_for_string("Registry username:")
-        self.registry_password = ask_for_password("Registry password:")
+        self.registry_uri      = ask_for_string("Registry")
+        self.registry_username = ask_for_string("Registry username")
+        self.registry_password = ask_for_password("Registry password")
+      end
+
+      def pull_container_image?
+        agree("Pull a container image? (Y/N):")
+      end
+
+      def choose_container_image
+        self.image = ask_for_string("Container image")
       end
 
       def confirm_selection
-        return false unless disk || registry_uri
+        return false unless disk || registry_uri || image
 
         clear_screen
 
@@ -86,14 +108,15 @@ module ManageIQ
           say("Authenticating to container registry #{registry_uri}")
         end
 
+        if image
+          say("Pull container image #{image}")
+        end
+
         agree("Confirm continue with these updates (Y/N):")
       end
 
       def podman!(*args, **kwargs)
-        params = [{:u => "manageiq"}, "podman", {:root => CONTAINERS_ROOT_DIR.join("storage")}]
-        params.concat(args)
-
-        AwesomeSpawn.run!("sudo", :params => params, **kwargs)
+        run_as_manageiq!("podman", {:root => CONTAINERS_ROOT_DIR.join("storage").to_s}, *args, **kwargs)
       end
     end
   end
