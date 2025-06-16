@@ -185,6 +185,11 @@ describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
   end
 
   context "#config_status" do
+    before do
+      allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with("/etc/sssd/sssd.conf").and_return(false)
+    end
+
     it "Returns not configured" do
       expect(described_class.config_status).to eq("not configured")
     end
