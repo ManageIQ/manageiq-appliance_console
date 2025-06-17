@@ -11,8 +11,9 @@ module ManageIQ
         @manageiq_gid ||= Process::GID.from_name("manageiq")
       end
 
-      def run_as_manageiq!(*args, **kwargs)
-        AwesomeSpawn.run!("sudo", :params => [{:user => "manageiq"}].concat(args), **kwargs)
+      def run_as_manageiq!(options = {})
+        options[:params].unshift({:user => "manageiq"})
+        AwesomeSpawn.run!("sudo", options)
       end
     end
   end
