@@ -167,77 +167,79 @@ module ApplianceConsole
       self.options = Optimist.options(args) do
         banner "Usage: appliance_console_cli [options]"
 
-        opt :host,                        "/etc/hosts name",                                                :type => :string,  :short => 'H'
-        opt :region,                      "Region Number",                                                  :type => :integer, :short => "r"
-        opt :internal,                    "Internal Database",                                                                 :short => 'i'
-        opt :hostname,                    "Database Hostname",                                              :type => :string,  :short => 'h'
-        opt :port,                        "Database Port",                                                  :type => :integer,                :default => 5432
-        opt :username,                    "Database Username",                                              :type => :string,  :short => 'U', :default => "root"
-        opt :password,                    "Database Password",                                              :type => :string,  :short => "p"
-        opt :dbname,                      "Database Name",                                                  :type => :string,  :short => "d", :default => "vmdb_production"
-        opt :local_file,                  "Source/Destination file for DB dump/backup/restore",             :type => :string,  :shoft => "l"
-        opt :dump,                        "Perform a pg-dump"
-        opt :backup,                      "Perform a pg-basebackup"
-        opt :restore,                     "Restore a database dump/backup"
-        opt :standalone,                  "Run this server as a standalone database server",                :type => :bool,    :short => 'S'
-        opt :key,                         "Create encryption key",                                          :type => :boolean, :short => "k"
-        opt :fetch_key,                   "SSH host with encryption key",                                   :type => :string,  :short => "K"
-        opt :force_key,                   "Forcefully create encryption key",                               :type => :boolean, :short => "f"
-        opt :sshlogin,                    "SSH login",                                                      :type => :string,  :default => "root"
-        opt :sshpassword,                 "SSH password",                                                   :type => :string
-        opt :replication,                 "Configure database replication as primary or standby",           :type => :string,  :short => :none
-        opt :primary_host,                "Primary database host IP address",                               :type => :string,  :short => :none
-        opt :standby_host,                "Standby database host IP address",                               :type => :string,  :short => :none
-        opt :auto_failover,               "Configure Replication Manager (repmgrd) for automatic failover", :type => :bool,    :short => :none
-        opt :cluster_node_number,         "Database unique cluster node number",                            :type => :integer, :short => :none
-        opt :verbose,                     "Verbose",                                                        :type => :boolean, :short => "v"
-        opt :dbdisk,                      "Database Disk Path",                                             :type => :string
-        opt :logdisk,                     "Log Disk Path",                                                  :type => :string
-        opt :tmpdisk,                     "Temp storage Disk Path",                                         :type => :string
-        opt :uninstall_ipa,               "Uninstall IPA Client",                                           :type => :boolean, :default => false
-        opt :ipaserver,                   "IPA Server FQDN",                                                :type => :string
-        opt :ipaprincipal,                "IPA Server principal",                                           :type => :string,  :default => "admin"
-        opt :ipapassword,                 "IPA Server password",                                            :type => :string
-        opt :ipadomain,                   "IPA Server domain (optional)",                                   :type => :string
-        opt :iparealm,                    "IPA Server realm (optional)",                                    :type => :string
-        opt :ca,                          "CA name used for certmonger",                                    :type => :string,  :default => "ipa"
-        opt :http_cert,                   "install certs for http server",                                  :type => :boolean
-        opt :extauth_opts,                "External Authentication Options",                                :type => :string
-        opt :saml_config,                 "Configure Appliance for SAML Authentication",                    :type => :boolean, :default => false
-        opt :saml_client_host,            "Optional Appliance host used for SAML registration",             :type => :string
-        opt :saml_idp_metadata,           "The file path or URL of the SAML IDP Metadata",                  :type => :string
-        opt :saml_enable_sso,             "Optionally enable SSO with SAML Authentication",                 :type => :boolean, :default => false
-        opt :saml_unconfig,               "Unconfigure Appliance SAML Authentication",                      :type => :boolean, :default => false
-        opt :oidc_config,                 "Configure Appliance for OpenID-Connect Authentication",          :type => :boolean, :default => false
-        opt :oidc_url,                    "The OpenID-Connect Provider URL",                                :type => :string
-        opt :oidc_client_host,            "Optional Appliance host used for OpenID-Connect Authentication", :type => :string
-        opt :oidc_client_id,              "The OpenID-Connect Provider Client ID",                          :type => :string
-        opt :oidc_client_secret,          "The OpenID-Connect Provider Client Secret",                      :type => :string
-        opt :oidc_insecure,               "OpenID-Connect Insecure No SSL Verify (development)",            :type => :boolean, :default => false
-        opt :oidc_introspection_endpoint, "The OpenID-Connect Provider Introspect Endpoint",                :type => :string
-        opt :oidc_enable_sso,             "Optionally enable SSO with OpenID-Connect Authentication",       :type => :boolean, :default => false
-        opt :oidc_unconfig,               "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
-        opt :server,                      "{start|stop|restart} actions on evmserverd Server",              :type => :string
-        opt :openscap,                    "Setup OpenScap",                                                 :type => :boolean, :default => false
-        opt :message_server_config,       "Subcommand to   Configure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
-        opt :message_server_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
-        opt :message_client_config,       "Subcommand to   Configure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
-        opt :message_client_unconfig,     "Subcommand to Unconfigure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
-        opt :message_keystore_username,   "Message Server Keystore Username",                               :type => :string
-        opt :message_keystore_password,   "Message Server Keystore Password",                               :type => :string
-        opt :message_server_username,     "Message Server Username",                                        :type => :string
-        opt :message_server_password,     "Message Server password",                                        :type => :string
-        opt :message_server_port,         "Message Server Port",                                            :type => :integer
-        opt :message_server_use_ipaddr,   "Deprecated: Message Server Use Address",                         :type => :boolean, :default => false
-        opt :message_server_host,         "Message Server Hostname or IP Address",                          :type => :string
-        opt :message_truststore_path_src, "Message Server Truststore Path",                                 :type => :string
-        opt :message_ca_cert_path_src,    "Message Server CA Cert Path",                                    :type => :string
-        opt :message_persistent_disk,     "Message Persistent Disk Path",                                   :type => :string
-        opt :containers_storage_disk,     "Containers Storage Disk Path",                                   :type => :string
-        opt :container_registry_uri,      "Container Registry URI",                                         :type => :string
-        opt :container_registry_username, "Container Registry Username",                                    :type => :string
-        opt :container_registry_password, "Container Registry Password",                                    :type => :string
-        opt :container_pull_image,        "Container Pull Image",                                           :type => :string
+        opt :host,                          "/etc/hosts name",                                                :type => :string,  :short => 'H'
+        opt :region,                        "Region Number",                                                  :type => :integer, :short => "r"
+        opt :internal,                      "Internal Database",                                                                 :short => 'i'
+        opt :hostname,                      "Database Hostname",                                              :type => :string,  :short => 'h'
+        opt :port,                          "Database Port",                                                  :type => :integer,                :default => 5432
+        opt :username,                      "Database Username",                                              :type => :string,  :short => 'U', :default => "root"
+        opt :password,                      "Database Password",                                              :type => :string,  :short => "p"
+        opt :dbname,                        "Database Name",                                                  :type => :string,  :short => "d", :default => "vmdb_production"
+        opt :local_file,                    "Source/Destination file for DB dump/backup/restore",             :type => :string,  :shoft => "l"
+        opt :dump,                          "Perform a pg-dump"
+        opt :backup,                        "Perform a pg-basebackup"
+        opt :restore,                       "Restore a database dump/backup"
+        opt :standalone,                    "Run this server as a standalone database server",                :type => :bool,    :short => 'S'
+        opt :key,                           "Create encryption key",                                          :type => :boolean, :short => "k"
+        opt :fetch_key,                     "SSH host with encryption key",                                   :type => :string,  :short => "K"
+        opt :force_key,                     "Forcefully create encryption key",                               :type => :boolean, :short => "f"
+        opt :sshlogin,                      "SSH login",                                                      :type => :string,  :default => "root"
+        opt :sshpassword,                   "SSH password",                                                   :type => :string
+        opt :replication,                   "Configure database replication as primary or standby",           :type => :string,  :short => :none
+        opt :primary_host,                  "Primary database host IP address",                               :type => :string,  :short => :none
+        opt :standby_host,                  "Standby database host IP address",                               :type => :string,  :short => :none
+        opt :auto_failover,                 "Configure Replication Manager (repmgrd) for automatic failover", :type => :bool,    :short => :none
+        opt :cluster_node_number,           "Database unique cluster node number",                            :type => :integer, :short => :none
+        opt :verbose,                       "Verbose",                                                        :type => :boolean, :short => "v"
+        opt :dbdisk,                        "Database Disk Path",                                             :type => :string
+        opt :logdisk,                       "Log Disk Path",                                                  :type => :string
+        opt :tmpdisk,                       "Temp storage Disk Path",                                         :type => :string
+        opt :uninstall_ipa,                 "Uninstall IPA Client",                                           :type => :boolean, :default => false
+        opt :ipaserver,                     "IPA Server FQDN",                                                :type => :string
+        opt :ipaprincipal,                  "IPA Server principal",                                           :type => :string,  :default => "admin"
+        opt :ipapassword,                   "IPA Server password",                                            :type => :string
+        opt :ipadomain,                     "IPA Server domain (optional)",                                   :type => :string
+        opt :iparealm,                      "IPA Server realm (optional)",                                    :type => :string
+        opt :ca,                            "CA name used for certmonger",                                    :type => :string,  :default => "ipa"
+        opt :http_cert,                     "install certs for http server",                                  :type => :boolean
+        opt :extauth_opts,                  "External Authentication Options",                                :type => :string
+        opt :saml_config,                   "Configure Appliance for SAML Authentication",                    :type => :boolean, :default => false
+        opt :saml_client_host,              "Optional Appliance host used for SAML registration",             :type => :string
+        opt :saml_idp_metadata,             "The file path or URL of the SAML IDP Metadata",                  :type => :string
+        opt :saml_enable_sso,               "Optionally enable SSO with SAML Authentication",                 :type => :boolean, :default => false
+        opt :saml_unconfig,                 "Unconfigure Appliance SAML Authentication",                      :type => :boolean, :default => false
+        opt :oidc_config,                   "Configure Appliance for OpenID-Connect Authentication",          :type => :boolean, :default => false
+        opt :oidc_url,                      "The OpenID-Connect Provider URL",                                :type => :string
+        opt :oidc_client_host,              "Optional Appliance host used for OpenID-Connect Authentication", :type => :string
+        opt :oidc_client_id,                "The OpenID-Connect Provider Client ID",                          :type => :string
+        opt :oidc_client_secret,            "The OpenID-Connect Provider Client Secret",                      :type => :string
+        opt :oidc_insecure,                 "OpenID-Connect Insecure No SSL Verify (development)",            :type => :boolean, :default => false
+        opt :oidc_introspection_endpoint,   "The OpenID-Connect Provider Introspect Endpoint",                :type => :string
+        opt :oidc_enable_sso,               "Optionally enable SSO with OpenID-Connect Authentication",       :type => :boolean, :default => false
+        opt :oidc_unconfig,                 "Unconfigure Appliance OpenID-Connect Authentication",            :type => :boolean, :default => false
+        opt :server,                        "{start|stop|restart} actions on evmserverd Server",              :type => :string
+        opt :openscap,                      "Setup OpenScap",                                                 :type => :boolean, :default => false
+        opt :message_server_config,         "Subcommand to   Configure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
+        opt :message_server_unconfig,       "Subcommand to Unconfigure Appliance as a Kafka Message Server",  :type => :boolean, :default => false
+        opt :message_client_config,         "Subcommand to   Configure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
+        opt :message_client_unconfig,       "Subcommand to Unconfigure Appliance as a Kafka Message Client",  :type => :boolean, :default => false
+        opt :message_keystore_username,     "Message Server Keystore Username",                               :type => :string
+        opt :message_keystore_password,     "Message Server Keystore Password",                               :type => :string
+        opt :message_server_username,       "Message Server Username",                                        :type => :string
+        opt :message_server_password,       "Message Server password",                                        :type => :string
+        opt :message_server_port,           "Message Server Port",                                            :type => :integer
+        opt :message_server_use_ipaddr,     "Deprecated: Message Server Use Address",                         :type => :boolean, :default => false
+        opt :message_server_host,           "Message Server Hostname or IP Address",                          :type => :string
+        opt :message_truststore_path_src,   "Message Server Truststore Path",                                 :type => :string
+        opt :message_ca_cert_path_src,      "Message Server CA Cert Path",                                    :type => :string
+        opt :message_persistent_disk,       "Message Persistent Disk Path",                                   :type => :string
+        opt :containers_storage_disk,       "Containers Storage Disk Path",                                   :type => :string
+        opt :container_registry_uri,        "Container Registry URI",                                         :type => :string
+        opt :container_registry_username,   "Container Registry Username",                                    :type => :string
+        opt :container_registry_password,   "Container Registry Password",                                    :type => :string
+        opt :container_registry_authfile,   "Path of the authentication file for container registry auth",    :type => :string
+        opt :container_registry_tls_verify, "Verify certificates when contacting registries",                 :type => :boolean
+        opt :container_pull_image,          "Container Pull Image",                                           :type => :string
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       Optimist.die "Supply only one of --message-server-config, --message-server-unconfig, --message-client-config or --message-client-unconfig" if multiple_message_subcommands?
@@ -500,10 +502,12 @@ module ApplianceConsole
     def config_container_registry
       if options[:container_registry_uri]
         ManageIQ::ApplianceConsole::ContainersConfiguration.new(
-          :container_registry_uri      => options[:container_registry_uri],
-          :container_registry_username => options[:container_registry_username],
-          :container_registry_password => options[:container_registry_password]
-        )
+          :container_registry_uri        => options[:container_registry_uri],
+          :container_registry_username   => options[:container_registry_username],
+          :container_registry_password   => options[:container_registry_password],
+          :container_registry_authfile   => options[:container_registry_authfile],
+          :container_registry_tls_verify => options[:container_registry_tls_verify]
+        ).activate
       end
     end
 
