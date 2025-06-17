@@ -14,12 +14,13 @@ module ManageIQ
                     :disk, :image
 
       def initialize(options = {})
-        self.registry_uri      = options[:container_registry_uri]
-        self.registry_username = options[:container_registry_username]
-        self.registry_password = options[:container_registry_password]
-        self.registry_authfile = options[:container_registry_authfile]
-        self.image             = options[:container_image]
-        self.disk              = options[:disk]
+        self.registry_uri        = options[:container_registry_uri]
+        self.registry_username   = options[:container_registry_username]
+        self.registry_password   = options[:container_registry_password]
+        self.registry_authfile   = options[:container_registry_authfile]
+        self.registry_tls_verify = options[:conatiner_registry_tls_verify]
+        self.image               = options[:container_image]
+        self.disk                = options[:disk]
       end
 
       def ask_questions
@@ -101,15 +102,19 @@ module ManageIQ
       def activate_registry_login
         say("Authenticating to container registry #{registry_uri}...")
 
-        login_params = {
-          :username   => registry_username,
-          :password   => registry_password,
-          :authfile   => registry_authfile,
-          :cert_dir   => registry_certdir,
-          :tls_verify => registry_tls_verify
-        }
+        extra_opts   = {}
+        login_params = {}
+        login_params[:username]       = registry_username if registry_username
+        login_params[:authfile]       = registry_authfile if registry_authfile
+        login_params[:cert_dir]       = registry_certdir  if registry_certdir.present?
+        login_params[:tls_verify]     = nil               if registry_tls_verify
 
-        podman!("login", registry_uri, login_params.compact)
+        if registry_password
+          login_params[:password_stdin] = nil
+          extra_opts[:in_data] = "#{registry_password}\n"
+        end
+
+        podman!(:params => ["login", registry_uri, login_params], **extra_opts)
       end
 
       def activate_image_pull
@@ -118,8 +123,9 @@ module ManageIQ
         podman!("image", "pull", image)
       end
 
-      def podman!(*args, **kwargs)
-        run_as_manageiq!("podman", {:root => CONTAINERS_ROOT_DIR.join("storage").to_s}, *args, **kwargs)
+      def podman!(options = {})
+        options[:params].unshift("podman", {:root => CONTAINERS_ROOT_DIR.join("storage").to_s})
+        run_as_manageiq!(options)
       end
     end
   end

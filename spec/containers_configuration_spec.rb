@@ -60,7 +60,7 @@ describe ManageIQ::ApplianceConsole::ContainersConfiguration do
       end
 
       it "calls podman login as the manageiq user" do
-        stub_good_run!("sudo", :params => [{:user => "manageiq"}, "podman", {:root => "/var/lib/manageiq/containers/storage"}, "login", container_registry_uri, {:password => container_registry_password, :username => container_registry_username}])
+        stub_good_run!("sudo", :params => [{:user => "manageiq"}, "podman", {:root => "/var/lib/manageiq/containers/storage"}, "login", container_registry_uri, {:password_stdin => nil, :username => container_registry_username}], :in_data => "#{container_registry_password}\n")
         subject.activate
       end
     end
