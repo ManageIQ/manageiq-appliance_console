@@ -125,6 +125,8 @@ module ManageIQ
 
       def podman!(options = {})
         options[:params].unshift("podman", {:root => CONTAINERS_ROOT_DIR.join("storage").to_s})
+        options[:chdir] ||= "/home/manageiq"
+
         run_as_manageiq!(options)
       end
     end
