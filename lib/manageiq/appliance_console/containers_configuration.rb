@@ -31,34 +31,9 @@ module ManageIQ
       end
 
       def activate
-        if disk
-          say("Initializing container storage disk")
-
-          FileUtils.mkdir_p(CONTAINERS_ROOT_DIR)
-          LogicalVolumeManagement.new(:disk => disk, :mount_point => CONTAINERS_ROOT_DIR, :name => CONTAINERS_VOL_NAME).setup
-          FileUtils.chown(manageiq_uid, manageiq_gid, CONTAINERS_ROOT_DIR)
-        end
-
-        if registry_uri
-          say("Authenticating to container registry #{registry_uri}...")
-
-          login_params = {
-            :username   => registry_username,
-            :password   => registry_password,
-            :authfile   => registry_authfile,
-            :cert_dir   => registry_certdir,
-            :tls_verify => registry_tls_verify
-          }
-
-          podman!("login", registry_uri, login_params.compact)
-        end
-
-        if image
-          say("Pulling container image #{image}...")
-
-          podman!("image", "pull", image)
-        end
-
+        activate_new_disk       if disk
+        activate_registry_login if registry_uri
+        activate_image_pull     if image
         true
       rescue AwesomeSpawn::CommandResultError => e
         say(e.result.output)
@@ -113,6 +88,34 @@ module ManageIQ
         end
 
         agree("Confirm continue with these updates (Y/N):")
+      end
+
+      def activate_new_disk
+        say("Initializing container storage disk")
+
+        FileUtils.mkdir_p(CONTAINERS_ROOT_DIR)
+        LogicalVolumeManagement.new(:disk => disk, :mount_point => CONTAINERS_ROOT_DIR, :name => CONTAINERS_VOL_NAME).setup
+        FileUtils.chown(manageiq_uid, manageiq_gid, CONTAINERS_ROOT_DIR)
+      end
+
+      def activate_registry_login
+        say("Authenticating to container registry #{registry_uri}...")
+
+        login_params = {
+          :username   => registry_username,
+          :password   => registry_password,
+          :authfile   => registry_authfile,
+          :cert_dir   => registry_certdir,
+          :tls_verify => registry_tls_verify
+        }
+
+        podman!("login", registry_uri, login_params.compact)
+      end
+
+      def activate_image_pull
+        say("Pulling container image #{image}...")
+
+        podman!("image", "pull", image)
       end
 
       def podman!(*args, **kwargs)
