@@ -27,6 +27,13 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "bcrypt_pbkdf",            ">= 1.0", "< 2.0"
   spec.add_runtime_dependency "ed25519",                 ">= 1.2", "< 2.0"
   spec.add_runtime_dependency "highline",                "~> 2.1"
+
+  # These two dependencies can be removed for ruby 3.4 support once we upgrade highline:
+  #   abbrev is not in ruby 3.4 standard library and no longer a dependency in highline 3.0.1
+  #   reline is not in ruby 3.4 standard library and added as a runtime dependency in highline 3.1.0
+  spec.add_runtime_dependency "abbrev"
+  spec.add_runtime_dependency "reline"
+
   spec.add_runtime_dependency "i18n",                    ">= 0.8"
   spec.add_runtime_dependency "linux_admin",             "~> 4.0"
   spec.add_runtime_dependency "manageiq-password",       "< 2"

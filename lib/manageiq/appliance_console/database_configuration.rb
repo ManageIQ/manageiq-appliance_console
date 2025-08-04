@@ -205,7 +205,7 @@ FRIENDLY
     def validate!
       pool = ModelWithNoBackingTable.establish_connection(settings_hash.delete_if { |_n, v| v.blank? })
       begin
-        pool.connection
+        pool.with_connection { |conn| conn.connect! && conn.connected? }
       ensure
         ModelWithNoBackingTable.remove_connection
       end
