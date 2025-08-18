@@ -1,7 +1,7 @@
 # ManageIQ::ApplianceConsole
 
 [![Gem Version](https://badge.fury.io/rb/manageiq-appliance_console.svg)](http://badge.fury.io/rb/manageiq-appliance_console)
-[![CI](https://github.com/ManageIQ/manageiq-appliance_console/actions/workflows/ci.yaml/badge.svg)](https://github.com/ManageIQ/manageiq-appliance_console/actions/workflows/ci.yaml)
+[![CI](https://github.com/ManageIQ/manageiq-appliance_console/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/ManageIQ/manageiq-appliance_console/actions/workflows/ci.yaml)
 [![Code Climate](https://codeclimate.com/github/ManageIQ/manageiq-appliance_console.svg)](https://codeclimate.com/github/ManageIQ/manageiq-appliance_console)
 [![Test Coverage](https://codeclimate.com/github/ManageIQ/manageiq-appliance_console/badges/coverage.svg)](https://codeclimate.com/github/ManageIQ/manageiq-appliance_console/coverage)
 
