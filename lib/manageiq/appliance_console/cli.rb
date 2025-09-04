@@ -511,6 +511,11 @@ module ApplianceConsole
       end
     end
 
+    def config_container_pull_image
+      container_image = options[:container_pull_image]
+      ManageIQ::ApplianceConsole::ContainersConfiguration.new(:container_image => container_image).activate if container_image
+    end
+
     def report_disk_error(missing_disk)
       choose_disk = disk.try(:path)
       if choose_disk

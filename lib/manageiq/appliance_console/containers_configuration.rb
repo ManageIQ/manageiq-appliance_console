@@ -120,7 +120,7 @@ module ManageIQ
       def activate_image_pull
         say("Pulling container image #{image}...")
 
-        podman!("image", "pull", image)
+        podman!(:params => ["image", "pull", image])
       end
 
       def podman!(options = {})
