@@ -4,6 +4,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Add support for rails 8, drop ruby 3.1 and rails 7.1
+
 ## [10.0.2] - 2025-05-08
 ## Changed
 - Remove ping of IPA Server [[#278](https://github.com/ManageIQ/manageiq-appliance_console/pull/278)]
