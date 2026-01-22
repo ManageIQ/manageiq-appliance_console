@@ -4,14 +4,23 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-- Add support for rails 8, drop ruby 3.1 and rails 7.1
+## [11.0.0] - 2026-01-22
+### Added
+- Add support for Rails 8 [[#297](https://github.com/ManageIQ/manageiq-appliance_console/pull/297)]
+- Add options to authenticate to a container registry and pull an image [[#282](https://github.com/ManageIQ/manageiq-appliance_console/pull/282)]
+- Add support for Rails 7.2 and Ruby 3.4 [[#284](https://github.com/ManageIQ/manageiq-appliance_console/pull/284)]
+- Add option to use a dedicated volume for containers [[#281](https://github.com/ManageIQ/manageiq-appliance_console/pull/281)]
+
+### Removed
+- Drop Ruby 3.1 and Rails 7.1 [[#297](https://github.com/ManageIQ/manageiq-appliance_console/pull/297)]
+- Drop CodeClimate [[#296](https://github.com/ManageIQ/manageiq-appliance_console/pull/296)]
 
 ## [10.0.2] - 2025-05-08
-## Changed
+### Changed
 - Remove ping of IPA Server [[#278](https://github.com/ManageIQ/manageiq-appliance_console/pull/278)]
 
 ## [10.0.1] - 2024-11-27
-## Changed
+### Changed
 - Readline does not work with ruby 3.3 [[#270](https://github.com/ManageIQ/manageiq-appliance_console/pull/270)]
 
 ## [10.0.0] - 2024-11-19
@@ -309,7 +318,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...HEAD
+[11.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...v11.0.0
 [10.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.0...v10.0.1
 [10.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v9.1.1...v10.0.0
