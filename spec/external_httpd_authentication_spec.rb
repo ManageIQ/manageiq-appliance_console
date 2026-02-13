@@ -204,4 +204,75 @@ describe ManageIQ::ApplianceConsole::ExternalHttpdAuthentication do
       expect(described_class.config_status).to eq("External Auth SAML")
     end
   end
+
+  context "#configure_sssd_domain" do
+    let(:domain) { "example.com" }
+    let(:base_config) do
+      <<~CONFIG
+        [sssd]
+        services = nss, pam
+
+        [domain/example.com]
+        id_provider = ipa
+        ipa_server = ipa.example.com
+      CONFIG
+    end
+
+    it "adds ldap_user_extra_attrs when not present" do
+      config = base_config.dup
+      subject.send(:configure_sssd_domain, config, domain)
+      expect(config).to include("ldap_user_extra_attrs = mail, givenname, sn, displayname, domainname, krbPrincipalName")
+    end
+
+    it "updates existing ldap_user_extra_attrs" do
+      config = "#{base_config} ldap_user_extra_attrs = mail\n"
+      subject.send(:configure_sssd_domain, config, domain)
+
+      # Verify the line contains all expected attributes
+      expect(config).to include("ldap_user_extra_attrs = mail, givenname, sn, displayname, domainname, krbPrincipalName")
+
+      # Verify there's only one ldap_user_extra_attrs line
+      expect(config.scan("ldap_user_extra_attrs").length).to eq(1)
+
+      # Verify the original "mail" only value was replaced, not just appended
+      expect(config).not_to include("ldap_user_extra_attrs = mail\n")
+    end
+
+    it "preserves existing configuration while adding attributes" do
+      config = base_config.dup
+      subject.send(:configure_sssd_domain, config, domain)
+      expect(config).to include("id_provider = ipa")
+      expect(config).to include("ipa_server = ipa.example.com")
+    end
+  end
+
+  context "#configure_sssd_ifp" do
+    let(:base_config) do
+      <<~CONFIG
+        [sssd]
+        services = nss, pam
+      CONFIG
+    end
+
+    it "adds [ifp] section when not present" do
+      config = base_config.dup
+      subject.send(:configure_sssd_ifp, config)
+      expect(config).to include("[ifp]")
+      expect(config).to include("allowed_uids = apache, root, manageiq")
+      expect(config).to include("user_attributes = +mail, +givenname, +sn, +displayname, +domainname, +krbPrincipalName")
+    end
+
+    it "updates user_attributes in existing [ifp] section" do
+      config = "#{base_config}\n[ifp]\nallowed_uids = apache\nuser_attributes = +mail\n"
+      subject.send(:configure_sssd_ifp, config)
+      expect(config).to include("user_attributes = +mail, +givenname, +sn, +displayname, +domainname, +krbPrincipalName")
+      expect(config.scan("user_attributes").length).to eq(1)
+    end
+
+    it "adds user_attributes when [ifp] exists but user_attributes doesn't" do
+      config = "#{base_config}\n[ifp]\nallowed_uids = apache\n"
+      subject.send(:configure_sssd_ifp, config)
+      expect(config).to include("user_attributes = +mail, +givenname, +sn, +displayname, +domainname, +krbPrincipalName")
+    end
+  end
 end
