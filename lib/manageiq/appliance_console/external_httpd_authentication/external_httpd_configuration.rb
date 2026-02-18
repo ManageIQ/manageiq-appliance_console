@@ -31,11 +31,12 @@ module ApplianceConsole
       TIMESTAMP_FORMAT      = "%Y%m%d_%H%M%S".freeze
 
       LDAP_ATTRS            = {
-        "mail"        => "REMOTE_USER_EMAIL",
-        "givenname"   => "REMOTE_USER_FIRSTNAME",
-        "sn"          => "REMOTE_USER_LASTNAME",
-        "displayname" => "REMOTE_USER_FULLNAME",
-        "domainname"  => "REMOTE_USER_DOMAIN"
+        "mail"             => "REMOTE_USER_EMAIL",
+        "givenname"        => "REMOTE_USER_FIRSTNAME",
+        "sn"               => "REMOTE_USER_LASTNAME",
+        "displayname"      => "REMOTE_USER_FULLNAME",
+        "domainname"       => "REMOTE_USER_DOMAIN",
+        "krbPrincipalName" => "REMOTE_USER_PRINCIPAL"
       }.freeze
 
       def template_directory
