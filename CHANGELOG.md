@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [11.1.0] - 2026-02-24
+### Added
+- Add krbPrincipalName to sssd.conf user attributes [[#298](https://github.com/ManageIQ/manageiq-appliance_console/pull/298)]
+
 ## [11.0.0] - 2026-01-22
 ### Added
 - Add support for Rails 8 [[#297](https://github.com/ManageIQ/manageiq-appliance_console/pull/297)]
@@ -318,7 +322,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.1.0...HEAD
+[11.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...v11.1.0
 [11.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...v11.0.0
 [10.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.1...v10.0.2
 [10.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.0...v10.0.1
