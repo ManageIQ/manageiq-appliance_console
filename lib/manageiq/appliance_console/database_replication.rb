@@ -12,10 +12,6 @@ module ApplianceConsole
     NETWORK_INTERFACE = 'eth0'.freeze
 
     REPGMR_FILE_LOCATIONS = {
-      "repmgr10" => {
-        "config" => "/etc/repmgr/10/repmgr.conf",
-        "log"    => "/var/log/repmgr/repmgrd.log"
-      },
       "repmgr13" => {
         "config" => "/etc/repmgr/13/repmgr.conf",
         "log"    => "/var/log/repmgr/repmgrd-13.log"
@@ -72,13 +68,7 @@ Replication Server Configuration
     end
 
     def self.repmgr_service_name
-      @repmgr_service_name ||= if File.exist?(REPGMR_FILE_LOCATIONS["repmgr16"]["config"])
-                                 "repmgr16"
-                               elsif File.exist?(REPGMR_FILE_LOCATIONS["repmgr13"]["config"])
-                                 "repmgr13"
-                               else
-                                 "repmgr10"
-                               end
+      @repmgr_service_name ||= File.exist?(REPGMR_FILE_LOCATIONS["repmgr16"]["config"]) ? "repmgr16" : "repmgr13"
     end
 
     delegate :repmgr_config, :repmgr_configured?, :repmgr_file_locations, :repmgr_log, :repmgr_service_name, :to => self
