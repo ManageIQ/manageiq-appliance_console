@@ -25,6 +25,14 @@ module ApplianceConsole
     attr_accessor :node_number, :database_name, :database_user,
                   :database_password, :primary_host
 
+    def pgsslcert
+      @pgsslcert ||= PostgresAdmin.data_directory.join("server.crt").freeze
+    end
+
+    def pgsslkey
+      @pgsslkey ||= PostgresAdmin.data_directory.join("server.key").freeze
+    end
+
     def network_interfaces
       @network_interfaces ||= LinuxAdmin::NetworkInterface.list.reject(&:loopback?)
     end
@@ -129,7 +137,13 @@ Replication Server Configuration
       pid = fork do
         Process::UID.change_privilege(Process::UID.from_name("postgres"))
         begin
-          res = AwesomeSpawn.run!(cmd, :params => params, :env => {"PGPASSWORD" => database_password})
+          res = AwesomeSpawn.run!(cmd,
+                                  :params => params,
+                                  :env    => {
+                                    "PGPASSWORD" => database_password,
+                                    "PGSSLCERT"  => pgsslcert.to_s,
+                                    "PGSSLKEY"   => pgsslkey.to_s
+                                  })
           say(res.output)
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
