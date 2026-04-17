@@ -1,6 +1,7 @@
 describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
+  let(:data_directory) { Pathname.new("/test/postgres/directory") }
   before do
-    allow(ENV).to receive(:fetch).and_return("/test/postgres/directory")
+    allow(ENV).to receive(:fetch).and_return(data_directory)
     expect(LinuxAdmin::NetworkInterface).to receive(:list).and_return([double(:address => "192.0.2.1", :loopback? => false)])
     allow(subject).to receive(:say)
     allow(subject).to receive(:clear_screen)
@@ -185,7 +186,11 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
           "repmgr standby register",
           {
             :params => {:force => nil, :wait_sync= => 60},
-            :env    => {"PGPASSWORD" => "secret"}
+            :env    => {
+              "PGPASSWORD" => "secret",
+              "PGSSLCERT"  => data_directory.join("server.crt"),
+              "PGSSLKEY"   => data_directory.join("server.key")
+            }
           }
         ]
 
