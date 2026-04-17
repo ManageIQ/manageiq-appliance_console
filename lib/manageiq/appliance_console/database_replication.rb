@@ -12,10 +12,6 @@ module ApplianceConsole
     NETWORK_INTERFACE = 'eth0'.freeze
 
     REPGMR_FILE_LOCATIONS = {
-      "repmgr10" => {
-        "config" => "/etc/repmgr/10/repmgr.conf",
-        "log"    => "/var/log/repmgr/repmgrd.log"
-      },
       "repmgr13" => {
         "config" => "/etc/repmgr/13/repmgr.conf",
         "log"    => "/var/log/repmgr/repmgrd-13.log"
@@ -28,6 +24,14 @@ module ApplianceConsole
 
     attr_accessor :node_number, :database_name, :database_user,
                   :database_password, :primary_host
+
+    def pgsslcert
+      @pgsslcert ||= PostgresAdmin.data_directory.join("server.crt").freeze
+    end
+
+    def pgsslkey
+      @pgsslkey ||= PostgresAdmin.data_directory.join("server.key").freeze
+    end
 
     def network_interfaces
       @network_interfaces ||= LinuxAdmin::NetworkInterface.list.reject(&:loopback?)
@@ -72,13 +76,7 @@ Replication Server Configuration
     end
 
     def self.repmgr_service_name
-      @repmgr_service_name ||= if File.exist?(REPGMR_FILE_LOCATIONS["repmgr16"]["config"])
-                                 "repmgr16"
-                               elsif File.exist?(REPGMR_FILE_LOCATIONS["repmgr13"]["config"])
-                                 "repmgr13"
-                               else
-                                 "repmgr10"
-                               end
+      @repmgr_service_name ||= File.exist?(REPGMR_FILE_LOCATIONS["repmgr16"]["config"]) ? "repmgr16" : "repmgr13"
     end
 
     delegate :repmgr_config, :repmgr_configured?, :repmgr_file_locations, :repmgr_log, :repmgr_service_name, :to => self
@@ -139,7 +137,13 @@ Replication Server Configuration
       pid = fork do
         Process::UID.change_privilege(Process::UID.from_name("postgres"))
         begin
-          res = AwesomeSpawn.run!(cmd, :params => params, :env => {"PGPASSWORD" => database_password})
+          res = AwesomeSpawn.run!(cmd,
+                                  :params => params,
+                                  :env    => {
+                                    "PGPASSWORD" => database_password,
+                                    "PGSSLCERT"  => pgsslcert.to_s,
+                                    "PGSSLKEY"   => pgsslkey.to_s
+                                  })
           say(res.output)
         rescue AwesomeSpawn::CommandResultError => e
           say(e.result.output)
