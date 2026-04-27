@@ -38,7 +38,6 @@ module ManageIQ
           configure_persistent_disk         # Configure the persistent message store on a different disk
           create_jaas_config                # Create the message server jaas config file
           create_client_properties          # Create the client.properties config
-          create_logs_directory             # Create the logs directory:
           configure_firewall                # Open the firewall for message port 9093
           configure_keystore                # Populate the Java Keystore
           create_server_properties          # Update the /opt/message/config/server.properties
@@ -157,16 +156,6 @@ module ManageIQ
         JAAS
 
         File.write(jaas_config_path, content) unless file_found?(jaas_config_path)
-      end
-
-      def create_logs_directory
-        say(__method__.to_s.tr("_", " ").titleize)
-
-        return if file_found?(LOGS_DIR)
-
-        FileUtils.mkdir_p(LOGS_DIR)
-        FileUtils.chmod(0o755, LOGS_DIR)
-        FileUtils.chown("kafka", "kafka", LOGS_DIR)
       end
 
       def configure_firewall
