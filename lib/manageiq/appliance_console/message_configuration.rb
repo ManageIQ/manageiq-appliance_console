@@ -17,14 +17,15 @@ module ManageIQ
                   :messaging_yaml_sample_path, :messaging_yaml_path,
                   :ca_cert_path
 
-      BASE_DIR                          = "/opt/kafka".freeze
+      BASE_DIR                          = "/var/lib/kafka".freeze
+      BIN_DIR                           = "/opt/kafka/bin".freeze
       LOGS_DIR                          = "#{BASE_DIR}/logs".freeze
-      CONFIG_DIR                        = "#{BASE_DIR}/config".freeze
-      SAMPLE_CONFIG_DIR                 = "#{BASE_DIR}/config-sample".freeze
+      CONFIG_DIR                        = "/etc/kafka/config".freeze
+      SAMPLE_CONFIG_DIR                 = "/etc/kafka/config-sample".freeze
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
 
       def self.available?
-        File.exist?("#{BASE_DIR}/bin/kafka-run-class.sh")
+        File.exist?("#{BIN_DIR}/kafka-run-class.sh")
       end
 
       def self.configured?
