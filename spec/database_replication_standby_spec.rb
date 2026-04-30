@@ -188,8 +188,8 @@ describe ManageIQ::ApplianceConsole::DatabaseReplicationStandby do
             :params => {:force => nil, :wait_sync= => 60},
             :env    => {
               "PGPASSWORD" => "secret",
-              "PGSSLCERT"  => data_directory.join("server.crt"),
-              "PGSSLKEY"   => data_directory.join("server.key")
+              "PGSSLCERT"  => data_directory.join("server.crt").to_s,
+              "PGSSLKEY"   => data_directory.join("server.key").to_s
             }
           }
         ]
