@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [12.0.0] - 2026-05-07
+### Added
+- Add support for PostgreSQL 16 and repmgr16 [[#321](https://github.com/ManageIQ/manageiq-appliance_console/pull/321)]
+- Add support for Enterprise Linux 10 [[#321](https://github.com/ManageIQ/manageiq-appliance_console/pull/321)]
+
+### Removed
+- **BREAKING** Drop support for PostgreSQL 10 and repmgr10 [[#305](https://github.com/ManageIQ/manageiq-appliance_console/pull/305)]
+
 ## [11.1.0] - 2026-02-24
 ### Added
 - Add krbPrincipalName to sssd.conf user attributes [[#298](https://github.com/ManageIQ/manageiq-appliance_console/pull/298)]
@@ -322,7 +330,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.1.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.0...HEAD
+[12.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.1.0...v12.0.0
 [11.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...v11.1.0
 [11.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...v11.0.0
 [10.0.2]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.1...v10.0.2
