@@ -253,6 +253,7 @@ module ManageIQ
         content = <<~SERVER_PROPERTIES
 
           listeners=SASL_SSL://:#{message_server_port}
+          advertised.listeners=SASL_SSL://#{message_server_host}:#{message_server_port}
 
           ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
