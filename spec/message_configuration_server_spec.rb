@@ -232,6 +232,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       <<~SERVER_PROPERTIES
 
         listeners=SASL_SSL://:9093
+        advertised.listeners=SASL_SSL://#{subject.message_server_host}:9093
 
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
         ssl.keystore.location=#{subject.keystore_path}
