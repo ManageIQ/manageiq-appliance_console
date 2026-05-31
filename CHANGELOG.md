@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [12.0.1] - 2026-05-30
+### Added
+- Set kafka server advertised.listeners to reduce likelihood of connection errors [[#322](https://github.com/ManageIQ/manageiq-appliance_console/pull/322)]
+
 ## [12.0.0] - 2026-05-07
 ### Added
 - Add support for PostgreSQL 16 and repmgr16 [[#321](https://github.com/ManageIQ/manageiq-appliance_console/pull/321)]
@@ -330,7 +334,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.0...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.1...HEAD
+[12.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.0...v12.0.1
 [12.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.1.0...v12.0.0
 [11.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...v11.1.0
 [11.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v10.0.2...v11.0.0
