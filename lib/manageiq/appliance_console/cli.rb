@@ -229,7 +229,8 @@ module ApplianceConsole
         opt :message_server_password,       "Message Server password",                                        :type => :string
         opt :message_server_port,           "Message Server Port",                                            :type => :integer
         opt :message_server_use_ipaddr,     "Deprecated: Message Server Use Address",                         :type => :boolean, :default => false
-        opt :message_server_host,           "Message Server Hostname or IP Address",                          :type => :string
+        opt :message_server_host,           "Message Server Hostname or IP Address (single host)",            :type => :string
+        opt :message_server_hosts,          "Message Server Hostnames (comma-separated for HA)",              :type => :string
         opt :message_truststore_path_src,   "Message Server Truststore Path",                                 :type => :string
         opt :message_ca_cert_path_src,      "Message Server CA Cert Path",                                    :type => :string
         opt :message_persistent_disk,       "Message Persistent Disk Path",                                   :type => :string
@@ -243,6 +244,7 @@ module ApplianceConsole
       end
       Optimist.die :region, "needed when setting up a local database" if region_number_required? && options[:region].nil?
       Optimist.die "Supply only one of --message-server-config, --message-server-unconfig, --message-client-config or --message-client-unconfig" if multiple_message_subcommands?
+      Optimist.die "Supply only one of --message-server-host or --message-server-hosts" if options[:message_server_host] && options[:message_server_hosts]
       warn("--message_server_use_ipaddr is deprecated and will be ignored") if options[:message_server_use_ipaddr]
       self
     end

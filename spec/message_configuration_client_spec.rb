@@ -46,8 +46,9 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     it "should prompt for message_keystore_username and message_keystore_password" do
+      expect(subject).to receive(:agree).with("Configure High Availability with multiple hosts? (Y/N): ").and_return(false)
       expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname").and_return("my-host-name.example.com")
-      expect(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
+      expect(subject).to receive(:ask_for_integer).with("Message Server Port number", 1..65_535, 9_093).and_return("9093")
       expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
       expect(subject).to receive(:ask_for_messaging_password).with("Message Keystore Password").and_return("top_secret")
       expect(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
@@ -62,8 +63,9 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     end
 
     it "should display Server Hostname and Key Username" do
+      allow(subject).to receive(:agree).with("Configure High Availability with multiple hosts? (Y/N): ").and_return(false)
       allow(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname").and_return("my-kafka-server.example.com")
-      allow(subject).to receive(:ask_for_integer).with("Message Server Port number", (1..65_535), 9_093).and_return("9093")
+      allow(subject).to receive(:ask_for_integer).with("Message Server Port number", 1..65_535, 9_093).and_return("9093")
       allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
       allow(subject).to receive(:ask_for_messaging_password).with("Message Keystore Password").and_return("top_secret")
       allow(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
@@ -76,8 +78,57 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       expect(subject).to receive(:say).with("\nMessage Client Configuration:\n")
       expect(subject).to receive(:say).with("Message Client Details:\n")
       expect(subject).to receive(:say).with("  Message Server Hostname:   my-kafka-server.example.com\n")
+      expect(subject).to receive(:say).with("  Message Server Port:       9093\n")
       expect(subject).to receive(:say).with("  Message Server Username:   root\n")
       expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
+
+      expect(subject.send(:ask_questions)).to be_truthy
+    end
+
+    it "should prompt for multiple hosts when HA mode is selected" do
+      expect(subject).to receive(:agree).with("Configure High Availability with multiple hosts? (Y/N): ").and_return(true)
+      expect(subject).to receive(:ask_for_string).with("Message Server Hostnames (comma-separated)").and_return("host1.example.com,host2.example.com,host3.example.com")
+      expect(subject).to receive(:ask_for_integer).with("Message Server Port number", 1..65_535, 9_093).and_return("9093")
+      expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      expect(subject).to receive(:ask_for_messaging_password).with("Message Keystore Password").and_return("top_secret")
+      expect(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
+      expect(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
+
+      expect(subject).to receive(:ask_for_string).with("Message Server Username", message_server_username).and_return("root")
+      expect(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
+
+      expect(subject).to receive(:say).at_least(5).times
+      expect(subject).to receive(:agree).with("\nProceed? (Y/N): ").and_return(true)
+      allow(subject).to receive(:host_resolvable?).and_return(true)
+      allow(subject).to receive(:host_reachable?).and_return(true)
+
+      expect(subject.send(:ask_questions)).to be_truthy
+    end
+
+    it "should display multiple hostnames when HA mode is configured" do
+      allow(subject).to receive(:agree).with("Configure High Availability with multiple hosts? (Y/N): ").and_return(true)
+      allow(subject).to receive(:ask_for_string).with("Message Server Hostnames (comma-separated)").and_return("host1.example.com, host2.example.com, host3.example.com")
+      allow(subject).to receive(:ask_for_integer).with("Message Server Port number", 1..65_535, 9_093).and_return("9093")
+      allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
+      allow(subject).to receive(:ask_for_messaging_password).with("Message Keystore Password").and_return("top_secret")
+      allow(subject).to receive(:ask_for_string).with("Message Server Truststore Path", subject.truststore_path)
+      allow(subject).to receive(:ask_for_string).with("Message Server CA Cert Path", subject.ca_cert_path)
+
+      allow(subject).to receive(:ask_for_string).with("Message Server Username", message_server_username).and_return("root")
+      allow(subject).to receive(:ask_for_password).with("Message Server Password").and_return("top_secret")
+
+      expect(subject).to receive(:say).with("\nMessage Client Parameters:\n\n")
+      expect(subject).to receive(:say).with("\nMessage Client Configuration:\n")
+      expect(subject).to receive(:say).with("Message Client Details:\n")
+      expect(subject).to receive(:say).with("  Message Server Hostnames:  host1.example.com, host2.example.com, host3.example.com\n")
+      expect(subject).to receive(:say).with("  (High Availability Mode with 3 hosts)\n")
+      expect(subject).to receive(:say).with("  Message Server Port:       9093\n")
+      expect(subject).to receive(:say).with("  Message Server Username:   root\n")
+      expect(subject).to receive(:say).with("  Message Keystore Username: admin\n")
+
+      allow(subject).to receive(:agree).with("\nProceed? (Y/N): ").and_return(true)
+      allow(subject).to receive(:host_resolvable?).and_return(true)
+      allow(subject).to receive(:host_reachable?).and_return(true)
 
       expect(subject.send(:ask_questions)).to be_truthy
     end
@@ -95,6 +146,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     let(:secure_content) do
       <<~CLIENT_PROPERTIES
+        bootstrap.servers=#{message_server_host}:#{message_server_port}
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
 
         sasl.mechanism=PLAIN
@@ -109,6 +161,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
     let(:unsecure_content) do
       <<~CLIENT_PROPERTIES
+        bootstrap.servers=#{message_server_host}:#{message_server_port}
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
 
         sasl.mechanism=PLAIN
@@ -324,6 +377,55 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
     context "when using unsecure port 9092" do
       let(:content) { unsecure_messagine_yml_content }
       let(:message_server_port) { 9_092 }
+      include_examples "messaging yaml file"
+    end
+
+    context "when using multiple hosts with secure port 9093" do
+      let(:message_server_host) { "host1.example.com,host2.example.com,host3.example.com" }
+      let(:message_server_port) { 9_093 }
+      let(:content) do
+        <<~SECURE_MESSAGING_YML_MULTI
+          ---
+          base:
+            host: localhost
+            port: 9092
+            protocol: Kafka
+            encoding: json
+            username: admin
+            password: smartvm
+          development:
+            host: localhost
+            port: 9092
+            protocol: Kafka
+            encoding: json
+            username: admin
+            password: smartvm
+          production:
+            port: 9093
+            protocol: Kafka
+            encoding: json
+            username: admin
+            password: #{ManageIQ::Password.try_encrypt("super_secret")}
+            hosts:
+            - host1.example.com
+            - host2.example.com
+            - host3.example.com
+            ssl: true
+            ca_file: "#{@tmp_base_dir}/config/keystore/ca-cert"
+          test:
+            host: localhost
+            port: 9092
+            protocol: Kafka
+            encoding: json
+            username: admin
+            password: smartvm
+        SECURE_MESSAGING_YML_MULTI
+      end
+
+      before do
+        subject.instance_variable_set(:@message_server_hosts, ["host1.example.com", "host2.example.com", "host3.example.com"])
+      end
+
       include_examples "messaging yaml file"
     end
   end

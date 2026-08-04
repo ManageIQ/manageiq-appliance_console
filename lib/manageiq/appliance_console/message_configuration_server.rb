@@ -15,9 +15,11 @@ module ManageIQ
       PERSISTENT_NAME = "kafka_messages".freeze
 
       def initialize(options = {})
+        # Set message_server_host option before calling super if not provided
+        options[:message_server_host] ||= my_hostname
+
         super(options)
 
-        @message_server_host           = options[:message_server_host] || my_hostname
         @message_persistent_disk       = LinuxAdmin::Disk.new(:path => options[:message_persistent_disk]) unless options[:message_persistent_disk].nil?
 
         @jaas_config_path              = config_dir_path.join("kafka_server_jaas.conf")
@@ -68,7 +70,8 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @message_server_host       = ask_for_messaging_hostname("Message Server Hostname", message_server_host)
+        hostname = ask_for_messaging_hostname("Message Server Hostname", message_server_host)
+        @message_server_hosts = [hostname]
 
         @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
         @message_keystore_password = ask_for_messaging_password("Message Keystore Password")
@@ -105,6 +108,10 @@ module ManageIQ
       def self.configured?
         LinuxAdmin::Service.new("kafka").running? ||
           LinuxAdmin::Service.new("zookeeper").running?
+      end
+
+      def message_server_host
+        message_server_hosts.first
       end
 
       private

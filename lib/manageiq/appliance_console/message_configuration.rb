@@ -10,7 +10,7 @@ module ManageIQ
       include ManageIQ::ApplianceConsole::Prompts
 
       attr_reader :message_keystore_username, :message_keystore_password,
-                  :message_server_host, :message_server_port,
+                  :message_server_hosts, :message_server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
                   :client_properties_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
@@ -37,6 +37,15 @@ module ManageIQ
         @message_keystore_username  = options[:message_keystore_username] || "admin"
         @message_keystore_password  = options[:message_keystore_password]
 
+        # Handle both single and multiple host parameters - store everything in @message_server_hosts array
+        @message_server_hosts = if options[:message_server_hosts]
+                                  parse_hosts(options[:message_server_hosts])
+                                elsif options[:message_server_host]
+                                  [options[:message_server_host]]
+                                else
+                                  []
+                                end
+
         @miq_config_dir_path        = Pathname.new(MIQ_CONFIG_DIR)
         @config_dir_path            = Pathname.new(CONFIG_DIR)
         @sample_config_dir_path     = Pathname.new(SAMPLE_CONFIG_DIR)
@@ -49,6 +58,23 @@ module ManageIQ
         @messaging_yaml_sample_path = miq_config_dir_path.join("messaging.kafka.yml")
         @messaging_yaml_path        = miq_config_dir_path.join("messaging.yml")
         @ca_cert_path               = keystore_dir_path.join("ca-cert")
+      end
+
+      # Parse comma-separated host string into array
+      def parse_hosts(hosts_input)
+        return [] if hosts_input.blank?
+
+        hosts_input.split(',').map(&:strip).reject(&:empty?)
+      end
+
+      # Get first host (for backward compatibility and file fetching)
+      def primary_message_server_host
+        message_server_hosts.first
+      end
+
+      # Check if multiple hosts configured
+      def multiple_hosts?
+        message_server_hosts.length > 1
       end
 
       def already_configured?
@@ -69,8 +95,17 @@ module ManageIQ
         show_parameters
         return false unless agree("\nProceed? (Y/N): ")
 
-        return false unless host_resolvable?(message_server_host) && host_reachable?(message_server_host, "Message Server Host:")
+        return false unless all_hosts_valid?
 
+        true
+      end
+
+      # Validate all configured hosts
+      def all_hosts_valid?
+        message_server_hosts.each do |host|
+          return false unless host_resolvable?(host)
+          return false unless host_reachable?(host, "Message Server Host")
+        end
         true
       end
 
@@ -79,7 +114,8 @@ module ManageIQ
 
         return if file_found?(client_properties_path)
 
-        algorithm = message_server_host.ipaddress? ? "" : "HTTPS"
+        # Determine algorithm based on first host (all should be same type)
+        algorithm = primary_message_server_host.ipaddress? ? "" : "HTTPS"
         protocol = secure? ? "SASL_SSL" : "PLAINTEXT"
         content = secure? ? secure_client_properties_content(algorithm, protocol) : unsecure_client_properties_content(algorithm, protocol)
 
@@ -96,7 +132,11 @@ module ManageIQ
       end
 
       def unsecure_client_properties_content(algorithm, protocol)
+        # Format hosts as host1:port,host2:port,host3:port for bootstrap.servers
+        bootstrap_servers = message_server_hosts.map { |host| "#{host}:#{message_server_port}" }.join(',')
+
         <<~CLIENT_PROPERTIES
+          bootstrap.servers=#{bootstrap_servers}
           ssl.endpoint.identification.algorithm=#{algorithm}
 
           sasl.mechanism=PLAIN
@@ -120,7 +160,13 @@ module ManageIQ
             YAML.load(data) # rubocop:disable Security/YAMLLoad
           end
 
-        messaging_yaml["production"]["host"]      = message_server_host
+        # Use "host" for single host, "hosts" array for multiple hosts
+        if multiple_hosts?
+          messaging_yaml["production"].delete("host")
+          messaging_yaml["production"]["hosts"]   = message_server_hosts
+        else
+          messaging_yaml["production"]["host"]    = message_server_hosts.first
+        end
         messaging_yaml["production"]["port"]      = message_server_port
         messaging_yaml["production"]["username"]  = message_keystore_username
         messaging_yaml["production"]["password"]  = ManageIQ::Password.try_encrypt(message_keystore_password)

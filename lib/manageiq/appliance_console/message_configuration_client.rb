@@ -13,8 +13,9 @@ module ManageIQ
       def initialize(options = {})
         super(options)
 
-        @message_server_host         = options[:message_server_host]
-        @message_server_username     = options[:message_server_usernamed] || "root"
+        # Parent class handles message_server_host(s) initialization
+
+        @message_server_username     = options[:message_server_username] || "root"
         @message_server_password     = options[:message_server_password]
 
         @message_truststore_path_src = options[:message_truststore_path_src] || truststore_path
@@ -46,7 +47,19 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Client Parameters:\n\n")
 
-        @message_server_host         = ask_for_messaging_hostname("Message Server Hostname")
+        # Ask if user wants HA configuration
+        use_ha = agree("Configure High Availability with multiple hosts? (Y/N): ")
+
+        if use_ha
+          # Prompt for comma-separated hosts
+          hosts_input = ask_for_string("Message Server Hostnames (comma-separated)")
+          @message_server_hosts = parse_hosts(hosts_input)
+        else
+          # Prompt for single host
+          single_host = ask_for_messaging_hostname("Message Server Hostname")
+          @message_server_hosts = [single_host]
+        end
+
         @message_server_port         = ask_for_integer("Message Server Port number", (1..65_535), 9_093).to_i
         @message_server_username     = ask_for_string("Message Server Username", message_server_username)
         @message_server_password     = ask_for_password("Message Server Password")
@@ -59,9 +72,17 @@ module ManageIQ
       def show_parameters
         say("\nMessage Client Configuration:\n")
         say("Message Client Details:\n")
-        say("  Message Server Hostname:   #{message_server_host}\n")
+
+        if multiple_hosts?
+          say("  Message Server Hostnames:  #{message_server_hosts.join(', ')}\n")
+          say("  (High Availability Mode with #{message_server_hosts.length} hosts)\n")
+        else
+          say("  Message Server Hostname:   #{message_server_hosts.first}\n")
+        end
+
+        say("  Message Server Port:       #{message_server_port}\n")
         say("  Message Server Username:   #{message_server_username}\n")
-        say("  Message Keystore Username: #{message_keystore_username}\n")
+        say("  Message Keystore Username: #{message_keystore_username}\n") if secure?
       end
 
       def fetch_truststore_from_server
@@ -87,13 +108,16 @@ module ManageIQ
 
         FileUtils.mkdir_p(dst_file.dirname) unless dst_file.dirname.directory?
 
-        Net::SCP.start(message_server_host, message_server_username, :password => message_server_password) do |scp|
+        # Use primary host for file fetching
+        host = primary_message_server_host
+
+        Net::SCP.start(host, message_server_username, :password => message_server_password) do |scp|
           scp.download!(src_file, dst_file)
         end
 
         File.exist?(dst_file)
       rescue => e
-        say("Failed to fetch #{src_file} from server: #{e.message}")
+        say("Failed to fetch #{src_file} from server #{host}: #{e.message}")
         false
       end
     end
