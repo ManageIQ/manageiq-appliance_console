@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Fixed
+- Fix ArgumentError unknown keyword with json 3 [[#339](https://github.com/ManageIQ/manageiq-appliance_console/pull/339)]
 
 ## [12.0.1] - 2026-05-30
 ### Added
