@@ -204,6 +204,16 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
       end
 
+      it "carries the SAN through the CSR and the signed certificate" do
+        allow(AwesomeSpawn).to receive(:run!)
+
+        expect(AwesomeSpawn).to receive(:run!)
+          .with("keytool", hash_including(:params => hash_including("-certreq" => nil, "-ext" => ext)))
+        expect(AwesomeSpawn).to receive(:run!)
+          .with("openssl", hash_including(:params => ["x509", "-req", hash_including("-copy_extensions" => "copy")]))
+        subject.send(:configure_keystore)
+      end
+
       it "does not recreate the keystore files if they already exists" do
         subject.keystore_files.each { |f| FileUtils.touch(f) }
         expect(AwesomeSpawn).not_to receive(:run!)

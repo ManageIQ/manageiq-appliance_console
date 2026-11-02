@@ -206,21 +206,25 @@ module ManageIQ
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
         # :stdin_data provides the -storepass argument
+        # -ext copies the SAN into the CSR, since keytool -certreq does not carry it over from the keystore entry
         AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
                                                      "-alias"    => keystore_params["-alias"],
                                                      "-certreq"  => nil,
+                                                     "-ext"      => keystore_params["-ext"],
                                                      "-file"     => cert_file_path},
                                      :stdin_data => "#{message_keystore_password}\n")
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
+        # -copy_extensions keeps the SAN from the CSR; openssl x509 -req drops all CSR extensions otherwise
         AwesomeSpawn.run!("openssl", :env    => {"PASSWORD" => message_keystore_password},
-                                     :params => ["x509", "-req", {"-CA"             => ca_cert_path,
-                                                                  "-CAkey"          => ca_key_path,
-                                                                  "-in"             => cert_file_path,
-                                                                  "-out"            => cert_signed_path,
-                                                                  "-days"           => 10_000,
-                                                                  "-CAcreateserial" => nil,
-                                                                  "-passin"         => "env:PASSWORD"}])
+                                     :params => ["x509", "-req", {"-CA"              => ca_cert_path,
+                                                                  "-CAkey"           => ca_key_path,
+                                                                  "-in"              => cert_file_path,
+                                                                  "-out"             => cert_signed_path,
+                                                                  "-days"            => 10_000,
+                                                                  "-CAcreateserial"  => nil,
+                                                                  "-copy_extensions" => "copy",
+                                                                  "-passin"          => "env:PASSWORD"}])
 
         # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
         # :stdin_data provides the -storepass argument and yes to confirm
