@@ -2,7 +2,7 @@ module ManageIQ
   module ApplianceConsole
     require 'pathname'
     require 'tempfile'
-    RAILS_ROOT = File.exist?("/var/www/miq/vmdb") ? Pathname.new("/var/www/miq/vmdb") : Pathname.new(Dir.mktmpdir)
+    RAILS_ROOT = File.exist?("/usr/lib/manageiq/manageiq") ? Pathname.new("/usr/lib/manageiq/manageiq") : Pathname.new(Dir.mktmpdir)
 
     class << self
       attr_writer :logger
