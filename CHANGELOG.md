@@ -3,7 +3,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [13.0.0] - 2026-11-03
+### Changed
+- **BREAKING** Change RAILS_ROOT from /var/www/miq/vmdb to /usr/lib/manageiq/manageiq [[#336](https://github.com/ManageIQ/manageiq-appliance_console/pull/336)]
+- Require linux_admin ~> 4.1 and net-ssh ~> 7.3 (>= 7.3.5) [[#338](https://github.com/ManageIQ/manageiq-appliance_console/pull/338)]
+
 ### Fixed
+- Fix SAN propagation through CSR signing in keystore configuration [[#337](https://github.com/ManageIQ/manageiq-appliance_console/pull/337)]
 - Fix ArgumentError unknown keyword with json 3 [[#339](https://github.com/ManageIQ/manageiq-appliance_console/pull/339)]
 
 ## [12.0.1] - 2026-05-30
@@ -336,7 +343,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.0.0] - 2017-10-19
 
-[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.1...HEAD
+[Unreleased]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v13.0.0...HEAD
+[13.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.1...v13.0.0
 [12.0.1]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v12.0.0...v12.0.1
 [12.0.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.1.0...v12.0.0
 [11.1.0]: https://github.com/ManageIQ/manageiq-appliance_console/compare/v11.0.0...v11.1.0
