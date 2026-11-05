@@ -43,8 +43,8 @@ module ManageIQ
 
         @client_properties_path     = config_dir_path.join("client.properties")
         @keystore_dir_path          = config_dir_path.join("keystore")
-        @truststore_path            = keystore_dir_path.join("truststore.jks")
-        @keystore_path              = keystore_dir_path.join("keystore.jks")
+        @truststore_path            = keystore_dir_path.join("truststore.p12")
+        @keystore_path              = keystore_dir_path.join("keystore.p12")
 
         @messaging_yaml_sample_path = miq_config_dir_path.join("messaging.kafka.yml")
         @messaging_yaml_path        = miq_config_dir_path.join("messaging.yml")
@@ -90,6 +90,8 @@ module ManageIQ
         secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{message_keystore_password}
+          ssl.truststore.type=PKCS12
+          ssl.enabled.protocols=TLSv1.2,TLSv1.3
         CLIENT_PROPERTIES
 
         unsecure_client_properties_content(algorithm, protocol) + secure_content
