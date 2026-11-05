@@ -154,6 +154,12 @@ module ManageIQ
             password=#{message_keystore_password}
             user_admin=#{message_keystore_password} ;
           };
+
+          KafkaClient {
+            org.apache.kafka.common.security.plain.PlainLoginModule required
+            username=#{message_keystore_username}
+            password=#{message_keystore_password} ;
+          };
         JAAS
 
         File.write(jaas_config_path, content) unless file_found?(jaas_config_path)
@@ -184,7 +190,7 @@ module ManageIQ
 
         FileUtils.mkdir_p(keystore_dir_path) unless keystore_dir_path.directory?
 
-        # Generte a Java keystore and key pair, creating keystore.jks
+        # Generate a PKCS12 keystore and key pair, creating keystore.p12 (JKS is not allowed in FIPS mode)
         # :stdin_data provides the -storepass twice to confirm and an extra CR to accept the same password for -keypass
         AwesomeSpawn.run!("keytool", :params => keystore_params, :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")
 
@@ -196,22 +202,24 @@ module ManageIQ
                                                                           "-passout" => "env:PASSWORD",
                                                                           "-subj"    => '/CN=ApplianceCA'}])
 
-        # Import the CA cert into the trust store, creating truststore.jks
+        # Import the CA cert into the trust store, creating truststore.p12
         # :stdin_data provides the -storepass argument and yes to confirm
-        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => truststore_path,
-                                                     "-alias"    => "CARoot",
-                                                     "-import"   => nil,
-                                                     "-file"     => ca_cert_path},
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore"  => truststore_path,
+                                                     "-storetype" => "PKCS12",
+                                                     "-alias"     => "CARoot",
+                                                     "-import"    => nil,
+                                                     "-file"      => ca_cert_path},
                                      :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\nyes\n")
 
         # Generate a certificate signing request (CSR) for an existing Java keystore, creating cert-file
         # :stdin_data provides the -storepass argument
         # -ext copies the SAN into the CSR, since keytool -certreq does not carry it over from the keystore entry
-        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
-                                                     "-alias"    => keystore_params["-alias"],
-                                                     "-certreq"  => nil,
-                                                     "-ext"      => keystore_params["-ext"],
-                                                     "-file"     => cert_file_path},
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore"  => keystore_path,
+                                                     "-storetype" => "PKCS12",
+                                                     "-alias"     => keystore_params["-alias"],
+                                                     "-certreq"   => nil,
+                                                     "-ext"       => keystore_params["-ext"],
+                                                     "-file"      => cert_file_path},
                                      :stdin_data => "#{message_keystore_password}\n")
 
         # Use openssl to sign the certificate with the "CA" certificate, creating ca-cert.srl and cert-signed
@@ -226,20 +234,22 @@ module ManageIQ
                                                                   "-copy_extensions" => "copy",
                                                                   "-passin"          => "env:PASSWORD"}])
 
-        # Import a root or intermediate CA certificate to an existing Java keystore, updating keystore.jks
+        # Import a root or intermediate CA certificate to an existing PKCS12 keystore, updating keystore.p12
         # :stdin_data provides the -storepass argument and yes to confirm
-        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
-                                                     "-alias"    => "CARoot",
-                                                     "-import"   => nil,
-                                                     "-file"     => ca_cert_path},
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore"  => keystore_path,
+                                                     "-storetype" => "PKCS12",
+                                                     "-alias"     => "CARoot",
+                                                     "-import"    => nil,
+                                                     "-file"      => ca_cert_path},
                                      :stdin_data => "#{message_keystore_password}\nyes\n")
 
-        # Import a signed primary certificate to an existing Java keystore, updating keystore.jks
+        # Import a signed primary certificate to an existing PKCS12 keystore, updating keystore.p12
         # :stdin_data provides the -storepass argument
-        AwesomeSpawn.run!("keytool", :params     => {"-keystore" => keystore_path,
-                                                     "-alias"    => keystore_params["-alias"],
-                                                     "-import"   => nil,
-                                                     "-file"     => cert_signed_path},
+        AwesomeSpawn.run!("keytool", :params     => {"-keystore"  => keystore_path,
+                                                     "-storetype" => "PKCS12",
+                                                     "-alias"     => keystore_params["-alias"],
+                                                     "-import"    => nil,
+                                                     "-file"      => cert_signed_path},
                                      :stdin_data => "#{message_keystore_password}\n")
       end
 
@@ -262,10 +272,15 @@ module ManageIQ
           ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
           ssl.keystore.password=#{message_keystore_password}
+          ssl.keystore.type=PKCS12
           ssl.key.password=#{message_keystore_password}
 
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{message_keystore_password}
+          ssl.truststore.type=PKCS12
+
+          ssl.enabled.protocols=TLSv1.2,TLSv1.3
+          ssl.protocol=TLSv1.3
 
           ssl.client.auth=#{client_auth}
 
@@ -297,17 +312,26 @@ module ManageIQ
       end
 
       def assemble_keystore_params
-        keystore_params = {"-keystore" => keystore_path,
-                           "-validity" => 10_000,
-                           "-genkey"   => nil,
-                           "-keyalg"   => "RSA"}
+        keystore_params = {"-keystore"  => keystore_path,
+                           "-storetype" => "PKCS12",
+                           "-validity"  => 10_000,
+                           "-genkey"    => nil,
+                           "-keyalg"    => "RSA",
+                           "-keysize"   => 2048}
 
         keystore_params["-alias"] = message_server_host
-        keystore_params["-ext"] = "san=dns:#{message_server_host}"
+        keystore_params["-ext"] = "san=#{subject_alternative_names.join(",")}"
 
         keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
 
         keystore_params
+      end
+
+      # Hostname/IP the clients use, plus localhost and this appliance's address
+      # so that TLS endpoint verification succeeds for local and inter-broker connections.
+      def subject_alternative_names
+        host_san = message_server_host.ipaddress? ? "ip:#{message_server_host}" : "dns:#{message_server_host}"
+        [host_san, "dns:localhost", "ip:127.0.0.1", ("ip:#{my_ipaddr}" if my_ipaddr)].compact.uniq
       end
 
       def modify_firewall(action)
