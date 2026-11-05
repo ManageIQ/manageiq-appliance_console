@@ -13,7 +13,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     @tmp_miq_config_dir = Pathname.new(Dir.mktmpdir)
     @this = ManageIQ::ApplianceConsole::MessageConfiguration
     @this_server = ManageIQ::ApplianceConsole::MessageServerConfiguration
-    @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.jks")
+    @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.p12")
     stub_const("#{@this}::BASE_DIR", @tmp_base_dir)
     stub_const("#{@this}::LOGS_DIR", "#{@tmp_base_dir}/logs")
     stub_const("#{@this}::CONFIG_DIR", "#{@tmp_base_dir}/config")
@@ -139,6 +139,12 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
           password="#{message_keystore_password}"
           user_admin="#{message_keystore_password}" ;
         };
+
+        KafkaClient {
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username=#{message_keystore_username}
+          password=#{message_keystore_password} ;
+        };
       JAAS
 
       expect(File).to receive(:write).with(subject.jaas_config_path, content)
@@ -211,13 +217,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
         expect(AwesomeSpawn).to receive(:run!)
-          .with("keytool", :params     => {"-keystore" => @keystore_path,
-                                           "-validity" => 10_000,
-                                           "-genkey"   => nil,
-                                           "-keyalg"   => "RSA",
-                                           "-alias"    => ks_alias,
-                                           "-dname"    => "cn=#{ks_alias}",
-                                           "-ext"      => ext},
+          .with("keytool", :params     => {"-keystore"  => @keystore_path,
+                                           "-storetype" => "PKCS12",
+                                           "-validity"  => 10_000,
+                                           "-genkey"    => nil,
+                                           "-keyalg"    => "RSA",
+                                           "-keysize"   => 2048,
+                                           "-alias"     => ks_alias,
+                                           "-dname"     => "cn=#{ks_alias}",
+                                           "-ext"       => ext},
                            :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")
         expect(subject.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
@@ -274,10 +282,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
         ssl.keystore.location=#{subject.keystore_path}
         ssl.keystore.password=#{message_keystore_password}
+        ssl.keystore.type=PKCS12
         ssl.key.password=#{message_keystore_password}
 
         ssl.truststore.location=#{subject.truststore_path}
         ssl.truststore.password=#{message_keystore_password}
+        ssl.truststore.type=PKCS12
+
+        ssl.enabled.protocols=TLSv1.2,TLSv1.3
+        ssl.protocol=TLSv1.3
 
         ssl.client.auth=#{client_auth}
 
@@ -370,7 +383,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
 
     context "when --message-server-host is specified" do
-      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.1" ) }
+      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.1") }
 
       it "sets message_server_host to the provided value" do
         expect(subject.message_server_host).to eq("192.0.2.1")
