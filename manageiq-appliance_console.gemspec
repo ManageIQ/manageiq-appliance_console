@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "bcrypt",                  "~> 3.1.10"
   spec.add_runtime_dependency "bcrypt_pbkdf",            ">= 1.0", "< 2.0"
   spec.add_runtime_dependency "ed25519",                 ">= 1.2", "< 2.0"
-  spec.add_runtime_dependency "highline",                "~> 2.1"
+  spec.add_runtime_dependency "highline",                "~> 3.0"
 
   # These two dependencies can be removed for ruby 3.4 support once we upgrade highline:
   #   abbrev is not in ruby 3.4 standard library and no longer a dependency in highline 3.0.1
