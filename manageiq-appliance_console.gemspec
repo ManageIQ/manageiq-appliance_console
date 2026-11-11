@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "linux_admin",             "~> 4.1"
   spec.add_runtime_dependency "manageiq-password",       "< 2"
   spec.add_runtime_dependency "net-scp",                 "~> 4.0"
-  spec.add_runtime_dependency "net-ssh",                 "~> 7.3", ">= 7.3.5"
+  spec.add_runtime_dependency "net-ssh",                 "~> 8.0", ">= 8.1.2"
   spec.add_runtime_dependency "optimist",                "~> 3.0"
   spec.add_runtime_dependency "pg"
   spec.add_runtime_dependency "pg-logical_replication"
