@@ -238,7 +238,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     context "with hostname" do
       let(:ks_alias) { "my-host-name.example.com" }
       let(:message_server_host) { ks_alias }
-      let(:ext) { "san=dns:my-host-name.example.com,dns:localhost,ip:127.0.0.1,ip:192.0.2.10" }
+      let(:ext) { "san=dns:my-host-name.example.com,dns:localhost,ip:127.0.0.1,ip:::1,ip:192.0.2.10" }
 
       include_examples "configure keystore"
     end
@@ -246,7 +246,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     context "with an ip address" do
       let(:ks_alias) { "192.0.2.10" }
       let(:message_server_host) { ks_alias }
-      let(:ext) { "san=ip:192.0.2.10,dns:localhost,ip:127.0.0.1" }
+      let(:ext) { "san=ip:192.0.2.10,dns:localhost,ip:127.0.0.1,ip:::1" }
 
       include_examples "configure keystore"
     end

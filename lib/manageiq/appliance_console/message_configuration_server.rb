@@ -331,7 +331,7 @@ module ManageIQ
       # so that TLS endpoint verification succeeds for local and inter-broker connections.
       def subject_alternative_names
         host_san = message_server_host.ipaddress? ? "ip:#{message_server_host}" : "dns:#{message_server_host}"
-        [host_san, "dns:localhost", "ip:127.0.0.1", ("ip:#{my_ipaddr}" if my_ipaddr)].compact.uniq
+        [host_san, "dns:localhost", "ip:127.0.0.1", "ip:::1", ("ip:#{my_ipaddr}" if my_ipaddr)].compact.uniq
       end
 
       def modify_firewall(action)
