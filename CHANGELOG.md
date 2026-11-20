@@ -8,6 +8,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - **BREAKING** Change RAILS_ROOT from /var/www/miq/vmdb to /usr/lib/manageiq/manageiq [[#336](https://github.com/ManageIQ/manageiq-appliance_console/pull/336)]
 - Require linux_admin ~> 4.1 and net-ssh ~> 7.3 (>= 7.3.5) [[#338](https://github.com/ManageIQ/manageiq-appliance_console/pull/338)]
+- Use PKCS12 keystores/truststore (`keystore.p12`, `truststore.p12`) for the Kafka message server so it works in FIPS mode. Existing message servers/clients must be re-configured.
+- Add `localhost`, `127.0.0.1` and the appliance IP to the Kafka server certificate SAN
+- Add a `KafkaClient` section to the Kafka JAAS config for inter-broker connections
+- Set `ssl.*.type=PKCS12` and `ssl.enabled.protocols` in the Kafka server and client properties
 
 ### Fixed
 - Fix SAN propagation through CSR signing in keystore configuration [[#337](https://github.com/ManageIQ/manageiq-appliance_console/pull/337)]

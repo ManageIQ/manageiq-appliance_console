@@ -12,7 +12,7 @@ module ManageIQ
       attr_reader :message_keystore_username, :message_keystore_password,
                   :message_server_host, :message_server_port,
                   :miq_config_dir_path, :config_dir_path, :sample_config_dir_path,
-                  :client_properties_path,
+                  :client_properties_path, :kafka_security_path,
                   :keystore_dir_path, :truststore_path, :keystore_path,
                   :messaging_yaml_sample_path, :messaging_yaml_path,
                   :ca_cert_path
@@ -23,6 +23,8 @@ module ManageIQ
       CONFIG_DIR                        = "/etc/kafka/config".freeze
       SAMPLE_CONFIG_DIR                 = "/etc/kafka/config-sample".freeze
       MIQ_CONFIG_DIR                    = ManageIQ::ApplianceConsole::RAILS_ROOT.join("config").freeze
+
+      FIPS_PROVIDERS                    = %w[SunSASL JdkSASL SunJGSS].freeze
 
       def self.available?
         File.exist?("#{BIN_DIR}/kafka-run-class.sh")
@@ -42,9 +44,10 @@ module ManageIQ
         @sample_config_dir_path     = Pathname.new(SAMPLE_CONFIG_DIR)
 
         @client_properties_path     = config_dir_path.join("client.properties")
+        @kafka_security_path        = config_dir_path.join("kafka.security")
         @keystore_dir_path          = config_dir_path.join("keystore")
-        @truststore_path            = keystore_dir_path.join("truststore.jks")
-        @keystore_path              = keystore_dir_path.join("keystore.jks")
+        @truststore_path            = keystore_dir_path.join("truststore.p12")
+        @keystore_path              = keystore_dir_path.join("keystore.p12")
 
         @messaging_yaml_sample_path = miq_config_dir_path.join("messaging.kafka.yml")
         @messaging_yaml_path        = miq_config_dir_path.join("messaging.yml")
@@ -86,10 +89,63 @@ module ManageIQ
         File.write(client_properties_path, content)
       end
 
+      # Writes the kafka.security file, which is passed to the JVM with
+      # -Djava.security.properties, adding any of the FIPS_PROVIDERS that are
+      # not already registered as a fips.provider.N in the JDK's java.security.
+      # New providers are numbered after the highest existing fips.provider.N.
+      def create_kafka_security
+        say(__method__.to_s.tr("_", " ").titleize)
+
+        return if file_found?(kafka_security_path)
+
+        security_file = java_security_path
+        if security_file.nil?
+          say("\tWARNING: Unable to locate the JDK java.security file. Taking no action.")
+          return
+        end
+
+        content = kafka_security_content(security_file)
+        if content.empty?
+          say("\tFIPS providers #{FIPS_PROVIDERS.join(", ")} are already present in #{security_file}. Taking no action.")
+          return
+        end
+
+        File.write(kafka_security_path, content)
+      end
+
+      def kafka_security_content(security_file)
+        existing    = fips_providers(security_file)
+        next_number = (existing.keys.max || 0) + 1
+
+        missing = FIPS_PROVIDERS - existing.values
+        missing.each_with_index.map { |provider, i| "fips.provider.#{next_number + i}=#{provider}\n" }.join
+      end
+
+      # Returns a Hash of fips.provider number => provider name from the java.security file
+      def fips_providers(security_file)
+        File.foreach(security_file).each_with_object({}) do |line, providers|
+          next unless (match = line.match(/^\s*fips\.provider\.(\d+)\s*=\s*(\S+)/))
+
+          providers[match[1].to_i] = match[2]
+        end
+      end
+
+      def java_security_path
+        java_homes = [ENV.fetch("JAVA_HOME", nil), java_home_from_path].compact.reject(&:empty?)
+        java_homes.map { |home| File.join(home, "conf", "security", "java.security") }.detect { |path| File.exist?(path) }
+      end
+
+      def java_home_from_path
+        java = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "java") }.detect { |path| File.executable?(path) }
+        File.expand_path("../..", File.realpath(java)) if java
+      end
+
       def secure_client_properties_content(algorithm, protocol)
         secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
           ssl.truststore.password=#{message_keystore_password}
+          ssl.truststore.type=PKCS12
+          ssl.enabled.protocols=TLSv1.2,TLSv1.3
         CLIENT_PROPERTIES
 
         unsecure_client_properties_content(algorithm, protocol) + secure_content

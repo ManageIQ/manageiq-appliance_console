@@ -13,7 +13,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     @tmp_miq_config_dir = Pathname.new(Dir.mktmpdir)
     @this = ManageIQ::ApplianceConsole::MessageConfiguration
     @this_server = ManageIQ::ApplianceConsole::MessageServerConfiguration
-    @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.jks")
+    @keystore_path = Pathname.new("#{@tmp_base_dir}/config/keystore/keystore.p12")
     stub_const("#{@this}::BASE_DIR", @tmp_base_dir)
     stub_const("#{@this}::LOGS_DIR", "#{@tmp_base_dir}/logs")
     stub_const("#{@this}::CONFIG_DIR", "#{@tmp_base_dir}/config")
@@ -24,7 +24,8 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     FileUtils.mkdir_p("#{@tmp_base_dir}/config/keystore")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
 
-    allow_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('my-host-name.example.com')
+    allow(LinuxAdmin::Hosts).to receive(:new).and_return(double(:hostname => 'my-host-name.example.com'))
+    allow(LinuxAdmin::IpAddress).to receive(:new).and_return(double(:address => '192.0.2.10'))
   end
 
   after do
@@ -138,6 +139,12 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
           password=#{message_keystore_password}
           user_admin=#{message_keystore_password} ;
         };
+
+        KafkaClient {
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username=#{message_keystore_username}
+          password=#{message_keystore_password} ;
+        };
       JAAS
 
       expect(File).to receive(:write).with(subject.jaas_config_path, content)
@@ -171,6 +178,88 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
   end
 
+  describe "#create_kafka_security" do
+    let(:java_security_file) { Pathname.new(@tmp_base_dir).join("java.security") }
+
+    before do
+      expect(subject).to receive(:say).with("Create Kafka Security")
+      allow(subject).to receive(:java_security_path).and_return(java_security_file)
+    end
+
+    it "numbers the providers after the highest existing fips.provider.N" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        security.provider.1=SUN
+        fips.provider.1=SunPKCS11 ${java.home}/conf/security/nss.fips.cfg
+        fips.provider.2=SUN
+        fips.provider.3=SunEC
+      JAVA_SECURITY
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.4=SunSASL
+        fips.provider.5=JdkSASL
+        fips.provider.6=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "starts at 1 when there are no fips providers" do
+      java_security_file.write("security.provider.1=SUN\n")
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.1=SunSASL
+        fips.provider.2=JdkSASL
+        fips.provider.3=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "only adds the providers that are not already present" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        fips.provider.1=SUN
+        fips.provider.2=JdkSASL
+      JAVA_SECURITY
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.3=SunSASL
+        fips.provider.4=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "does not create the file when all providers are already present" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        fips.provider.1=SunSASL
+        fips.provider.2=JdkSASL
+        fips.provider.3=SunJGSS
+      JAVA_SECURITY
+      expect(subject).to receive(:say).with(/already present/)
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path).not_to exist
+    end
+
+    it "does not create the file when java.security cannot be found" do
+      allow(subject).to receive(:java_security_path).and_return(nil)
+      expect(subject).to receive(:say).with(/Unable to locate/)
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path).not_to exist
+    end
+
+    it "does not recreate the file if it already exists" do
+      expect(subject).to receive(:say).with(/already exists/)
+      FileUtils.touch(subject.kafka_security_path)
+      expect(File).not_to receive(:write)
+
+      subject.send(:create_kafka_security)
+    end
+  end
+
   describe "#configure_firewall" do
     before do
       expect(subject).to receive(:say).with("Configure Firewall")
@@ -192,13 +281,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         allow(AwesomeSpawn).to receive(:run!).exactly(7).times
 
         expect(AwesomeSpawn).to receive(:run!)
-          .with("keytool", :params     => {"-keystore" => @keystore_path,
-                                           "-validity" => 10_000,
-                                           "-genkey"   => nil,
-                                           "-keyalg"   => "RSA",
-                                           "-alias"    => ks_alias,
-                                           "-dname"    => "cn=#{ks_alias}",
-                                           "-ext"      => ext},
+          .with("keytool", :params     => {"-keystore"  => @keystore_path,
+                                           "-storetype" => "PKCS12",
+                                           "-validity"  => 10_000,
+                                           "-genkey"    => nil,
+                                           "-keyalg"    => "RSA",
+                                           "-keysize"   => 2048,
+                                           "-alias"     => ks_alias,
+                                           "-dname"     => "cn=#{ks_alias}",
+                                           "-ext"       => ext},
                            :stdin_data => "#{message_keystore_password}\n#{message_keystore_password}\n\n")
         expect(subject.send(:configure_keystore)).to be_nil
         expect(File.directory?(subject.keystore_dir_path)).to be_truthy
@@ -229,7 +320,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     context "with hostname" do
       let(:ks_alias) { "my-host-name.example.com" }
       let(:message_server_host) { ks_alias }
-      let(:ext) { "san=dns:my-host-name.example.com" }
+      let(:ext) { "san=dns:my-host-name.example.com,dns:localhost,ip:127.0.0.1,ip:::1,ip:192.0.2.10" }
+
+      include_examples "configure keystore"
+    end
+
+    context "with an ip address" do
+      let(:ks_alias) { "192.0.2.10" }
+      let(:message_server_host) { ks_alias }
+      let(:ext) { "san=ip:192.0.2.10,dns:localhost,ip:127.0.0.1,ip:::1" }
 
       include_examples "configure keystore"
     end
@@ -247,10 +346,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         ssl.endpoint.identification.algorithm=#{ident_algorithm}
         ssl.keystore.location=#{subject.keystore_path}
         ssl.keystore.password=#{message_keystore_password}
+        ssl.keystore.type=PKCS12
         ssl.key.password=#{message_keystore_password}
 
         ssl.truststore.location=#{subject.truststore_path}
         ssl.truststore.password=#{message_keystore_password}
+        ssl.truststore.type=PKCS12
+
+        ssl.enabled.protocols=TLSv1.2,TLSv1.3
+        ssl.protocol=TLSv1.3
 
         ssl.client.auth=#{client_auth}
 
@@ -336,16 +440,14 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password) }
 
       it "sets message_server_host to my hostname" do
-        hosts = LinuxAdmin::Hosts.new
-        expect(hosts).to receive(:hostname).and_return("my-hostname")
-        expect(LinuxAdmin::Hosts).to receive(:new).and_return(hosts)
+        expect(LinuxAdmin::Hosts).to receive(:new).and_return(double(:hostname => "my-hostname"))
 
         expect(subject.message_server_host).to eq("my-hostname")
       end
     end
 
     context "when --message-server-host is specified" do
-      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.1" ) }
+      subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password, :message_server_host => "192.0.2.1") }
 
       it "sets message_server_host to the provided value" do
         expect(subject.message_server_host).to eq("192.0.2.1")

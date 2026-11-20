@@ -104,6 +104,8 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           password=#{message_keystore_password} ;
         ssl.truststore.location=#{subject.truststore_path}
         ssl.truststore.password=#{message_keystore_password}
+        ssl.truststore.type=PKCS12
+        ssl.enabled.protocols=TLSv1.2,TLSv1.3
       CLIENT_PROPERTIES
     end
 
