@@ -101,7 +101,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
           username=#{message_keystore_username} \\
-          password=#{message_keystore_password} ;
+          password="#{message_keystore_password}" ;
         ssl.truststore.location=#{subject.truststore_path}
         ssl.truststore.password=#{message_keystore_password}
       CLIENT_PROPERTIES
@@ -115,7 +115,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
         security.protocol=#{security_protocol}
         sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
           username=#{message_keystore_username} \\
-          password=#{message_keystore_password} ;
+          password="#{message_keystore_password}" ;
       CLIENT_PROPERTIES
     end
 
@@ -180,6 +180,21 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
       let(:content) { unsecure_content }
 
       include_examples "client properties config file"
+    end
+
+    context "with special characters in the password" do
+      let(:message_server_port) { 9_092 }
+      let(:message_server_host) { "192.0.2.0" }
+      let(:ident_algorithm) { "" }
+      let(:security_protocol) { "PLAINTEXT" }
+      let(:message_keystore_password) { 'pa ss;w"o=r\\d' }
+
+      it "quotes the password, escaping for JAAS and then for the properties file" do
+        expect(File).to receive(:write) do |_path, content|
+          expect(content).to include(%q(password="pa ss;w\\\\"o=r\\\\\\\\d" ;))
+        end
+        subject.send(:create_client_properties)
+      end
     end
   end
 

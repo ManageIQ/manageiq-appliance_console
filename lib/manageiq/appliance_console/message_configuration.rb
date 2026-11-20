@@ -103,8 +103,18 @@ module ManageIQ
           security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
             username=#{message_keystore_username} \\
-            password=#{message_keystore_password} ;
+            password=#{properties_escape(jaas_quote(message_keystore_password))} ;
         CLIENT_PROPERTIES
+      end
+
+      # Quote a value for a JAAS config entry, escaping backslashes and double quotes.
+      def jaas_quote(value)
+        %("#{value.to_s.gsub(/["\\]/) { |c| "\\#{c}" }}")
+      end
+
+      # Escape a value for a Java .properties file, where backslash is an escape character.
+      def properties_escape(value)
+        value.gsub("\\") { "\\\\" }
       end
 
       def configure_messaging_yaml

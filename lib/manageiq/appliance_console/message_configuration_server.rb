@@ -151,8 +151,8 @@ module ManageIQ
           KafkaServer {
             org.apache.kafka.common.security.plain.PlainLoginModule required
             username=#{message_keystore_username}
-            password=#{message_keystore_password}
-            user_admin=#{message_keystore_password} ;
+            password=#{jaas_quote(message_keystore_password)}
+            user_admin=#{jaas_quote(message_keystore_password)} ;
           };
         JAAS
 
