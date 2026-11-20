@@ -211,6 +211,22 @@ describe ManageIQ::ApplianceConsole::Prompts, :with_ui do
     end
   end
 
+  context "MESSAGING_PASSWORD_REGEXP" do
+    let(:regexp) { described_class::MESSAGING_PASSWORD_REGEXP }
+
+    it "allows printable ASCII characters including interior spaces" do
+      ["super_secret", "a.b-c$d*e", 'pa ss;w"o=r\\d#!', "p@ss:w0rd{}[]()<>?/|~`'%^&+,"].each do |password|
+        expect(password).to match(regexp)
+      end
+    end
+
+    it "rejects empty, leading/trailing space, control and non-ASCII characters" do
+      ["", " secret", "secret ", " ", "sec\nret", "sec\tret", "sécret"].each do |password|
+        expect(password).not_to match(regexp)
+      end
+    end
+  end
+
   context "#ask_for_disk" do
     context "with nodisks" do
       before do
