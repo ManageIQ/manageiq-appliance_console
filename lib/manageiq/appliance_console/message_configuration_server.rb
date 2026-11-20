@@ -30,7 +30,7 @@ module ManageIQ
         @cert_signed_path              = keystore_dir_path.join("cert-signed")
 
         @keystore_files  = [ca_cert_path, ca_cert_srl_path, ca_key_path, cert_file_path, cert_signed_path, truststore_path, keystore_path]
-        @installed_files = [jaas_config_path, client_properties_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
+        @installed_files = [jaas_config_path, client_properties_path, kafka_security_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
       end
 
       def configure
@@ -38,6 +38,7 @@ module ManageIQ
           configure_persistent_disk         # Configure the persistent message store on a different disk
           create_jaas_config                # Create the message server jaas config file
           create_client_properties          # Create the client.properties config
+          create_kafka_security             # Create the kafka.security file with the FIPS providers
           create_logs_directory             # Create the logs directory:
           configure_firewall                # Open the firewall for message port 9093
           configure_keystore                # Populate the Java Keystore

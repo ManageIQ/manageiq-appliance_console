@@ -178,6 +178,88 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     end
   end
 
+  describe "#create_kafka_security" do
+    let(:java_security_file) { Pathname.new(@tmp_base_dir).join("java.security") }
+
+    before do
+      expect(subject).to receive(:say).with("Create Kafka Security")
+      allow(subject).to receive(:java_security_path).and_return(java_security_file)
+    end
+
+    it "numbers the providers after the highest existing fips.provider.N" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        security.provider.1=SUN
+        fips.provider.1=SunPKCS11 ${java.home}/conf/security/nss.fips.cfg
+        fips.provider.2=SUN
+        fips.provider.3=SunEC
+      JAVA_SECURITY
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.4=SunSASL
+        fips.provider.5=JdkSASL
+        fips.provider.6=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "starts at 1 when there are no fips providers" do
+      java_security_file.write("security.provider.1=SUN\n")
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.1=SunSASL
+        fips.provider.2=JdkSASL
+        fips.provider.3=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "only adds the providers that are not already present" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        fips.provider.1=SUN
+        fips.provider.2=JdkSASL
+      JAVA_SECURITY
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path.read).to eq(<<~KAFKA_SECURITY)
+        fips.provider.3=SunSASL
+        fips.provider.4=SunJGSS
+      KAFKA_SECURITY
+    end
+
+    it "does not create the file when all providers are already present" do
+      java_security_file.write(<<~JAVA_SECURITY)
+        fips.provider.1=SunSASL
+        fips.provider.2=JdkSASL
+        fips.provider.3=SunJGSS
+      JAVA_SECURITY
+      expect(subject).to receive(:say).with(/already present/)
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path).not_to exist
+    end
+
+    it "does not create the file when java.security cannot be found" do
+      allow(subject).to receive(:java_security_path).and_return(nil)
+      expect(subject).to receive(:say).with(/Unable to locate/)
+
+      subject.send(:create_kafka_security)
+
+      expect(subject.kafka_security_path).not_to exist
+    end
+
+    it "does not recreate the file if it already exists" do
+      expect(subject).to receive(:say).with(/already exists/)
+      FileUtils.touch(subject.kafka_security_path)
+      expect(File).not_to receive(:write)
+
+      subject.send(:create_kafka_security)
+    end
+  end
+
   describe "#configure_firewall" do
     before do
       expect(subject).to receive(:say).with("Configure Firewall")
