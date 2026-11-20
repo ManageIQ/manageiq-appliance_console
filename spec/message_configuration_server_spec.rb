@@ -135,13 +135,31 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
         KafkaServer {
           org.apache.kafka.common.security.plain.PlainLoginModule required
           username=#{message_keystore_username}
-          password=#{message_keystore_password}
-          user_admin=#{message_keystore_password} ;
+          password="#{message_keystore_password}"
+          user_admin="#{message_keystore_password}" ;
         };
       JAAS
 
       expect(File).to receive(:write).with(subject.jaas_config_path, content)
       expect(subject.send(:create_jaas_config)).to be_nil
+    end
+
+    context "with special characters in the password" do
+      let(:message_keystore_password) { 'pa ss;w"o=r\\d' }
+
+      it "quotes the password and escapes quotes and backslashes" do
+        content = <<~JAAS
+          KafkaServer {
+            org.apache.kafka.common.security.plain.PlainLoginModule required
+            username=#{message_keystore_username}
+            password="pa ss;w\\"o=r\\\\d"
+            user_admin="pa ss;w\\"o=r\\\\d" ;
+          };
+        JAAS
+
+        expect(File).to receive(:write).with(subject.jaas_config_path, content)
+        expect(subject.send(:create_jaas_config)).to be_nil
+      end
     end
 
     it "does not recreate the jaas config file if it already exists" do

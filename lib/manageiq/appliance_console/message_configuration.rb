@@ -89,7 +89,7 @@ module ManageIQ
       def secure_client_properties_content(algorithm, protocol)
         secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{message_keystore_password}
+          ssl.truststore.password=#{properties_escape(message_keystore_password)}
         CLIENT_PROPERTIES
 
         unsecure_client_properties_content(algorithm, protocol) + secure_content
@@ -103,8 +103,18 @@ module ManageIQ
           security.protocol=#{protocol}
           sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \\
             username=#{message_keystore_username} \\
-            password=#{message_keystore_password} ;
+            password=#{properties_escape(jaas_quote(message_keystore_password))} ;
         CLIENT_PROPERTIES
+      end
+
+      # Quote a value for a JAAS config entry, escaping backslashes and double quotes.
+      def jaas_quote(value)
+        %("#{value.to_s.gsub(/["\\]/) { |c| "\\#{c}" }}")
+      end
+
+      # Escape a value for a Java .properties file, where backslash is an escape character.
+      def properties_escape(value)
+        value.gsub("\\") { "\\\\" }
       end
 
       def configure_messaging_yaml
