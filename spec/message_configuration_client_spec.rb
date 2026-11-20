@@ -103,7 +103,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           username=#{message_keystore_username} \\
           password="#{message_keystore_password}" ;
         ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password=#{message_keystore_password}
+        ssl.truststore.password="#{message_keystore_password}"
       CLIENT_PROPERTIES
     end
 
@@ -191,7 +191,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
 
       it "quotes the password, escaping for JAAS and then for the properties file" do
         expect(File).to receive(:write) do |_path, content|
-          expect(content).to include(%q(password="pa ss;w\\\\"o=r\\\\\\\\d" ;))
+          expect(content).to include('password="pa ss;w\\\\"o=r\\\\\\\\d" ;')
         end
         subject.send(:create_client_properties)
       end

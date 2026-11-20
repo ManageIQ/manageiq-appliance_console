@@ -261,11 +261,11 @@ module ManageIQ
 
           ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
-          ssl.keystore.password=#{message_keystore_password}
-          ssl.key.password=#{message_keystore_password}
+          ssl.keystore.password=#{properties_escape(message_keystore_password)}
+          ssl.key.password=#{properties_escape(message_keystore_password)}
 
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{message_keystore_password}
+          ssl.truststore.password=#{properties_escape(message_keystore_password)}
 
           ssl.client.auth=#{client_auth}
 
