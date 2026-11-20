@@ -30,7 +30,7 @@ module ManageIQ
         @cert_signed_path              = keystore_dir_path.join("cert-signed")
 
         @keystore_files  = [ca_cert_path, ca_cert_srl_path, ca_key_path, cert_file_path, cert_signed_path, truststore_path, keystore_path]
-        @installed_files = [jaas_config_path, client_properties_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
+        @installed_files = [jaas_config_path, client_properties_path, kafka_security_path, server_properties_path, messaging_yaml_path, LOGS_DIR] + keystore_files
       end
 
       def configure
@@ -38,6 +38,7 @@ module ManageIQ
           configure_persistent_disk         # Configure the persistent message store on a different disk
           create_jaas_config                # Create the message server jaas config file
           create_client_properties          # Create the client.properties config
+          create_kafka_security             # Create the kafka.security file with the FIPS providers
           create_logs_directory             # Create the logs directory:
           configure_firewall                # Open the firewall for message port 9093
           configure_keystore                # Populate the Java Keystore
@@ -157,7 +158,7 @@ module ManageIQ
           KafkaClient {
             org.apache.kafka.common.security.plain.PlainLoginModule required
             username=#{message_keystore_username}
-            password=#{message_keystore_password} ;
+            password=#{jaas_quote(message_keystore_password)} ;
           };
         JAAS
 
@@ -270,12 +271,12 @@ module ManageIQ
 
           ssl.endpoint.identification.algorithm=#{ident_algorithm}
           ssl.keystore.location=#{keystore_path}
-          ssl.keystore.password=properties_escape(message_keystore_password)}
+          ssl.keystore.password=#{properties_escape(message_keystore_password)}
           ssl.keystore.type=PKCS12
-          ssl.key.password=properties_escape(message_keystore_password)}
+          ssl.key.password=#{properties_escape(message_keystore_password)}
 
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=properties_escape(message_keystore_password)}
+          ssl.truststore.password=#{properties_escape(message_keystore_password)}
           ssl.truststore.type=PKCS12
 
           ssl.enabled.protocols=TLSv1.2,TLSv1.3
