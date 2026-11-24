@@ -15,7 +15,9 @@ module ApplianceConsole
     NONE_REGEXP   = /^('?NONE'?)?$/i.freeze
     HOSTNAME_REGEXP = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
     MESSAGING_HOSTNAME_REGEXP = /^(?!.*localhost)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
-    MESSAGING_PASSWORD_REGEXP = /\A[a-zA-Z0-9_\-\.\$\*]+\z/.freeze
+    # Printable ASCII, including interior spaces. Leading/trailing spaces are not allowed.
+    # The password is quoted/escaped when written to the Kafka JAAS and properties files.
+    MESSAGING_PASSWORD_REGEXP = /\A[\x21-\x7E](?:[\x20-\x7E]*[\x21-\x7E])?\z/
 
     def ask_for_uri(prompt, expected_scheme, opts = {})
       require 'uri'
@@ -147,7 +149,7 @@ module ApplianceConsole
     end
 
     def ask_for_messaging_password(prompt)
-      ask_for_new_password(prompt, :validation => MESSAGING_PASSWORD_REGEXP, :validation_err => "allowed characters are a-z, A-Z, 0-9, -, _, ., $, and *")
+      ask_for_new_password(prompt, :validation => MESSAGING_PASSWORD_REGEXP, :validation_err => "allowed characters are printable ASCII characters (letters, digits, punctuation and spaces), but it can not start or end with a space")
     end
 
     def ask_for_string(prompt, default = nil)
