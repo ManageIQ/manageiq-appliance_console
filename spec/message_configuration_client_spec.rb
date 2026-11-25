@@ -103,7 +103,7 @@ describe ManageIQ::ApplianceConsole::MessageClientConfiguration do
           username=#{message_keystore_username} \\
           password="#{message_keystore_password}" ;
         ssl.truststore.location=#{subject.truststore_path}
-        ssl.truststore.password="#{message_keystore_password}"
+        ssl.truststore.password=#{message_keystore_password}
       CLIENT_PROPERTIES
     end
 

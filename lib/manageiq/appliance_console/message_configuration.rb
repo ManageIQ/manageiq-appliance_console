@@ -89,7 +89,7 @@ module ManageIQ
       def secure_client_properties_content(algorithm, protocol)
         secure_content = <<~CLIENT_PROPERTIES
           ssl.truststore.location=#{truststore_path}
-          ssl.truststore.password=#{properties_escape(jaas_quote(message_keystore_password))}
+          ssl.truststore.password=#{properties_escape(message_keystore_password)}
         CLIENT_PROPERTIES
 
         unsecure_client_properties_content(algorithm, protocol) + secure_content
