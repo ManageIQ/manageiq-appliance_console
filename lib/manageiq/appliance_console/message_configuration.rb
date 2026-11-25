@@ -207,13 +207,7 @@ module ManageIQ
 
         say("Checking if #{host} is resolvable ... ")
         begin
-          ip_address = Resolv.getaddress(host)
-
-          if IPAddr.new("127.0.0.1/8").include?(ip_address) || IPAddr.new("::1/128").include?(ip_address)
-            say("Failed.\nThe hostname must not resolve to a link-local address")
-
-            return false
-          end
+          Resolv.getaddress(host)
         rescue Resolv::ResolvError => e
           say("Failed.\nHostname #{host} is not resolvable: #{e.message}")
 
