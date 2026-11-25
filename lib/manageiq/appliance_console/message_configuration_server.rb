@@ -68,8 +68,7 @@ module ManageIQ
       def ask_for_parameters
         say("\nMessage Server Parameters:\n\n")
 
-        @message_server_host       = ask_for_messaging_hostname("Message Server Hostname", message_server_host)
-
+        @message_server_host       = ask_for_ip_or_hostname("Message Server Hostname", message_server_host)
         @message_keystore_username = ask_for_string("Message Keystore Username", message_keystore_username)
         @message_keystore_password = ask_for_messaging_password("Message Keystore Password")
         @message_persistent_disk   = ask_for_persistent_disk
@@ -303,11 +302,18 @@ module ManageIQ
                            "-keyalg"   => "RSA"}
 
         keystore_params["-alias"] = message_server_host
-        keystore_params["-ext"] = "san=dns:#{message_server_host}"
+        keystore_params["-ext"] = "san=#{subject_alternative_names.join(",")}"
 
         keystore_params["-dname"] = "cn=#{keystore_params["-alias"]}"
 
         keystore_params
+      end
+
+      # Hostname/IP the clients use, plus localhost and this appliance's address
+      # so that TLS endpoint verification succeeds for local and inter-broker connections.
+      def subject_alternative_names
+        host_san = message_server_host.ipaddress? ? "ip:#{message_server_host}" : "dns:#{message_server_host}"
+        [host_san, "dns:localhost", "ip:127.0.0.1", "ip:::1", ("ip:#{my_ipaddr}" if my_ipaddr)].compact.uniq
       end
 
       def modify_firewall(action)

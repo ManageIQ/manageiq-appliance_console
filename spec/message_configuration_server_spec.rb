@@ -24,7 +24,8 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     FileUtils.mkdir_p("#{@tmp_base_dir}/config/keystore")
     FileUtils.mkdir_p("#{@tmp_base_dir}/config-sample")
 
-    allow_any_instance_of(LinuxAdmin::Hosts).to receive(:hostname).and_return('my-host-name.example.com')
+    allow(LinuxAdmin::Hosts).to receive(:new).and_return(double(:hostname => 'my-host-name.example.com'))
+    allow(LinuxAdmin::IpAddress).to receive(:new).and_return(double(:address => '192.0.2.10'))
   end
 
   after do
@@ -46,7 +47,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should prompt for message_keystore_username and message_keystore_password" do
-        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_ip_or_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
 
@@ -56,7 +57,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should re-prompt when an empty message_keystore_password is given" do
-        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_ip_or_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).and_return("")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
@@ -68,7 +69,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       end
 
       it "should display Server Hostname and Keystore Username" do
-        allow(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
+        allow(subject).to receive(:ask_for_ip_or_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         allow(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
 
@@ -89,7 +90,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
 
       it "should prompt for message_keystore_username, message_keystore_password and persistent disk" do
         message_persistent_disk = LinuxAdmin::Disk.new(:path => "/tmp/disk")
-        expect(subject).to receive(:ask_for_messaging_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
+        expect(subject).to receive(:ask_for_ip_or_hostname).with("Message Server Hostname", "my-host-name.example.com").and_return("my-host-name.example.com")
         expect(subject).to receive(:ask_for_string).with("Message Keystore Username", message_keystore_username).and_return("admin")
         expect(subject).to receive(:just_ask).with(/Message Keystore Password/i, anything).twice.and_return("top_secret")
         expect(subject).to receive(:ask_for_disk).with("Persistent disk").and_return(message_persistent_disk)
@@ -247,7 +248,15 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
     context "with hostname" do
       let(:ks_alias) { "my-host-name.example.com" }
       let(:message_server_host) { ks_alias }
-      let(:ext) { "san=dns:my-host-name.example.com" }
+      let(:ext) { "san=dns:my-host-name.example.com,dns:localhost,ip:127.0.0.1,ip:::1,ip:192.0.2.10" }
+
+      include_examples "configure keystore"
+    end
+
+    context "with an ip address" do
+      let(:ks_alias) { "192.0.2.10" }
+      let(:message_server_host) { ks_alias }
+      let(:ext) { "san=ip:192.0.2.10,dns:localhost,ip:127.0.0.1,ip:::1" }
 
       include_examples "configure keystore"
     end
@@ -354,9 +363,7 @@ describe ManageIQ::ApplianceConsole::MessageServerConfiguration do
       subject { described_class.new(:message_keystore_username => message_keystore_username, :message_keystore_password => message_keystore_password) }
 
       it "sets message_server_host to my hostname" do
-        hosts = LinuxAdmin::Hosts.new
-        expect(hosts).to receive(:hostname).and_return("my-hostname")
-        expect(LinuxAdmin::Hosts).to receive(:new).and_return(hosts)
+        expect(LinuxAdmin::Hosts).to receive(:new).and_return(double(:hostname => "my-hostname"))
 
         expect(subject.message_server_host).to eq("my-hostname")
       end

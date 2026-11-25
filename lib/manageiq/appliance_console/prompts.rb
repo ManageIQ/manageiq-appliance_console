@@ -14,7 +14,6 @@ module ApplianceConsole
     INT_REGEXP    = /^[0-9]+$/
     NONE_REGEXP   = /^('?NONE'?)?$/i.freeze
     HOSTNAME_REGEXP = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
-    MESSAGING_HOSTNAME_REGEXP = /^(?!.*localhost)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/.freeze
     # Printable ASCII, including interior spaces. Leading/trailing spaces are not allowed.
     # The password is quoted/escaped when written to the Kafka JAAS and properties files.
     MESSAGING_PASSWORD_REGEXP = /\A[\x21-\x7E](?:[\x20-\x7E]*[\x21-\x7E])?\z/
@@ -73,11 +72,6 @@ module ApplianceConsole
 
     def ask_for_hostname(prompt, default = nil, validate = HOSTNAME_REGEXP, error_text = "a valid Hostname.", &block)
       just_ask(prompt, default, validate, error_text, &block)
-    end
-
-    def ask_for_messaging_hostname(prompt, default = nil, error_text = "a valid Messaging Hostname (not an IP or localhost)", &block)
-      validation = ->(h) { h =~ MESSAGING_HOSTNAME_REGEXP && h !~ IP_REGEXP }
-      just_ask(prompt, default, validation, error_text, &block)
     end
 
     def ask_for_ip_or_hostname(prompt, default = nil)
